@@ -1,0 +1,1 @@
+- [Headless Chromium debugging](chromium-cdp-origin.md) — in-container DevTools WebSocket checks need Chromium's remote-origin allowlist enabled.

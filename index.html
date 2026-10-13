@@ -381,7 +381,7 @@
       isolation: isolate;
     }
 
-    .video-frame iframe {
+    .video-frame > video {
       position: absolute;
       inset: 0;
       display: block;
@@ -389,6 +389,10 @@
       height: 100%;
       border: 0;
       background: #09080d;
+    }
+
+    .video-frame--player > video {
+      object-fit: contain;
     }
 
     .featured-details {
@@ -640,6 +644,56 @@
         linear-gradient(150deg, #191421, #09080e 78%);
       cursor: pointer;
       text-align: left;
+    }
+
+    .video-poster::after {
+      position: absolute;
+      z-index: 0;
+      inset: 36% 0 0;
+      background: linear-gradient(transparent, rgba(7, 6, 11, 0.82));
+      content: "";
+      pointer-events: none;
+    }
+
+    .video-thumbnail-media {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .video-poster.has-media .poster-art {
+      display: none;
+    }
+
+    .video-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      color: var(--silver);
+      background:
+        radial-gradient(ellipse at 76% 19%, rgba(142, 103, 232, 0.2), transparent 41%),
+        linear-gradient(150deg, #191421, #09080e 78%);
+      text-align: center;
+    }
+
+    .video-fallback p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .video-fallback a {
+      color: var(--violet-bright);
+      font-weight: 600;
+      text-underline-offset: 0.2em;
     }
 
     .poster-art {
@@ -1178,14 +1232,13 @@
         <span class="featured-index" id="featured-index" aria-label="Featured video number">01 / 07</span>
       </div>
 
-      <div class="video-frame" id="featured-player" aria-label="Featured video player">
+      <div class="video-frame video-frame--player" id="featured-player" aria-label="Featured video player" aria-live="polite">
         <noscript><p style="padding:1rem;color:#d9d5e1">Enable JavaScript to load the featured video.</p></noscript>
       </div>
 
       <div class="featured-details">
         <div class="featured-copy">
           <h3 id="featured-title">The Violet Hour</h3>
-          <p id="featured-description">An atmospheric sample feature from the house library. Replace this description and embed URL with your own.</p>
         </div>
         <a class="offer-button" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
           <span>Exclusive · Featured Offer</span>
@@ -1221,7 +1274,7 @@
           <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Explore the library</p>
           <h2 id="videos-heading">The video <span>vault.</span></h2>
         </div>
-        <p class="section-note">Choose a preview to load and play the video.</p>
+        <p class="section-note">Choose a thumbnail to play it above.</p>
       </div>
 
       <aside id="adsterra-leaderboard" class="ad-slot ad-slot--leaderboard" aria-label="Advertisement slot, 728 by 90 leaderboard">
@@ -1258,7 +1311,9 @@
     </div>
   </footer>
 
-  <script>
+  <script type="module">
+    import { videos } from "./videos.js";
+
     "use strict";
 
     // EDIT THE SITE NAME HERE. The visible logo/footer and SEO title/meta are synced to this value.
@@ -1266,46 +1321,6 @@
 
     // ADSTERRA SMARTLINK: paste your full Smartlink URL between the quotes.
     const SMARTLINK_URL = "PASTE_ADSTERRA_SMARTLINK_HERE";
-
-    // EDIT VIDEO LINKS/TITLES/DESCRIPTIONS HERE. The first item is featured; the rest fill the grid.
-    // Use an embed URL from your video host (not a normal watch-page URL). These are demo YouTube embeds.
-    const videos = [
-      {
-        title: "The Violet Hour",
-        description: "An atmospheric sample feature from the house library. Replace this description and embed URL with your own.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "Velvet Afterglow",
-        description: "A late-night sample edit with a rich, cinematic finish. Add a short description of your own video here.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "Nocturne · Chapter 02",
-        description: "A sample entry from the archive. Swap in your own summary and the matching embed link.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "The Glass Room",
-        description: "A study in shadow and soft light. Replace this sample copy with a few words about the release.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "Midnight in Monochrome",
-        description: "A polished sample pick for the video vault. Your own short description goes here.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "Soft Focus · Session 05",
-        description: "A quiet, cinematic sample moment. Edit the title, description, and embed URL to make it yours.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      },
-      {
-        title: "After Hours, Revisited",
-        description: "One more sample from the collection. Replace this with the details for your next video.",
-        url: "https://www.youtube.com/embed/aqz-KE-bpKQ"
-      }
-    ];
 
     // EDIT SOCIAL LINKS HERE. Replace each placeholder URL with your real profile URL.
     const socialLinks = [
@@ -1358,52 +1373,82 @@
     document.querySelector("#social-links")?.setAttribute("aria-label", `${SITE_NAME} social media links`);
     document.getElementById("current-year").textContent = String(new Date().getFullYear());
 
-    function makeIframe(video, autoplay = false) {
-      const iframe = document.createElement("iframe");
-      let embedUrl = video.url.trim();
+    function getVideoUrls(video) {
+      let originalUrl = null;
+      let directUrl = null;
 
       try {
-        const parsedUrl = new URL(embedUrl);
-        if (autoplay) {
-          parsedUrl.searchParams.set("autoplay", "1");
-          parsedUrl.searchParams.set("playsinline", "1");
+        const parsedUrl = new URL(video.url);
+        if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
+          originalUrl = parsedUrl.href;
+          if (
+            (parsedUrl.hostname === "videy.co" || parsedUrl.hostname === "www.videy.co") &&
+            /^\/v\/?$/.test(parsedUrl.pathname)
+          ) {
+            const id = parsedUrl.searchParams.get("id");
+            if (id && /^[\w-]+$/.test(id)) {
+              directUrl = `https://cdn.videy.co/${encodeURIComponent(id)}.mp4`;
+            }
+          }
         }
-        embedUrl = parsedUrl.href;
       } catch (error) {
-        // The URL is kept as typed; use a complete https:// embed URL in the video list.
+        // Invalid or non-HTTP URLs are not loaded.
       }
 
-      iframe.src = embedUrl;
-      iframe.title = `${video.title} — ${SITE_NAME} video`;
-      iframe.loading = "lazy";
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-      iframe.allowFullscreen = true;
-      iframe.referrerPolicy = "strict-origin-when-cross-origin";
-      return iframe;
+      return { originalUrl, directUrl };
     }
 
-    function renderFeaturedVideo() {
-      const featuredVideo = videos[0];
-      if (!featuredVideo) {
-        document.getElementById("featured-player").textContent = "Add a video to the videos array to feature it here.";
-        return;
+    function makeThumbnailMedia(video, button) {
+      const { directUrl } = getVideoUrls(video);
+      const showFirstFrame = () => {
+        if (!directUrl) return;
+        const thumbnail = document.createElement("video");
+        thumbnail.className = "video-thumbnail-media";
+        thumbnail.muted = true;
+        thumbnail.playsInline = true;
+        thumbnail.preload = "metadata";
+        thumbnail.tabIndex = -1;
+        thumbnail.setAttribute("aria-hidden", "true");
+        thumbnail.src = `${directUrl}#t=0.5`;
+        thumbnail.addEventListener("loadedmetadata", () => {
+          if (thumbnail.duration > 0.5 && thumbnail.currentTime < 0.45) {
+            thumbnail.currentTime = 0.5;
+          }
+        });
+        thumbnail.addEventListener("loadeddata", () => {
+          thumbnail.classList.add("is-ready");
+          button.classList.add("has-media");
+        }, { once: true });
+        button.insertBefore(thumbnail, button.firstChild);
+      };
+
+      if (video.thumb) {
+        const image = document.createElement("img");
+        image.className = "video-thumbnail-media";
+        image.alt = "";
+        image.loading = button.closest("#featured-player") ? "eager" : "lazy";
+        image.decoding = "async";
+        image.src = video.thumb;
+        image.addEventListener("load", () => {
+          image.classList.add("is-ready");
+          button.classList.add("has-media");
+        }, { once: true });
+        image.addEventListener("error", () => {
+          image.remove();
+          showFirstFrame();
+        }, { once: true });
+        button.append(image);
+      } else {
+        showFirstFrame();
       }
-
-      document.getElementById("featured-title").textContent = featuredVideo.title;
-      document.getElementById("featured-description").textContent = featuredVideo.description;
-      document.getElementById("featured-index").textContent = `01 / ${String(videos.length).padStart(2, "0")}`;
-      document.getElementById("featured-player").replaceChildren(makeIframe(featuredVideo));
     }
 
-    function makeVideoPreview(video, index, card) {
-      const frame = document.createElement("div");
-      frame.className = "video-frame video-frame--card";
-
-      const playButton = document.createElement("button");
-      playButton.className = "video-poster";
-      playButton.type = "button";
-      playButton.setAttribute("aria-label", `Play ${video.title}`);
-      playButton.style.setProperty("--poster-tone", posterTones[(index - 1) % posterTones.length]);
+    function makeVideoPoster(video, index, onPlay) {
+      const button = document.createElement("button");
+      button.className = "video-poster";
+      button.type = "button";
+      button.setAttribute("aria-label", `Play ${video.title}`);
+      button.style.setProperty("--poster-tone", posterTones[index % posterTones.length]);
 
       const art = document.createElement("span");
       art.className = "poster-art";
@@ -1412,7 +1457,9 @@
       const meta = document.createElement("span");
       meta.className = "poster-meta";
       meta.setAttribute("aria-hidden", "true");
-      meta.textContent = `THE VAULT  /  ${String(index).padStart(2, "0")}`;
+      meta.textContent = index === 0
+        ? "SIGNATURE SELECTION"
+        : `THE VAULT  /  ${String(index).padStart(2, "0")}`;
 
       const playIcon = document.createElement("span");
       playIcon.className = "poster-play";
@@ -1427,40 +1474,107 @@
       const hint = document.createElement("span");
       hint.className = "poster-hint";
       hint.setAttribute("aria-hidden", "true");
-      hint.textContent = "Play preview";
+      hint.textContent = "Tap to play";
 
-      const playVideo = () => {
-        if (card.classList.contains("is-playing")) return;
-        card.classList.add("is-playing");
-        frame.replaceChildren(makeIframe(video, true));
-      };
+      makeThumbnailMedia(video, button);
+      button.append(art, meta, playIcon, posterTitle, hint);
+      button.addEventListener("click", onPlay);
+      return button;
+    }
 
-      playButton.append(art, meta, playIcon, posterTitle, hint);
-      playButton.addEventListener("click", playVideo);
-      frame.append(playButton);
-      return { frame, playVideo };
+    function updateFeaturedDetails(video, index) {
+      document.getElementById("featured-title").textContent = video.title;
+      document.getElementById("featured-index").textContent =
+        `${String(index + 1).padStart(2, "0")} / ${String(videos.length).padStart(2, "0")}`;
+    }
+
+    function makeFallback(originalUrl) {
+      const fallback = document.createElement("div");
+      fallback.className = "video-fallback";
+
+      const message = document.createElement("p");
+      message.textContent = "This video could not play here.";
+      fallback.append(message);
+
+      if (originalUrl) {
+        const link = document.createElement("a");
+        link.href = originalUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open the original video";
+        fallback.append(link);
+      }
+
+      return fallback;
+    }
+
+    function playInMainPlayer(video, index, scrollToPlayer = false) {
+      const player = document.getElementById("featured-player");
+      const { originalUrl, directUrl } = getVideoUrls(video);
+      updateFeaturedDetails(video, index);
+
+      if (!directUrl) {
+        player.replaceChildren(makeFallback(originalUrl));
+      } else {
+        const media = document.createElement("video");
+        media.controls = true;
+        media.playsInline = true;
+        media.preload = "auto";
+        media.autoplay = true;
+        media.setAttribute("aria-label", `${video.title} video`);
+        if (video.thumb) media.poster = video.thumb;
+        media.addEventListener("error", () => {
+          if (player.contains(media)) {
+            player.replaceChildren(makeFallback(originalUrl));
+          }
+        }, { once: true });
+        player.replaceChildren(media);
+        media.src = directUrl;
+        media.play().catch(() => {
+          // Native controls remain available if autoplay is blocked by the browser.
+        });
+      }
+
+      if (scrollToPlayer) {
+        player.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function renderFeaturedVideo() {
+      const featuredVideo = videos[0];
+      const player = document.getElementById("featured-player");
+      if (!featuredVideo) {
+        player.textContent = "Add a video to videos.js to feature it here.";
+        return;
+      }
+
+      updateFeaturedDetails(featuredVideo, 0);
+      player.replaceChildren(makeVideoPoster(
+        featuredVideo,
+        0,
+        () => playInMainPlayer(featuredVideo, 0)
+      ));
     }
 
     function makeVideoCard(video, index) {
       const card = document.createElement("article");
       card.className = "video-card";
 
-      const preview = makeVideoPreview(video, index, card);
+      const frame = document.createElement("div");
+      frame.className = "video-frame video-frame--card";
+      frame.append(makeVideoPoster(video, index, () => playInMainPlayer(video, index, true)));
+
       const body = document.createElement("div");
       body.className = "video-card__body";
 
       const title = document.createElement("h3");
       title.textContent = video.title;
-      const description = document.createElement("p");
-      description.textContent = video.description;
+      body.append(title);
+      card.append(frame, body);
 
-      body.append(title, description);
-      card.append(preview.frame, body);
-
-      // Clicking the card's text area also plays the video; the poster button remains keyboard accessible.
       card.addEventListener("click", (event) => {
-        if (event.target.closest("button, a")) return;
-        preview.playVideo();
+        if (event.target.closest("a, button")) return;
+        playInMainPlayer(video, index, true);
       });
       return card;
     }
@@ -1514,12 +1628,12 @@
 
     function renderVideoGrid() {
       const grid = document.getElementById("video-grid");
-      const gridVideos = videos.slice(1);
+      const gridVideos = videos;
 
       if (!gridVideos.length) {
         const empty = document.createElement("p");
         empty.className = "empty-message";
-        empty.textContent = "Add more videos to the videos array to fill the library.";
+        empty.textContent = "Add videos to videos.js to fill the library.";
         grid.append(empty);
         return;
       }

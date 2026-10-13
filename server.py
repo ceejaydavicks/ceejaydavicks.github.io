@@ -5,23 +5,30 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 
-PAGE = Path(__file__).with_name("index.html")
+ROOT = Path(__file__).parent
+SERVED_FILES = {
+    "/": (ROOT / "index.html", "text/html; charset=utf-8"),
+    "/index.html": (ROOT / "index.html", "text/html; charset=utf-8"),
+    "/videos.js": (ROOT / "videos.js", "text/javascript; charset=utf-8"),
+}
 
 
 class PageHandler(BaseHTTPRequestHandler):
     def serve_page(self, include_body=True):
-        if urlsplit(self.path).path not in ("/", "/index.html"):
+        asset = SERVED_FILES.get(urlsplit(self.path).path)
+        if asset is None:
             self.send_error(404)
             return
 
+        file_path, content_type = asset
         try:
-            content = PAGE.read_bytes()
+            content = file_path.read_bytes()
         except OSError:
-            self.send_error(500, "Unable to read index.html")
+            self.send_error(500, "Unable to read requested site file")
             return
 
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
