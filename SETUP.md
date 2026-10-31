@@ -106,16 +106,23 @@ Settings changes apply to the **next** deployment:
    ```json
    {
      "ok": true,
+     "deployment": { "environment": "production", "branch": "main",
+                     "commit": "b1c2d3e", "url": "https://…boootymansion.pages.dev" },
      "checks": { "adminPassword": true, "sessionSecret": true,
                  "dbBinding": true, "mediaBinding": true, "telegram": false },
      "database": { "reachable": true, "schemaReady": true, "videoCount": 0 },
+     "notes": [],
      "error": null, "hint": null
    }
    ```
 
    `"ok": true` means sign-in will work. If something is `false`, `error` and
-   `hint` name the missing binding/secret and where to add it. This is the first
-   place to look for **any** admin problem.
+   `hint` name the missing binding/secret and where to add it. `deployment` says
+   which build answered — production or **preview**, which branch, which commit —
+   which is how you confirm a "Retry deployment" actually took effect.
+   `notes` explains optional gaps (no `SESSION_SECRET`, no R2 bucket, bot not
+   finished) that do **not** block the admin. This is the first place to look for
+   **any** admin problem.
 
 ---
 
