@@ -370,6 +370,10 @@
 
       <button class="btn" type="submit" id="login-submit" style="width:100%">Sign in</button>
       <p class="status-line" id="login-status" role="status" aria-live="polite"></p>
+      <p class="hint" style="margin-top:0.7rem">
+        Sign-in failing? <a href="/api/health" target="_blank" rel="noopener">Run diagnostics</a> —
+        it lists any missing binding or secret without revealing them.
+      </p>
     </form>
   </div>
 
@@ -580,7 +584,15 @@
       }
 
       if (!response.ok) {
-        throw new Error(data.error || `Request failed (${response.status})`);
+        if (data && data.error) {
+          throw new Error(data.hint ? `${data.error} ${data.hint}` : data.error);
+        }
+        if (response.status >= 500) {
+          throw new Error(
+            `Server error (${response.status}). Open /api/health in a new tab to see which binding or secret is missing.`
+          );
+        }
+        throw new Error(`Request failed (${response.status})`);
       }
 
       return data;
