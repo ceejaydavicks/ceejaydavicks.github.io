@@ -13,6 +13,7 @@ const SCHEMA = [
     video_url TEXT NOT NULL DEFAULT '',
     embed_url TEXT NOT NULL DEFAULT '',
     duration TEXT NOT NULL DEFAULT '',
+    duration_seconds INTEGER NOT NULL DEFAULT 0,
     "views" TEXT NOT NULL DEFAULT '',
     tag TEXT NOT NULL DEFAULT '',
     orientation TEXT NOT NULL DEFAULT 'horizontal',
@@ -57,7 +58,11 @@ const LATE_COLUMNS = [
   /* The page a scraped row came from. Kept separately from video_url because a
      mirrored file lives in R2 under a fresh key every time — without this, the
      same page pasted twice looked like a different video. */
-  ["source_url", "ALTER TABLE videos ADD COLUMN source_url TEXT NOT NULL DEFAULT ''"]
+  ["source_url", "ALTER TABLE videos ADD COLUMN source_url TEXT NOT NULL DEFAULT ''"],
+  /* Real length in seconds. `duration` stays as the m:ss label the cards show;
+     this column is what the Shorts rule reads (under 60s = Short), so the same
+     video behaves the same whether it arrived from /admin, a link or Telegram. */
+  ["duration_seconds", "ALTER TABLE videos ADD COLUMN duration_seconds INTEGER NOT NULL DEFAULT 0"]
 ];
 
 /* One Telegram message may only ever produce one row: webhook updates are
@@ -116,6 +121,7 @@ export const VIDEO_COLUMNS = [
   "video_url",
   "embed_url",
   "duration",
+  "duration_seconds",
   "views",
   "tag",
   "orientation",
@@ -149,9 +155,9 @@ export async function getVideo(env, id) {
 export async function insertVideo(env, values) {
   const result = await env.DB.prepare(
     `INSERT INTO videos
-       (title, creator, thumbnail_url, video_url, embed_url, duration, "views", tag,
-        orientation, featured, pinned, tg_chat, tg_message_id, source_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (title, creator, thumbnail_url, video_url, embed_url, duration, duration_seconds,
+        "views", tag, orientation, featured, pinned, tg_chat, tg_message_id, source_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       values.title,
@@ -160,6 +166,7 @@ export async function insertVideo(env, values) {
       values.video_url,
       values.embed_url,
       values.duration,
+      values.duration_seconds || 0,
       values.views,
       values.tag,
       values.orientation,
@@ -182,7 +189,8 @@ export async function updateVideo(env, id, values) {
   await env.DB.prepare(
     `UPDATE videos SET
        title = ?, creator = ?, thumbnail_url = ?, video_url = ?, embed_url = ?,
-       duration = ?, "views" = ?, tag = ?, orientation = ?, featured = ?, pinned = ?
+       duration = ?, duration_seconds = ?, "views" = ?, tag = ?, orientation = ?,
+       featured = ?, pinned = ?
      WHERE id = ?`
   )
     .bind(
@@ -192,6 +200,7 @@ export async function updateVideo(env, id, values) {
       values.video_url,
       values.embed_url,
       values.duration,
+      values.duration_seconds || 0,
       values.views,
       values.tag,
       values.orientation,

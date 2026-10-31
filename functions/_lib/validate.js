@@ -7,6 +7,72 @@
 
 import { boolInt, cleanText, safeAssetUrl, safeHttpUrl } from "./http.js";
 
+/* ---- duration -----------------------------------------------------------
+   A video's length is stored twice:
+
+   - `duration_seconds` — the real length, an integer. This is the source of
+     truth and the only thing the Shorts rule reads (under 60 seconds).
+   - `duration` — the "m:ss" label the cards show.
+
+   Every entry point funnels through here, so /admin (which accepts "12:48"),
+   the scraper (which reports seconds), the Telegram bot (which reports the
+   file's own duration) and direct API calls all end up in the same shape.
+   Anything unparseable is kept as free text but leaves the seconds at 0, which
+   means "unknown length" — an unknown video is a regular video, never a Short.
+   ------------------------------------------------------------------------- */
+
+export function parseDurationSeconds(value) {
+  const clamp = (n) => (Number.isFinite(n) && n > 0 ? Math.min(86400, Math.round(n)) : 0);
+
+  if (typeof value === "number") return clamp(value);
+
+  const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!raw) return 0;
+
+  // Lone digits are seconds — the shape Telegram metadata and the API use.
+  if (/^\d+(?:\.\d+)?$/.test(raw)) return clamp(Number(raw));
+
+  // "42s" / "42 sec" / "42 seconds"
+  let match = /^(\d+(?:\.\d+)?)\s*s(?:ec(?:s|onds?)?)?$/.exec(raw);
+  if (match) return clamp(Number(match[1]));
+
+  // "1h 2m 3s", "2m 5s", "90 min"
+  match = /^(?:(\d+)\s*h(?:ours?|rs?)?)?\s*(?:(\d+)\s*m(?:in(?:ute)?s?)?)?\s*(?:(\d+)\s*s(?:ec(?:s|onds?)?)?)?$/.exec(raw);
+  if (match && (match[1] || match[2] || match[3])) {
+    return clamp(Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0));
+  }
+
+  // "0:42", "12:48", "1:02:03"
+  const parts = raw.split(":").map((part) => part.trim());
+  if (parts.length >= 2 && parts.length <= 3 && parts.every((part) => /^\d+(?:\.\d+)?$/.test(part))) {
+    return clamp(parts.map(Number).reduce((total, part) => total * 60 + part, 0));
+  }
+
+  // ISO 8601, which some scraped pages expose ("PT1M5S").
+  match = /^p(?:(\d+)d)?t?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$/.exec(raw);
+  if (match && (match[1] || match[2] || match[3] || match[4])) {
+    return clamp(
+      Number(match[1] || 0) * 86400 +
+        Number(match[2] || 0) * 3600 +
+        Number(match[3] || 0) * 60 +
+        Number(match[4] || 0)
+    );
+  }
+
+  return 0;
+}
+
+export function formatDurationSeconds(seconds) {
+  const total = Math.round(Number(seconds) || 0);
+  if (!Number.isFinite(total) || total <= 0) return "";
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = String(total % 60).padStart(2, "0");
+  return hours
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${secs}`
+    : `${minutes}:${secs}`;
+}
+
 export function rowToInput(row) {
   return {
     title: row.title,
@@ -15,6 +81,7 @@ export function rowToInput(row) {
     video_url: row.video_url,
     embed_url: row.embed_url,
     duration: row.duration,
+    duration_seconds: row.duration_seconds,
     views: row.views,
     tag: row.tag,
     orientation: row.orientation,
@@ -53,6 +120,14 @@ export function validateVideoInput(body = {}, { requireSource = false } = {}) {
     return { error: "Add a video URL (or an embed link) so the video can play." };
   }
 
+  /* An embed usually cannot report its own length, so whatever was typed wins;
+     explicit seconds (from the bot or the API) beat the text field. */
+  const durationSeconds =
+    parseDurationSeconds(body.duration_seconds) || parseDurationSeconds(body.duration);
+  const durationLabel = durationSeconds
+    ? formatDurationSeconds(durationSeconds)
+    : cleanText(body.duration, 16);
+
   return {
     values: {
       title,
@@ -60,7 +135,8 @@ export function validateVideoInput(body = {}, { requireSource = false } = {}) {
       thumbnail_url: thumbnail,
       video_url: video,
       embed_url: embed,
-      duration: cleanText(body.duration, 16),
+      duration: durationLabel,
+      duration_seconds: durationSeconds,
       views: cleanText(body.views, 32),
       tag: cleanText(body.tag, 32),
       orientation: body.orientation === "vertical" ? "vertical" : "horizontal",

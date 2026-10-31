@@ -365,6 +365,9 @@ async function publishVideo(env, { chat, message, text, fromChannel = false }) {
     thumbnail_url: thumbnailUrl,
     video_url: videoUrl,
     embed_url: embed,
+    /* Telegram gives the file's own length in seconds — that is what decides
+       whether the site files it under Shorts (under 60s) or the main grid. */
+    duration_seconds: Number(media.duration) || 0,
     orientation: vertical ? "vertical" : "horizontal",
     featured: false,
     pinned: false,
@@ -569,6 +572,7 @@ async function publishScrapedItem(env, item, { referer }) {
       video_url: videoUrl,
       embed_url: embedUrl,
       duration,
+      duration_seconds: Number(item.durationSec) || 0,
       orientation: "horizontal",
       featured: false,
       pinned: false,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0A0614">
+  <meta name="theme-color" content="#0B0B0F">
   <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
   <meta name="referrer" content="no-referrer">
   <title>Admin · BootyMansion</title>
@@ -11,25 +11,73 @@
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 
+  <!-- Same theme as the site: the saved choice, else the device setting. -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("theme"); } catch (e) {}
+      var theme = saved === "light" || saved === "dark"
+        ? saved
+        : (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", theme === "light" ? "#F7F7FA" : "#0B0B0F");
+    })();
+  </script>
+
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0A0614;
-      --panel: #130B22;
-      --panel-2: #190F2C;
-      --line: #2A1B45;
-      --line-strong: #3A2760;
-      --text: #D9D4E3;
-      --muted: #8F86A3;
-      --quiet: #857C9B;
-      --rose: #9D82E6;
-      --rose-200: #C3AEF4;
-      --rose-deep: #3F2A7A;
-      --accent-gradient: linear-gradient(135deg, #3F2A7A 0%, #7B5FC7 100%);
+      --bg: #0B0B0F;
+      --panel: #15151B;
+      --panel-2: #1B1B22;
+      --line: #26262F;
+      --line-strong: #33333E;
+      --text: #F4F4F6;
+      --muted: #9A9AA8;
+      --quiet: #86869A;
+      --rose: #F43F5E;
+      --rose-200: #FB7185;
+      --rose-deep: #E11D48;
+      --accent-gradient: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
       --danger: #FB7185;
+      --danger-text: #FECDD3;
+      --warn-text: #FDE68A;
       --ok: #4ADE80;
+      --field-bg: #0C0C11;
+      --toast-bg: #17131C;
+      --track: rgba(255, 255, 255, 0.08);
+      --glow: rgba(244, 63, 94, 0.12);
+      --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.5);
+      --shadow-pop: 0 18px 44px rgba(0, 0, 0, 0.5);
       --radius: 16px;
       --font: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* Light theme: colours only, so nothing moves when the theme flips. */
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #F7F7FA;
+      --panel: #FFFFFF;
+      --panel-2: #F2F2F7;
+      --line: #E4E4EC;
+      --line-strong: #D5D5DF;
+      --text: #14141A;
+      --muted: #6B6B7A;
+      --quiet: #686878;
+      --rose: #D6184A;
+      --rose-200: #BE123C;
+      --rose-deep: #BE123C;
+      --danger: #BE123C;
+      --danger-text: #9F1239;
+      --warn-text: #92400E;
+      --ok: #15803D;
+      --field-bg: #FFFFFF;
+      --toast-bg: #FFFFFF;
+      --track: rgba(20, 20, 26, 0.08);
+      --glow: rgba(244, 63, 94, 0.1);
+      --shadow-lg: 0 24px 64px rgba(20, 20, 26, 0.14);
+      --shadow-pop: 0 18px 44px rgba(20, 20, 26, 0.14);
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -38,7 +86,7 @@
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(ellipse 64% 55% at 100% 0%, rgba(59, 26, 140, 0.25), transparent 62%),
+        radial-gradient(ellipse 70% 55% at 50% -8%, var(--glow), transparent 62%),
         var(--bg);
       color: var(--text);
       font-family: var(--font);
@@ -70,7 +118,7 @@
       border: 1px solid var(--line);
       border-radius: 22px;
       background: linear-gradient(160deg, #15121A, #0D0C11);
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+      box-shadow: var(--shadow-lg);
     }
 
     .login-card h1 { margin: 0.4rem 0 0.3rem; font-size: 1.3rem; letter-spacing: -0.02em; }
@@ -93,7 +141,7 @@
       padding: 0.7rem 0.8rem;
       border: 1px solid var(--line-strong);
       border-radius: 10px;
-      background: #0C0C11;
+      background: var(--field-bg);
       color: var(--text);
       font: inherit;
       font-size: 14px;
@@ -164,7 +212,7 @@
       padding: 0.2rem;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: #0C0C11;
+      background: var(--field-bg);
     }
 
     .tab {
@@ -245,8 +293,8 @@
       text-transform: uppercase;
     }
 
-    .badge--on { border-color: rgba(157, 130, 230, 0.5); background: rgba(157, 130, 230, 0.12); color: var(--rose-200); }
-    .badge--draft { border-color: rgba(250, 204, 21, 0.4); color: #FDE68A; }
+    .badge--on { border-color: rgba(244, 63, 94, 0.5); background: rgba(244, 63, 94, 0.12); color: var(--rose-200); }
+    .badge--draft { border-color: rgba(250, 204, 21, 0.4); color: var(--warn-text); }
 
     .row-actions {
       display: flex;
@@ -288,7 +336,7 @@
     @media (min-width: 560px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
 
     .check { display: flex; align-items: center; gap: 0.5rem; font-size: 13px; color: var(--text); }
-    .check input { width: 16px; height: 16px; accent-color: #9D82E6; }
+    .check input { width: 16px; height: 16px; accent-color: #F43F5E; }
     .check label { margin: 0; font-size: 13px; color: var(--text); }
 
     .hint { margin: 0.3rem 0 0; color: var(--quiet); font-size: 11.5px; }
@@ -303,10 +351,10 @@
       border: 0;
       border-radius: 999px;
       overflow: hidden;
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--track);
       appearance: none;
     }
-    .upload-bar::-webkit-progress-bar { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+    .upload-bar::-webkit-progress-bar { background: var(--track); border-radius: 999px; }
     .upload-bar::-webkit-progress-value { background: var(--accent-gradient); border-radius: 999px; }
     .upload-bar::-moz-progress-bar { background: var(--accent-gradient); border-radius: 999px; }
 
@@ -354,10 +402,10 @@
       padding: 0.75rem 1rem;
       border: 1px solid var(--line-strong);
       border-radius: 12px;
-      background: #17131C;
+      background: var(--toast-bg);
       color: var(--text);
       font-size: 13px;
-      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+      box-shadow: var(--shadow-pop);
       opacity: 0;
       transform: translateY(12px);
       transition: opacity 180ms ease, transform 180ms ease;
@@ -365,7 +413,7 @@
     }
 
     .toast.is-visible { opacity: 1; transform: translateY(0); }
-    .toast.is-error { border-color: rgba(251, 113, 133, 0.5); color: #FECDD3; }
+    .toast.is-error { border-color: rgba(251, 113, 133, 0.5); color: var(--danger-text); }
 
     .status-line { margin: 0.75rem 0 0; color: var(--quiet); font-size: 11.5px; }
   </style>
@@ -519,7 +567,8 @@
         <div class="grid-2">
           <div class="field">
             <label for="f-duration">Duration</label>
-            <input id="f-duration" type="text" maxlength="16" placeholder="12:48">
+            <input id="f-duration" type="text" maxlength="16" placeholder="12:48 or 768">
+            <p class="hint" id="duration-hint">Enter mm:ss (or plain seconds). Under 60 seconds the video is filed as a <strong>Short</strong>; 60 or more keeps it a regular video. Filled in automatically for uploaded files — type it yourself when an embed cannot report its length.</p>
           </div>
           <div class="field">
             <label for="f-views">Views label</label>
@@ -688,10 +737,12 @@
         const main = el("div", "video-main");
         main.append(el("h3", "video-title", video.title));
 
+        const rowSeconds = Number(video.duration_seconds) || 0;
         const metaBits = [
           `#${video.id}`,
           video.creator,
           video.duration,
+          rowSeconds ? `${rowSeconds}s` : "",
           video.views ? `${video.views} views` : "",
           video.orientation === "vertical" ? "vertical" : "horizontal"
         ].filter(Boolean);
@@ -701,6 +752,7 @@
         if (video.featured) badges.append(el("span", "badge badge--on", "Featured"));
         if (video.pinned) badges.append(el("span", "badge badge--on", "Pinned"));
         if (video.tag) badges.append(el("span", "badge", video.tag));
+        if (rowSeconds && rowSeconds < 60) badges.append(el("span", "badge badge--on", "Short"));
         if (!video.video_url && !video.embed_url) badges.append(el("span", "badge badge--draft", "Draft"));
         if (!video.video_url && video.embed_url) badges.append(el("span", "badge", "Embed"));
         main.append(badges);
@@ -769,7 +821,10 @@
       $("#f-thumb").value = video ? video.thumbnail_url : "";
       $("#f-video").value = video ? video.video_url : "";
       $("#f-embed").value = video ? video.embed_url : "";
-      $("#f-duration").value = video ? video.duration : "";
+      $("#f-duration").value = video
+        ? video.duration || secondsToLabel(video.duration_seconds)
+        : "";
+      updateDurationHint();
       $("#f-views").value = video ? video.views : "";
       $("#f-orientation").value = video && video.orientation === "vertical" ? "vertical" : "horizontal";
       $("#f-featured").checked = Boolean(video && video.featured);
@@ -784,6 +839,49 @@
       $("#f-title").focus();
     }
 
+    /* Same rules as the server (functions/_lib/validate.js): accepts 0:42,
+       12:48, 1:02:03, plain seconds, "42s" or "1m 5s". */
+    function durationToSeconds(value) {
+      const raw = String(value || "").trim().toLowerCase();
+      if (!raw) return 0;
+      const clamp = (n) => (Number.isFinite(n) && n > 0 ? Math.min(86400, Math.round(n)) : 0);
+      if (/^\d+(\.\d+)?$/.test(raw)) return clamp(Number(raw));
+      let m = /^(\d+(\.\d+)?)\s*s(?:ec(?:s|onds?)?)?$/.exec(raw);
+      if (m) return clamp(Number(m[1]));
+      m = /^(?:(\d+)\s*h(?:ours?|rs?)?)?\s*(?:(\d+)\s*m(?:in(?:ute)?s?)?)?\s*(?:(\d+)\s*s(?:ec(?:s|onds?)?)?)?$/.exec(raw);
+      if (m && (m[1] || m[2] || m[3])) {
+        return clamp(Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3] || 0));
+      }
+      const parts = raw.split(":").map((part) => part.trim());
+      if (parts.length >= 2 && parts.length <= 3 && parts.every((part) => /^\d+(\.\d+)?$/.test(part))) {
+        return clamp(parts.map(Number).reduce((total, part) => total * 60 + part, 0));
+      }
+      return 0;
+    }
+
+    function secondsToLabel(seconds) {
+      const total = Math.round(Number(seconds) || 0);
+      if (!Number.isFinite(total) || total <= 0) return "";
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const secs = String(total % 60).padStart(2, "0");
+      return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
+    }
+
+    function updateDurationHint() {
+      const node = $("#duration-hint");
+      if (!node) return;
+      const seconds = durationToSeconds($("#f-duration").value);
+      const base = "Enter mm:ss (or plain seconds). Under 60 seconds the video is filed as a Short; 60 or more keeps it a regular video.";
+      document.querySelectorAll("[data-duration-state]").forEach((node) => node.remove());
+      if (!seconds) return;
+      const state = document.createElement("span");
+      state.dataset.durationState = "on";
+      state.textContent = seconds < 60 ? ` → ${seconds}s · Short` : ` → ${seconds}s · regular video`;
+      state.dataset.short = seconds < 60 ? "yes" : "no";
+      node.append(state);
+    }
+
     function collectForm() {
       return {
         title: $("#f-title").value.trim(),
@@ -793,6 +891,7 @@
         video_url: $("#f-video").value.trim(),
         embed_url: $("#f-embed").value.trim(),
         duration: $("#f-duration").value.trim(),
+        duration_seconds: durationToSeconds($("#f-duration").value),
         views: $("#f-views").value.trim(),
         orientation: $("#f-orientation").value,
         featured: $("#f-featured").checked,
@@ -950,7 +1049,10 @@
 
         const info = await inspectVideo(file);
         if (info) {
-          if (info.duration && !$("#f-duration").value.trim()) $("#f-duration").value = info.duration;
+          if (info.duration && !$("#f-duration").value.trim()) {
+            $("#f-duration").value = info.duration;
+            updateDurationHint();
+          }
           if (info.orientation) $("#f-orientation").value = info.orientation;
           if (info.poster) {
             const form = new FormData();
@@ -1057,6 +1159,9 @@
       $("#panel-videos").hidden = !videos;
       $("#panel-settings").hidden = videos;
     }
+
+    /* Live "→ 42s · Short" feedback while the duration is typed. */
+    $("#f-duration").addEventListener("input", updateDurationHint);
 
     $("#video-search").addEventListener("input", (event) => {
       state.filter = event.target.value.trim().toLowerCase();

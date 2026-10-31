@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A0614">
+  <meta name="theme-color" content="#0B0B0F">
   <meta name="color-scheme" content="dark light">
   <meta name="robots" content="index,follow">
   <!-- Adult-content rating signals (required on every page). -->
@@ -31,7 +31,7 @@
       document.documentElement.setAttribute("data-theme", theme);
 
       var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute("content", theme === "light" ? "#FAFAFB" : "#0A0614");
+      if (meta) meta.setAttribute("content", theme === "light" ? "#F7F7FA" : "#0B0B0F");
 
       var preload = document.createElement("link");
       preload.setAttribute("rel", "preload");
@@ -57,7 +57,9 @@
   <!-- One remote font request, swap-in so text never waits on it. Falls back to system fonts offline. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
   <!-- ============================================================
        ANALYTICS
@@ -71,77 +73,92 @@
     :root {
       color-scheme: dark;
 
-      /* surfaces & ink — near-black page, deep purple panels, silver-lavender text */
-      --bg: #0A0614;
-      --surface: #130B22;
-      --surface-2: #190F2C;
-      --surface-3: #0E0819;
-      --text: #D9D4E3;
-      --muted: #8F86A3;
-      --quiet: #857C9B;
-      --line: #2A1B45;
-      --line-soft: #1E1336;
-      --line-strong: #3A2760;
-      --tint: rgba(157, 130, 230, 0.05);
-      --tint-soft: rgba(157, 130, 230, 0.035);
-      --tint-strong: rgba(157, 130, 230, 0.09);
+      /* ---- surfaces & ink -------------------------------------------- */
+      --bg: #0B0B0F;
+      --surface: #15151B;
+      --surface-2: #1B1B22;
+      --surface-3: #101016;
+      --text: #F4F4F6;
+      --muted: #9A9AA8;
+      --quiet: #86869A;
+      --line: #26262F;
+      --line-soft: #1F1F27;
+      --line-strong: #33333E;
+      --tint: rgba(255, 255, 255, 0.04);
+      --tint-soft: rgba(255, 255, 255, 0.025);
+      --tint-strong: rgba(255, 255, 255, 0.07);
 
-      /* purple accent — taken from the logo lockup */
-      --accent: #6B4BB5;
-      --accent-hi: #9D82E6;
-      --accent-deep: #3F2A7A;
-      --accent-gradient: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent-hi) 100%);
-      /* same ramp, darker end: keeps white text on small fills above 4.5:1 */
-      --accent-gradient-ink: linear-gradient(135deg, var(--accent-deep) 0%, #7B5FC7 100%);
-      /* legacy names kept so existing rules pick the accent up */
+      /* ---- accent: crimson rose -------------------------------------- */
+      --accent: #F43F5E;
+      --accent-hi: #FB7185;
+      --accent-deep: #E11D48;
+      --accent-gradient: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
+      /* deeper twin for small fills that carry white text (>= 4.5:1) */
+      --accent-gradient-ink: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
       --rose: var(--accent-hi);
-      --rose-200: #C3AEF4;
-      --rose-400: #B49BEF;
-      --rose-soft: rgba(107, 75, 181, 0.2);
-      --rose-line: rgba(157, 130, 230, 0.38);
-      --rose-fill: rgba(107, 75, 181, 0.24);
-      --on-rose: #FAF7FF;
+      --rose-200: #FB7185;
+      --rose-400: #E11D48;
+      --rose-soft: rgba(244, 63, 94, 0.14);
+      --rose-line: rgba(244, 63, 94, 0.38);
+      --rose-fill: rgba(244, 63, 94, 0.18);
+      --on-rose: #FFFFFF;
 
-      /* Telegram stays Telegram blue in both themes */
+      /* ---- Telegram: blue in BOTH themes ----------------------------- */
       --tg: #229ED9;
       --tg-hover: #1C8CC2;
 
-      /* elevation + chrome */
-      --shadow: 0 24px 60px rgba(5, 2, 12, 0.62);
-      --card-shadow: 0 18px 40px rgba(5, 2, 12, 0.55);
-      --card-ring: inset 0 0 0 1px rgba(157, 130, 230, 0.07);
-      --frame-shadow: 0 30px 70px rgba(5, 2, 12, 0.66);
-      --header-bg: rgba(10, 6, 20, 0.82);
-      --panel-bg: rgba(19, 11, 34, 0.98);
-      --toast-bg: rgba(25, 15, 44, 0.96);
+      /* ---- type ------------------------------------------------------ */
+      --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font: var(--font-body);
 
-      /* component surfaces */
-      --input-bg: rgba(157, 130, 230, 0.06);
-      --input-bg-focus: rgba(157, 130, 230, 0.1);
+      /* ---- elevation + chrome ---------------------------------------- */
+      --shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+      --card-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      --card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      --frame-shadow: 0 34px 80px rgba(0, 0, 0, 0.6);
+      --header-bg: rgba(11, 11, 15, 0.82);
+      --panel-bg: rgba(21, 21, 27, 0.98);
+      --toast-bg: rgba(27, 27, 34, 0.96);
+      --tabbar-bg: rgba(15, 15, 20, 0.92);
+
+      /* ---- component surfaces ---------------------------------------- */
+      --input-bg: rgba(255, 255, 255, 0.045);
+      --input-bg-focus: rgba(255, 255, 255, 0.07);
+      --chip-bg: rgba(255, 255, 255, 0.045);
       --chip-active-bg: var(--accent-gradient-ink);
       --chip-active-text: #FFFFFF;
-      --ad-label: #8F86A3;
-      --ad-bg: linear-gradient(150deg, rgba(25, 15, 44, 0.7), rgba(12, 8, 24, 0.85));
-      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(157, 130, 230, 0.16), transparent 46%),
-        linear-gradient(150deg, rgba(27, 17, 48, 0.98), rgba(12, 8, 24, 0.98));
-      --cta-bg: linear-gradient(135deg, #1A1030, #0E0819);
-      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 157, 130, 230), 0.26), transparent 62%),
-        linear-gradient(150deg, #1A1030, #09060F 78%);
-      --poster-grid: rgba(157, 130, 230, 0.05);
-      --media-bg: #0C0817;
-      --hero-fade: linear-gradient(90deg, rgba(10, 6, 20, 0.92), rgba(10, 6, 20, 0.35) 55%, rgba(10, 6, 20, 0.92));
-      --ambient: radial-gradient(ellipse 64% 100% at 100% 0%, rgba(59, 26, 140, 0.25), transparent 62%);
-      --selection: rgba(157, 130, 230, 0.3);
-      --avatar-bg: linear-gradient(140deg, rgba(157, 130, 230, 0.32), rgba(107, 75, 181, 0.1));
-      --footer-quiet: #8A81A0;
-      --ring-track: rgba(157, 130, 230, 0.16);
-      --glow: rgba(107, 75, 181, 0.4);
+      --ad-label: #9A9AA8;
+      --ad-bg: linear-gradient(150deg, rgba(27, 27, 34, 0.7), rgba(16, 16, 22, 0.9));
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(244, 63, 94, 0.16), transparent 46%),
+        linear-gradient(150deg, rgba(30, 20, 26, 0.98), rgba(16, 14, 18, 0.98));
+      --cta-bg: linear-gradient(135deg, #1B1418, #101016);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 244, 63, 94), 0.26), transparent 62%),
+        linear-gradient(150deg, #1B1418, #09090E 78%);
+      --poster-grid: rgba(255, 255, 255, 0.035);
+      --media-bg: #0D0D12;
+      --hero-fade: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
+      --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.12), transparent 62%);
+      --selection: rgba(244, 63, 94, 0.3);
+      --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.32), rgba(225, 29, 72, 0.12));
+      --footer-quiet: #7C7C8A;
+      --ring-track: rgba(244, 63, 94, 0.16);
+      --glow: rgba(244, 63, 94, 0.35);
 
-      --radius: 20px;
-      --radius-lg: 28px;
-      --radius-sm: 14px;
+      /* ---- fixed surfaces: identical in both themes ------------------
+         The player, the media area and the 18+ / Telegram banner stay dark so
+         white text on them keeps its contrast after a theme switch. */
+      --player-bg: #08080C;
+      --banner-bg: radial-gradient(ellipse at 12% 0%, rgba(244, 63, 94, 0.28), transparent 55%),
+        linear-gradient(135deg, #1A1013, #0B0B0F 70%);
+      --banner-line: rgba(255, 255, 255, 0.08);
+      --banner-text: #F4F4F6;
+      --banner-muted: #B4B4C0;
+
+      --radius: 18px;
+      --radius-lg: 26px;
+      --radius-sm: 12px;
       --max: 1440px;
-      --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
     /* ---------------------------------------------------------------
@@ -151,61 +168,64 @@
     [data-theme="light"] {
       color-scheme: light;
 
-      --bg: #FAFAFB;
+      --bg: #F7F7FA;
       --surface: #FFFFFF;
-      --surface-2: #F4F4F6;
+      --surface-2: #F2F2F7;
       --surface-3: #FFFFFF;
-      --text: #18181B;
-      --muted: #52525B;
-      --quiet: #6B6B75;
-      --line: rgba(24, 24, 27, 0.1);
-      --line-soft: rgba(24, 24, 27, 0.07);
-      --line-strong: rgba(24, 24, 27, 0.16);
-      --tint: rgba(24, 24, 27, 0.04);
-      --tint-soft: rgba(24, 24, 27, 0.025);
-      --tint-strong: rgba(24, 24, 27, 0.07);
+      --text: #14141A;
+      --muted: #6B6B7A;
+      --quiet: #686878;
+      --line: #E4E4EC;
+      --line-soft: rgba(20, 20, 26, 0.06);
+      --line-strong: #D5D5E0;
+      --tint: rgba(20, 20, 26, 0.04);
+      --tint-soft: rgba(20, 20, 26, 0.025);
+      --tint-strong: rgba(20, 20, 26, 0.07);
 
-      --accent: #6B4BB5;
-      --accent-hi: #9D82E6;
-      --accent-deep: #3F2A7A;
-      --accent-gradient: linear-gradient(135deg, #3F2A7A 0%, #6B4BB5 100%);
-      --accent-gradient-ink: linear-gradient(135deg, #3F2A7A 0%, #553A9C 100%);
-      --rose: #6B4BB5;
-      --rose-200: #3F2A7A;
-      --rose-400: #6B4BB5;
-      --rose-soft: rgba(107, 75, 181, 0.08);
-      --rose-line: rgba(107, 75, 181, 0.3);
-      --rose-fill: rgba(107, 75, 181, 0.1);
+      /* the accent is identical in both themes */
+      --accent: #F43F5E;
+      --accent-hi: #FB7185;
+      --accent-deep: #E11D48;
+      --accent-gradient: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
+      --accent-gradient-ink: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+      --rose: #D6184A;
+      --rose-200: #BE123C;
+      --rose-400: #E11D48;
+      --rose-soft: rgba(244, 63, 94, 0.1);
+      --rose-line: rgba(244, 63, 94, 0.34);
+      --rose-fill: rgba(244, 63, 94, 0.12);
       --on-rose: #FFFFFF;
 
-      --shadow: 0 20px 50px rgba(24, 24, 27, 0.08);
-      --card-shadow: 0 10px 26px rgba(24, 24, 27, 0.08);
-      --card-ring: inset 0 0 0 1px rgba(24, 24, 27, 0.06);
-      --frame-shadow: 0 22px 50px rgba(24, 24, 27, 0.16);
-      --header-bg: rgba(250, 250, 251, 0.86);
+      --shadow: 0 24px 60px rgba(20, 20, 26, 0.08);
+      --card-shadow: 0 12px 30px rgba(20, 20, 26, 0.07);
+      --card-ring: inset 0 0 0 1px rgba(20, 20, 26, 0.05);
+      --frame-shadow: 0 26px 60px rgba(20, 20, 26, 0.14);
+      --header-bg: rgba(247, 247, 250, 0.86);
       --panel-bg: rgba(255, 255, 255, 0.99);
       --toast-bg: rgba(255, 255, 255, 0.98);
+      --tabbar-bg: rgba(255, 255, 255, 0.94);
 
       --input-bg: #FFFFFF;
       --input-bg-focus: #FFFFFF;
+      --chip-bg: rgba(20, 20, 26, 0.04);
       --chip-active-bg: var(--accent-gradient-ink);
       --chip-active-text: #FFFFFF;
-      --ad-label: #6B6B75;
-      --ad-bg: linear-gradient(150deg, #F7F7F9, #EFEFF2);
-      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(107, 75, 181, 0.1), transparent 46%),
-        linear-gradient(150deg, #FFFFFF, #F8F4FF);
-      --cta-bg: linear-gradient(135deg, #F5F0FF, #FFFFFF);
-      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 107, 75, 181), 0.16), transparent 62%),
-        linear-gradient(150deg, #F6F6F9, #E7E7EE 78%);
-      --poster-grid: rgba(24, 24, 27, 0.05);
-      --media-bg: #EDEDF0;
-      --hero-fade: linear-gradient(90deg, rgba(250, 250, 251, 0.94), rgba(250, 250, 251, 0.42) 55%, rgba(250, 250, 251, 0.94));
-      --ambient: radial-gradient(ellipse 64% 100% at 100% 0%, rgba(107, 75, 181, 0.09), transparent 62%);
-      --selection: rgba(107, 75, 181, 0.18);
-      --avatar-bg: linear-gradient(140deg, rgba(107, 75, 181, 0.14), rgba(107, 75, 181, 0.04));
-      --footer-quiet: #6B6B75;
-      --ring-track: rgba(107, 75, 181, 0.16);
-      --glow: rgba(107, 75, 181, 0.12);
+      --ad-label: #6B6B7A;
+      --ad-bg: linear-gradient(150deg, #F2F2F7, #FFFFFF);
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(244, 63, 94, 0.1), transparent 46%),
+        linear-gradient(150deg, #FFFFFF, #FFF5F6);
+      --cta-bg: linear-gradient(135deg, #FFF5F6, #FFFFFF);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 244, 63, 94), 0.16), transparent 62%),
+        linear-gradient(150deg, #F2F2F7, #E7E7EE 78%);
+      --poster-grid: rgba(20, 20, 26, 0.05);
+      --media-bg: #EDEDF2;
+      --hero-fade: linear-gradient(90deg, rgba(247, 247, 250, 0.94), rgba(247, 247, 250, 0.42) 55%, rgba(247, 247, 250, 0.94));
+      --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.08), transparent 62%);
+      --selection: rgba(244, 63, 94, 0.18);
+      --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.2), rgba(225, 29, 72, 0.06));
+      --footer-quiet: #7A7A88;
+      --ring-track: rgba(244, 63, 94, 0.18);
+      --glow: rgba(244, 63, 94, 0.16);
     }
 
     /* ============ 2. BASE ============ */
@@ -495,7 +515,7 @@
     @media (max-width: 1139px) {
       .primary-nav {
         position: absolute;
-        z-index: 45;
+        z-index: 55; /* above the fixed tab bar, below toasts */
         top: calc(100% + 0.35rem);
         right: 0;
         left: 0;
@@ -540,7 +560,7 @@
       height: 6px;
       border-radius: 50%;
       background: var(--rose);
-      box-shadow: 0 0 12px rgba(157, 130, 230, 0.75);
+      box-shadow: 0 0 12px rgba(251, 113, 133, 0.75);
     }
 
     .section { margin-top: 4rem; }
@@ -662,7 +682,7 @@
       overflow: hidden;
       aspect-ratio: 16 / 9;
       border-radius: 20px;
-      background: #0A0614;
+      background: var(--player-bg);
       box-shadow: var(--frame-shadow);
       isolation: isolate;
     }
@@ -672,7 +692,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #0A0614;
+      background: var(--player-bg);
       object-fit: contain;
     }
 
@@ -701,7 +721,7 @@
       width: 100%;
       height: 100%;
       border: 0;
-      background: #0A0614;
+      background: var(--player-bg);
     }
 
     .empty-library {
@@ -710,7 +730,7 @@
       padding: clamp(1.6rem, 5vw, 2.6rem);
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(160deg, #1A1030, #0C0817);
+      background: linear-gradient(160deg, #1A1013, #0D0B0E);
       text-align: center;
       justify-items: center;
     }
@@ -1469,10 +1489,12 @@
       padding: 2rem 1.5rem;
       border: 1px solid var(--line-soft);
       border-radius: var(--radius-lg);
-      background: var(--cta-bg);
+      background: var(--banner-bg);
+      border-color: var(--banner-line);
+      color: var(--banner-text);
     }
 
-    @media (min-width: 640px) { .telegram-cta { padding: 3rem; } }
+    @media (min-width: 640px) { .telegram-cta { padding: 2.25rem 2.5rem; } }
 
     .telegram-cta::before {
       position: absolute;
@@ -1765,7 +1787,6 @@
     [data-theme="light"] .hero-backdrop { opacity: 0.16; }
     [data-theme="light"] .poster { box-shadow: var(--card-shadow); }
     [data-theme="light"] .site-header { border-bottom-color: var(--line); }
-    [data-theme="light"] .ad-slot { border-color: rgba(24, 24, 27, 0.18); }
 
     /* Smooth cross-fade of every colour while the theme flips (temporary). */
     html.is-theming *,
@@ -1829,7 +1850,7 @@
       background: conic-gradient(
         from 0deg,
         transparent 0 8%,
-        rgba(157, 130, 230, 0.1) 26%,
+        rgba(251, 113, 133, 0.1) 26%,
         var(--accent-hi) 94%,
         transparent 100%
       );
@@ -1895,6 +1916,359 @@
       }
       .poster:hover .poster__media { transform: none; }
     }
+
+    /* ================================================================
+       MOCKUP RESTYLE
+       ----------------------------------------------------------------
+       Everything below styles the components to match the reference
+       design. It only ever reads design tokens, so the light theme gets
+       the identical layout, spacing, sizes and motion — only the colours
+       differ. The player, thumbnails and the 18+ / Telegram banner use
+       tokens that are NOT overridden in the light theme, so they stay
+       dark in both and white text keeps its contrast.
+       ================================================================ */
+
+    /* ---- type ------------------------------------------------------ */
+    h1, h2, h3,
+    .hero-title,
+    .section-head h2,
+    .upnext__head h2,
+    .telegram-cta h2,
+    .empty-library strong,
+    .card__title,
+    .follow h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: -0.032em;
+    }
+
+    .hero-title { font-weight: 800; letter-spacing: -0.045em; line-height: 1.02; }
+    .section-head h2 { font-size: 1.15rem; }
+
+    /* ---- header: pills + blurred bar ------------------------------- */
+    .site-header {
+      border-bottom: 1px solid var(--line-soft);
+      background: var(--header-bg);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+    }
+
+    .nav-shell { min-height: 66px; }
+
+    .primary-nav { gap: 0.25rem; }
+
+    .primary-nav a {
+      padding: 0.52rem 0.95rem;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .primary-nav a:hover { background: var(--tint); color: var(--text); }
+
+    .primary-nav a.is-active {
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.26);
+    }
+
+    .search {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--input-bg);
+    }
+
+    .search:focus-within { border-color: var(--rose-line); background: var(--input-bg-focus); }
+
+    /* ---- hero: player | info | up next ----------------------------- */
+    .hero-stage {
+      padding: 0.5rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--player-bg);
+      box-shadow: var(--frame-shadow);
+    }
+
+    .hero-stage__inner { gap: 0.5rem; }
+
+    .hero-meta {
+      padding: 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+    }
+
+    .hero-upnext {
+      min-width: 0;
+      padding: 1.15rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+    }
+
+    .hero-upnext .upnext { margin-top: 0; }
+
+    /* three columns from 1024px: player | info | up next */
+    @media (min-width: 1024px) {
+      .hero {
+        grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.95fr) minmax(210px, 0.75fr);
+        align-items: stretch;
+        gap: 1.1rem;
+      }
+      .hero-meta, .hero-upnext { align-self: stretch; }
+    }
+
+    @media (min-width: 1280px) {
+      .hero {
+        grid-template-columns: minmax(0, 1.5fr) minmax(290px, 0.95fr) minmax(250px, 0.8fr);
+        gap: 1.35rem;
+      }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-self: flex-start;
+      gap: 0.4rem;
+      margin-bottom: 0.9rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+
+    .eyebrow-dot {
+      width: 5px;
+      height: 5px;
+      background: #FFFFFF;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.4rem;
+    }
+
+    .btn-primary {
+      height: 44px;
+      padding: 0 1.15rem;
+      border-radius: 999px;
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 12px 26px rgba(244, 63, 94, 0.3);
+    }
+
+    .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+    .btn-ghost {
+      height: 44px;
+      padding: 0 1.05rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+
+    .btn-ghost:hover { border-color: var(--rose-line); color: var(--rose-200); background: var(--tint); }
+    .btn-ghost.is-on { border-color: var(--rose-line); color: var(--rose-200); background: var(--rose-soft); }
+
+    .rail-btn__icon { border-radius: 14px; }
+    .rail-btn.is-on .rail-btn__icon { border-color: var(--rose-line); color: var(--rose); }
+
+    /* ---- category chips ------------------------------------------- */
+    .chips { gap: 0.5rem; margin-top: 2rem; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 0.9rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--chip-bg);
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+
+    .chip .chip__icon { width: 15px; height: 15px; opacity: 0.85; }
+    .chip:hover { color: var(--text); border-color: var(--line-strong); background: var(--tint-strong); }
+
+    .chip.is-active {
+      border-color: transparent;
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
+      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.25);
+    }
+
+    .chip.is-active .chip__icon { opacity: 1; }
+
+    /* ---- shorts: horizontal shelf --------------------------------- */
+    .grid-shorts {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.4rem;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .grid-shorts::-webkit-scrollbar { display: none; }
+    .grid-shorts > * { flex: 0 0 clamp(152px, 15vw, 196px); scroll-snap-align: start; }
+
+    @media (max-width: 560px) {
+      .grid-shorts { gap: 0.7rem; }
+      .grid-shorts > * { flex-basis: 40%; }
+    }
+
+    .section-head__actions { display: flex; align-items: center; gap: 0.75rem; }
+
+    .row-arrow {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--text);
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+
+    .row-arrow:hover {
+      border-color: transparent;
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
+    }
+
+    /* ---- recommended: one wide card + the rest -------------------- */
+    @media (min-width: 1024px) {
+      .grid-trending { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; }
+      .grid-trending > :first-child { grid-column: span 2; }
+    }
+
+    .media-card .card__title { font-size: 14px; }
+
+    /* ---- cards / posters ------------------------------------------ */
+    .poster { border-radius: var(--radius); }
+    .poster--vertical { border-radius: var(--radius); }
+
+    .poster__badge { background: var(--accent-gradient-ink); }
+    .poster__tag { background: var(--accent-gradient-ink); }
+
+    .poster__dur {
+      background: rgba(0, 0, 0, 0.68);
+      color: #FFFFFF;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .upnext__item { border-radius: 14px; }
+    .upnext__thumb { border-radius: 12px; }
+
+    /* ---- 18+ / Telegram banner ------------------------------------ */
+    .telegram-cta {
+      border-radius: var(--radius-lg);
+      background: var(--banner-bg);
+      border-color: var(--banner-line);
+    }
+
+    .telegram-cta h2 { color: var(--banner-text); font-size: clamp(1.3rem, 2.6vw, 1.6rem); }
+    .telegram-cta p { color: var(--banner-muted); }
+
+    .telegram-cta__inner { gap: 1.15rem; }
+
+    @media (min-width: 640px) {
+      .telegram-cta__inner { align-items: center; }
+    }
+
+    .banner-age {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1.5px solid rgba(251, 113, 133, 0.6);
+      border-radius: 999px;
+      background: rgba(244, 63, 94, 0.14);
+      color: var(--accent-hi);
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .telegram-cta__copy { min-width: 0; flex: 1 1 auto; }
+
+    .btn-telegram { margin-left: auto; }
+    .banner-arrow { display: none; }
+
+    @media (min-width: 640px) {
+      .banner-arrow { display: block; width: 16px; height: 16px; }
+    }
+
+    /* ---- mobile tab bar ------------------------------------------- */
+    .tabbar {
+      position: fixed;
+      z-index: 45;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      padding: 0.45rem 0.35rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid var(--line);
+      background: var(--tabbar-bg);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+    }
+
+    .tabbar a {
+      display: grid;
+      justify-items: center;
+      gap: 0.2rem;
+      padding: 0.4rem 0.2rem;
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 500;
+      transition: color 160ms ease, background 160ms ease;
+    }
+
+    .tabbar .icon { width: 20px; height: 20px; }
+    .tabbar a:hover { color: var(--text); background: var(--tint); }
+    .tabbar a.is-active { color: var(--rose-200); }
+    .tabbar a.is-active .icon { color: var(--accent); }
+
+    @media (min-width: 1024px) { .tabbar { display: none; } }
+
+    @media (max-width: 1023px) {
+      body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+    }
+
+    /* ---- ads ------------------------------------------------------- */
+    .ad-slot { border-radius: var(--radius); border-color: var(--line); }
+    .sponsored-card { border-radius: var(--radius); }
+    .ad-label { letter-spacing: 0.14em; }
+
+    /* ---- light theme: only tokens change --------------------------- */
+    [data-theme="light"] .btn-primary,
+    [data-theme="light"] .chip.is-active,
+    [data-theme="light"] .primary-nav a.is-active { color: #FFFFFF; }
+
   </style>
 </head>
 <body>
@@ -1946,8 +2320,8 @@
       </a>
 
       <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
-        <a href="#top" data-nav>Home</a>
-        <a href="#trending" data-nav>Trending</a>
+        <a href="#top" data-nav class="is-active" aria-current="page">Home</a>
+        <a href="#trending" data-nav>Recommended</a>
         <a href="#shorts" data-nav>Shorts</a>
         <a href="#feed" data-nav>Feed</a>
         <a href="#follow" data-nav>Follow</a>
@@ -2046,14 +2420,26 @@
         <div class="creator" id="hero-creator" hidden></div>
         <div class="hero-stats" id="hero-stats"></div>
 
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" data-hero-play>
+            <svg class="icon icon--fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z"></path></svg>
+            <span>Watch Now</span>
+          </button>
+          <button class="btn btn-ghost" type="button" data-act="save" aria-pressed="false">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
+            <span>Add to Watchlist</span>
+          </button>
+        </div>
+      </aside>
+
+      <aside class="hero-upnext" aria-labelledby="upnext-title">
         <div class="upnext">
           <div class="upnext__head">
-            <h2>Up next</h2>
-            <button class="link-btn" type="button" data-show-all>View all</button>
+            <h2 id="upnext-title">Up next</h2>
+            <button class="link-btn" type="button" data-show-all>See all →</button>
           </div>
           <div class="upnext__list" id="up-next-list"></div>
         </div>
-
       </aside>
     </section>
 
@@ -2075,11 +2461,16 @@
         <div>
           <div class="section-head__title">
             <svg class="icon" viewBox="0 0 24 24"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
-            <h2 id="shorts-title">Vertical Shorts</h2>
+            <h2 id="shorts-title">Shorts</h2>
           </div>
-          <p id="shorts-note">Bite-sized, beautifully framed</p>
+          <p id="shorts-note">Under a minute, straight to the point</p>
         </div>
-        <button class="link-btn" type="button" data-show-all>View all →</button>
+        <div class="section-head__actions">
+          <button class="row-arrow" type="button" data-scroll-shorts aria-label="Scroll Shorts">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </button>
+          <button class="link-btn" type="button" data-show-all>View all →</button>
+        </div>
       </div>
       <div class="grid-shorts" id="shorts-grid"></div>
     </section>
@@ -2094,9 +2485,9 @@
         <div>
           <div class="section-head__title">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 3c3.6 3 5.6 5.6 5.6 8.6a5.6 5.6 0 0 1-11.2 0C6.4 8.6 8.4 6 12 3Z"></path></svg>
-            <h2 id="trending-title">Trending Now</h2>
+            <h2 id="trending-title">Recommended for you</h2>
           </div>
-          <p id="trending-note">Most watched this week</p>
+          <p id="trending-note">Picked from the whole library</p>
         </div>
         <button class="link-btn" type="button" data-show-all>View all →</button>
       </div>
@@ -2134,13 +2525,15 @@
     <!-- Telegram call to action -->
     <section class="telegram-cta" id="telegram" aria-labelledby="telegram-title">
       <div class="telegram-cta__inner">
-        <div>
-          <h2 id="telegram-title">Never miss a premiere.</h2>
-          <p>Join our Telegram channel for early drops, exclusive previews and curated weekly picks.</p>
+        <span class="banner-age" aria-hidden="true">18+</span>
+        <div class="telegram-cta__copy">
+          <h2 id="telegram-title">18+ only</h2>
+          <p>This website contains content for adults only. By continuing you confirm you are 18 years or older — and join the channel for early drops and weekly picks.</p>
         </div>
         <a class="btn btn-telegram" data-telegram href="#telegram">
           <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
           Join on Telegram
+          <svg class="icon banner-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
         </a>
       </div>
     </section>
@@ -2154,6 +2547,31 @@
       <nav id="social-links" class="social-links" aria-label="Social media links"></nav>
     </section>
   </main>
+
+  <!-- ================= MOBILE TAB BAR =================
+       Shown below 1024px only. Every tab points at a real section of this page. -->
+  <nav class="tabbar" aria-label="Quick navigation">
+    <a href="#top" data-nav data-tab="home">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"></path></svg>
+      <span>Home</span>
+    </a>
+    <a href="#trending" data-nav data-tab="movies">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path></svg>
+      <span>Movies</span>
+    </a>
+    <a href="#shorts" data-nav data-tab="shorts">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
+      <span>Shorts</span>
+    </a>
+    <a href="#feed" data-nav data-tab="library">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h9a2 2 0 0 1 2 2v11h-9a2 2 0 0 1-2-2Z"></path><path d="M15.5 8.5h3a1 1 0 0 1 1 1v9h-4Z"></path></svg>
+      <span>Library</span>
+    </a>
+    <a href="#follow" data-nav data-tab="profile">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
 
   <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
@@ -2290,7 +2708,31 @@
 
     const plural = (count) => (count === 1 ? "" : "s");
 
-    const tone = (index) => ["157, 130, 230", "107, 75, 181", "185, 165, 240", "139, 106, 214", "122, 95, 201"][index % 5];
+    /* Real length in seconds. The API sends `duration_seconds`; rows created
+       before that column existed only have the "m:ss" label, so parse it. */
+    function durationToSeconds(value) {
+      if (typeof value === "number") return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+      const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
+      if (!raw) return 0;
+      if (/^\d+(?:\.\d+)?$/.test(raw)) return Math.round(Number(raw));
+      const parts = raw.split(":").map((part) => part.trim());
+      if (parts.length >= 2 && parts.length <= 3 && parts.every((part) => /^\d+(?:\.\d+)?$/.test(part))) {
+        return Math.round(parts.map(Number).reduce((total, part) => total * 60 + part, 0));
+      }
+      const match = /^(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?$/.exec(raw);
+      if (match && (match[1] || match[2] || match[3])) {
+        return Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0);
+      }
+      return 0;
+    }
+
+    /* THE SHORTS RULE: under 60 seconds is a Short, 60 or more is a regular
+       video. It is computed from the length alone, so it applies to every
+       existing row and to anything new from /admin, a scraped link or the bot.
+       An unknown length is treated as a regular video. */
+    const SHORT_LIMIT_SECONDS = 60;
+
+    const tone = (index) => ["244, 63, 94", "225, 29, 72", "251, 113, 133", "190, 18, 60", "253, 164, 175"][index % 5];
 
     function toast(message) {
       const node = $("#toast");
@@ -2414,6 +2856,7 @@
         creator: "",
         views: row.views ? String(row.views) : "",
         duration: formatDuration(Number(row.durationSec)),
+        durationSeconds: Number(row.durationSec) || 0,
         tag: tags[0] || clean(row.category),
         category: clean(row.category) || tags[0] || "",
         description: clean(row.description),
@@ -2441,7 +2884,8 @@
         title: row.title,
         creator: row.creator,
         views: row.views,
-        duration: row.duration,
+        duration: clean(row.duration) || formatDuration(Number(row.duration_seconds)),
+        durationSeconds: Number(row.duration_seconds) || durationToSeconds(row.duration),
         tag: row.tag,
         category: clean(row.tag),
         thumb: row.thumbnail_url,
@@ -2521,7 +2965,8 @@
         title,
         creator: clean(video.creator),
         views: clean(video.views),
-        duration: clean(video.duration),
+        duration: clean(video.duration) || formatDuration(Number(video.durationSeconds)),
+        durationSeconds: Number(video.durationSeconds) || durationToSeconds(video.duration),
         posted: clean(video.posted || video.ago),
         category: clean(video.category),
         tag: clean(video.tag),
@@ -2557,7 +3002,9 @@
 
     const byId = (id) => VIDEOS.find((video) => video.id === id) || null;
 
-    const isShort = (video) => video.format === "short";
+    const isShort = (video) =>
+      Number(video.durationSeconds) > 0 &&
+      Number(video.durationSeconds) < SHORT_LIMIT_SECONDS;
 
     const categories = [...new Set(VIDEOS.map((video) => video.category).filter(Boolean))];
     const hasShorts = VIDEOS.some(isShort);
@@ -2565,34 +3012,45 @@
     /* ================================================================
        LAYOUT — real videos, distributed once, no invented content
        ================================================================ */
-    const LAYOUT = { featured: VIDEOS[0] || null, upNext: [], shorts: [], trending: [], feed: [], shortsMode: "landscape" };
+    const LAYOUT = { featured: VIDEOS[0] || null, upNext: [], shorts: [], trending: [], feed: [], shortsMode: "vertical" };
 
     (function buildLayout() {
       if (!VIDEOS.length) return;
 
-      // The admin's featured video leads; pinned videos come next.
-      const featured = VIDEOS.find((video) => video.featured) || VIDEOS[0];
+      /* Shorts are their own shelf: the length decides, so they are filtered
+         out of the featured slot, Up next and every regular section instead of
+         being repeated there. */
+      const shorts = VIDEOS.filter(isShort);
+      const regulars = VIDEOS.filter((video) => !isShort(video));
+
+      // The admin's featured video leads, but the wide player needs a full-length
+      // release: a Short only takes the hero when no regular video exists.
+      const featured =
+        regulars.find((video) => video.featured) ||
+        regulars[0] ||
+        shorts.find((video) => video.featured) ||
+        VIDEOS[0];
       LAYOUT.featured = featured;
 
-      const pool = VIDEOS.filter((video) => video !== featured);
+      // A Short that already leads the page is not repeated on the shelf; a
+      // Short the admin featured still leads the shelf.
+      const shelf = shorts.filter((video) => video !== featured);
+      shelf.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
+      LAYOUT.shorts = shelf.slice(0, 12);
+      LAYOUT.shortsMode = "vertical";
+
+      const pool = regulars.filter((video) => video !== featured);
       const pinned = pool.filter((video) => video.pinned);
       const rest = pool.filter((video) => !video.pinned);
       pool.length = 0;
       pool.push(...pinned, ...rest);
 
-      LAYOUT.upNext = pool.slice(0, 3);
+      // Keep the "Up next" rail from swallowing a small catalogue: leave at
+      // least one release for the main grid whenever there is one to spare.
+      const upNextCount = pool.length >= 5 ? 3 : Math.max(0, pool.length - 1);
+      LAYOUT.upNext = pool.slice(0, upNextCount);
 
-      const afterUpNext = pool.slice(3);
-      let remaining = afterUpNext;
-
-      if (afterUpNext.length >= 4) {
-        const verticals = afterUpNext.filter(isShort);
-        LAYOUT.shortsMode = verticals.length ? "vertical" : "landscape";
-        LAYOUT.shorts = (verticals.length ? verticals : afterUpNext).slice(0, 6);
-        const taken = new Set(LAYOUT.shorts.map((video) => video.id));
-        remaining = afterUpNext.filter((video) => !taken.has(video.id));
-      }
-
+      const remaining = pool.slice(upNextCount);
       const trendingCount = remaining.length > 8
         ? 8
         : Math.min(remaining.length, Math.max(4, Math.ceil(remaining.length / 2)));
@@ -2724,7 +3182,7 @@
       // otherwise a sensible default based on the declared format.
       wrap.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
 
-      const tag = video.tag || (variant === "vertical" && isShort(video) ? "Short" : "");
+      const tag = isShort(video) ? "Short" : video.tag || "";
       const shownDuration = video.duration || "";
 
       const button = document.createElement("button");
@@ -3060,17 +3518,20 @@
       const sub = $("#featured-sub");
       const creatorBox = $("#hero-creator");
       const railOpen = $("#rail-open");
+      const actions = $(".hero-actions");
 
       if (!video) {
         title.textContent = "New releases are on the way";
         sub.hidden = true;
         creatorBox.hidden = true;
+        if (actions) actions.hidden = true;
         $("#hero-stats").innerHTML = "";
         if (railOpen) railOpen.setAttribute("aria-disabled", "true");
         return;
       }
 
       title.textContent = video.title;
+      if (actions) actions.hidden = false;
 
       if (video.description) {
         sub.textContent = video.description;
@@ -3161,7 +3622,7 @@
         frame.referrerPolicy = "strict-origin-when-cross-origin";
         frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
         frame.setAttribute("allowfullscreen", "");
-        frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#0A0614";
+        frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#08080C";
         player.replaceChildren(frame);
       } else if (!video.directUrl) {
         player.replaceChildren(makeFallback(video));
@@ -3180,9 +3641,9 @@
 
         player.replaceChildren(media);
         media.src = video.directUrl;
-        media.play().catch(() => {
-          // Native controls remain if autoplay is blocked.
-        });
+        const started = media.play();
+        // Older browsers return undefined here; autoplay may also be blocked.
+        if (started && typeof started.catch === "function") started.catch(() => {});
       }
 
       if (smooth) {
@@ -3296,6 +3757,45 @@
       feed: LAYOUT.feed.length > 0
     };
 
+    /* Chip icons are chosen from the tag itself, so a new category in the
+       database gets a sensible glyph without anyone editing this file. */
+    const CHIP_ICONS = {
+      all: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"></rect><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"></rect><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"></rect><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"></rect>',
+      shorts: '<path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path>',
+      movie: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path>',
+      series: '<rect x="3.5" y="6" width="17" height="12" rx="2"></rect><path d="M8 21h8M12 18v3"></path>',
+      music: '<path d="M9 18V6l9-2v12"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="15.5" cy="16" r="2.5"></circle>',
+      funny: '<circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"></path>',
+      action: '<path d="M13 3 5 13.5h5L9.5 21 19 10h-5.5Z"></path>',
+      lifestyle: '<path d="M12 20s-7-4.3-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.7-7 9-7 9Z"></path>',
+      drama: '<path d="M4 5h16v11H4z"></path><path d="M9 16v3M15 16v3"></path>',
+      vertical: '<rect x="7" y="3" width="10" height="18" rx="2.5"></rect>',
+      homemade: '<path d="M4 11.5 12 5l8 6.5V20H4z"></path>',
+      telegram: '<path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path>'
+    };
+
+    function chipIconKey(label) {
+      const key = String(label || "").toLowerCase();
+      if (key === "all") return "all";
+      if (key.startsWith("short")) return "shorts";
+      if (/movie|film|cinema/.test(key)) return "movie";
+      if (/series|episode|season/.test(key)) return "series";
+      if (/music|audio|song|dj/.test(key)) return "music";
+      if (/comedy|funny|laugh|meme/.test(key)) return "funny";
+      if (/action|fight|sport/.test(key)) return "action";
+      if (/life|vlog|travel|food/.test(key)) return "lifestyle";
+      if (/drama|story/.test(key)) return "drama";
+      if (/vertical|portrait/.test(key)) return "vertical";
+      if (/home|amateur|real/.test(key)) return "homemade";
+      if (/telegram/.test(key)) return "telegram";
+      return "all";
+    }
+
+    function chipIcon(label) {
+      const body = CHIP_ICONS[chipIconKey(label)] || CHIP_ICONS.all;
+      return `<svg class="icon chip__icon" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
+    }
+
     function renderChips() {
       const bar = $("#chips");
       const labels = ["All", ...categories];
@@ -3314,7 +3814,7 @@
         chip.type = "button";
         chip.className = "chip";
         chip.dataset.cat = label;
-        chip.textContent = label;
+        chip.innerHTML = `${chipIcon(label)}<span>${esc(label)}</span>`;
         chip.setAttribute("aria-pressed", String(state.category === label));
         if (state.category === label) chip.classList.add("is-active");
         bar.append(chip);
@@ -3371,17 +3871,15 @@
       const feed = $("#feed");
 
       if (LAYOUT.shorts.length) {
-        $("#shorts-title").textContent = LAYOUT.shortsMode === "vertical" ? "Vertical Shorts" : "Shorts & Clips";
-        $("#shorts-note").textContent =
-          LAYOUT.shortsMode === "vertical" ? "Bite-sized, beautifully framed" : "Quick picks from the library";
-        fillGrid($("#shorts-grid"), LAYOUT.shorts, {
-          variant: LAYOUT.shortsMode === "vertical" ? "vertical" : "landscape"
-        });
+        const count = LAYOUT.shorts.length;
+        $("#shorts-title").textContent = "Shorts";
+        $("#shorts-note").textContent = `${count} clip${plural(count)} under a minute`;
+        fillGrid($("#shorts-grid"), LAYOUT.shorts, { variant: "vertical" });
       }
       shorts.hidden = !sectionAvailability.shorts;
 
       if (LAYOUT.trending.length) {
-        $("#trending-note").textContent = `${LAYOUT.trending.length} release${plural(LAYOUT.trending.length)} in rotation`;
+        $("#trending-note").textContent = `${LAYOUT.trending.length} release${plural(LAYOUT.trending.length)} picked for you`;
         fillGrid($("#trending-grid"), LAYOUT.trending);
       }
       trending.hidden = !sectionAvailability.trending;
@@ -3428,12 +3926,15 @@
         // Private mode: saving is skipped silently.
       }
 
-      const button = $('[data-act="save"]');
-      if (button) {
+      document.querySelectorAll('[data-act="save"]').forEach((button) => {
         button.classList.toggle("is-on", nowSaved);
         button.setAttribute("aria-pressed", String(nowSaved));
-        button.querySelector("span:last-child").textContent = nowSaved ? "Saved" : "Save";
-      }
+        const label = button.querySelector("span:last-child");
+        if (!label) return;
+        label.textContent = button.classList.contains("btn-ghost")
+          ? (nowSaved ? "In your watchlist" : "Add to Watchlist")
+          : (nowSaved ? "Saved" : "Save");
+      });
       toast(nowSaved ? "Saved to this device" : "Removed from saved");
     }
 
@@ -3657,6 +4158,22 @@
           return;
         }
 
+        if (target.closest("[data-scroll-shorts]")) {
+          const row = $("#shorts-grid");
+          if (row) row.scrollBy({ left: Math.round(row.clientWidth * 0.8), behavior: "smooth" });
+          return;
+        }
+
+        if (target.closest("[data-hero-play]")) {
+          const player = $("#featured-player");
+          if (player) {
+            player.scrollIntoView({ behavior: "smooth", block: "center" });
+            const play = player.querySelector("[data-play]");
+            if (play) play.click();
+          }
+          return;
+        }
+
         const action = target.closest("[data-act]");
         if (action && action.dataset.act === "save") {
           event.preventDefault();
@@ -3681,6 +4198,7 @@
         link.addEventListener("click", (event) => {
           const id = link.getAttribute("href").slice(1);
           closeMenu();
+          setActiveNav(id);
           if (id === "top") return;
           event.preventDefault();
           const section = document.getElementById(id);
@@ -3693,6 +4211,46 @@
         });
       });
     }
+
+    /* ---- active nav pill / tab -------------------------------------
+       The header pills and the mobile tab bar both use data-nav, so one
+       observer keeps the two in step with whatever section is on screen. */
+    function setActiveNav(id) {
+      document.querySelectorAll("[data-nav]").forEach((link) => {
+        const on = link.getAttribute("href") === `#${id}`;
+        link.classList.toggle("is-active", on);
+        if (on) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+
+    (function watchActiveNav() {
+      const targets = ["top", "trending", "shorts", "feed", "follow"]
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      if (!("IntersectionObserver" in window) || !targets.length) return;
+
+      const ratios = new Map();
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            ratios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+          });
+          let best = "";
+          let bestRatio = 0;
+          ratios.forEach((ratio, id) => {
+            if (ratio > bestRatio) {
+              bestRatio = ratio;
+              best = id;
+            }
+          });
+          if (best) setActiveNav(best);
+        },
+        { rootMargin: "-90px 0px -55% 0px", threshold: [0.15, 0.4, 0.75] }
+      );
+
+      targets.forEach((node) => observer.observe(node));
+    })();
 
     /* ================================================================
        THEME (dark default, saved choice, device preference on first visit)
@@ -3731,7 +4289,7 @@
       }
 
       const themeColor = document.querySelector('meta[name="theme-color"]');
-      if (themeColor) themeColor.setAttribute("content", next === "light" ? "#FAFAFB" : "#0A0614");
+      if (themeColor) themeColor.setAttribute("content", next === "light" ? "#F7F7FA" : "#0B0B0F");
 
       const label = `Switch to ${next === "light" ? "dark" : "light"} mode`;
       document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
