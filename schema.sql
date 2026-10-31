@@ -2,7 +2,9 @@
 -- BootyMansion admin schema (Cloudflare D1)
 --
 -- The Pages Functions create these tables automatically on the first request,
--- so running this file is optional. It is here for reference and for anyone who
+-- so running this file is optional. Databases created by an older build are
+-- upgraded in place on the first request (missing columns are added, the
+-- Telegram index is created). It is here for reference and for anyone who
 -- prefers `npx wrangler d1 execute <db> --remote --file=./schema.sql`.
 -- ---------------------------------------------------------------------------
 
@@ -19,11 +21,17 @@ CREATE TABLE IF NOT EXISTS videos (
   orientation TEXT NOT NULL DEFAULT 'horizontal',
   featured INTEGER NOT NULL DEFAULT 0,
   pinned INTEGER NOT NULL DEFAULT 0,
+  tg_chat TEXT,          -- channel a video was published from (NULL for manual rows)
+  tg_message_id INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS videos_order_idx
   ON videos (featured DESC, pinned DESC, created_at DESC);
+
+-- One Telegram message may only ever produce one row (webhook retries).
+CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx
+  ON videos (tg_chat, tg_message_id);
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

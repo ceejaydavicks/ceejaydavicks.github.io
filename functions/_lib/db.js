@@ -18,6 +18,8 @@ const SCHEMA = [
     orientation TEXT NOT NULL DEFAULT 'horizontal',
     featured INTEGER NOT NULL DEFAULT 0,
     pinned INTEGER NOT NULL DEFAULT 0,
+    tg_chat TEXT,
+    tg_message_id INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS videos_order_idx
@@ -44,6 +46,43 @@ const DEFAULT_SETTINGS = {
   ad_smartlink_code: ""
 };
 
+/* Columns added after the first release. Databases created by an older build
+   get them through this list; fresh databases already have them in SCHEMA.
+   `ALTER TABLE ... ADD COLUMN` cannot be made conditional in SQLite, so each one
+   is attempted and a "duplicate column" error is ignored. */
+const LATE_COLUMNS = [
+  ["tg_chat", "ALTER TABLE videos ADD COLUMN tg_chat TEXT"],
+  ["tg_message_id", "ALTER TABLE videos ADD COLUMN tg_message_id INTEGER"]
+];
+
+/* One Telegram message may only ever produce one row: webhook updates are
+   retried by Telegram, and a retried update must not duplicate a video. */
+const LATE_INDEXES = [
+  "CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx ON videos (tg_chat, tg_message_id)"
+];
+
+async function migrate(env) {
+  const { results } = await env.DB.prepare("PRAGMA table_info(videos)").all();
+  const existing = new Set((results || []).map((row) => row.name));
+  for (const [name, sql] of LATE_COLUMNS) {
+    if (existing.has(name)) continue;
+    try {
+      await env.DB.prepare(sql).run();
+    } catch (error) {
+      if (!/duplicate column/i.test(String(error && error.message))) throw error;
+    }
+  }
+  for (const sql of LATE_INDEXES) {
+    try {
+      await env.DB.prepare(sql).run();
+    } catch (error) {
+      /* An index that already exists, or duplicate rows from before the index
+         existed, must not take the whole site down. */
+      if (!/already exists|UNIQUE constraint/i.test(String(error && error.message))) throw error;
+    }
+  }
+}
+
 let schemaPromise = null;
 
 export function ensureSchema(env) {
@@ -51,6 +90,7 @@ export function ensureSchema(env) {
   if (!schemaPromise) {
     schemaPromise = (async () => {
       await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
+      await migrate(env);
       const seed = env.DB.prepare(
         "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)"
       );
@@ -103,8 +143,9 @@ export async function getVideo(env, id) {
 export async function insertVideo(env, values) {
   const result = await env.DB.prepare(
     `INSERT INTO videos
-       (title, creator, thumbnail_url, video_url, embed_url, duration, "views", tag, orientation, featured, pinned)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (title, creator, thumbnail_url, video_url, embed_url, duration, "views", tag,
+        orientation, featured, pinned, tg_chat, tg_message_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       values.title,
@@ -117,7 +158,9 @@ export async function insertVideo(env, values) {
       values.tag,
       values.orientation,
       values.featured,
-      values.pinned
+      values.pinned,
+      values.tg_chat === undefined ? null : values.tg_chat,
+      values.tg_message_id === undefined ? null : values.tg_message_id
     )
     .run();
 
@@ -159,6 +202,23 @@ export async function updateVideo(env, id, values) {
 
 export async function deleteVideo(env, id) {
   await env.DB.prepare("DELETE FROM videos WHERE id = ?").bind(id).run();
+}
+
+/* ---- telegram source tracking ------------------------------------------ */
+
+export async function findVideoByTelegram(env, chat, messageId) {
+  return env.DB
+    .prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE tg_chat = ? AND tg_message_id = ?`)
+    .bind(String(chat), Number(messageId))
+    .first();
+}
+
+/* Where a row came from, so /delete can also remove the channel message. */
+export async function getVideoSourceRefs(env, id) {
+  return env.DB
+    .prepare("SELECT tg_chat, tg_message_id FROM videos WHERE id = ?")
+    .bind(id)
+    .first();
 }
 
 export async function setVideoFlags(env, id, { featured, pinned }) {

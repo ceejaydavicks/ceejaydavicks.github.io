@@ -295,6 +295,20 @@
     .thumb-row { display: flex; gap: 0.5rem; align-items: center; }
     .thumb-row input { flex: 1 1 auto; }
 
+    .upload-bar {
+      width: 100%;
+      height: 6px;
+      margin-top: 0.45rem;
+      border: 0;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      appearance: none;
+    }
+    .upload-bar::-webkit-progress-bar { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+    .upload-bar::-webkit-progress-value { background: #FDA4AF; border-radius: 999px; }
+    .upload-bar::-moz-progress-bar { background: #FDA4AF; border-radius: 999px; }
+
     .dialog-foot {
       display: flex;
       flex-wrap: wrap;
@@ -487,12 +501,18 @@
           <label for="f-video">Video URL (.mp4 / Videy link)</label>
           <input id="f-video" type="text" inputmode="url" placeholder="https://… or /api/media/…">
           <p class="hint">Use this for playable files (Telegram uploads look like <code>/api/media/videos/…mp4</code>). Leave empty if you are embedding.</p>
+          <div class="thumb-row" style="margin-top:0.5rem">
+            <button class="btn btn--ghost btn--small" type="button" id="video-button">Upload video</button>
+            <span class="hint" id="video-hint">MP4, WebM or MOV, up to 95 MB. Bigger files: send them to your Telegram bot.</span>
+          </div>
+          <progress class="upload-bar" id="video-progress" max="100" value="0" hidden></progress>
+          <input id="f-video-file" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" hidden>
         </div>
 
         <div class="field">
           <label for="f-embed">Embed link</label>
           <input id="f-embed" type="url" placeholder="https://www.youtube.com/embed/…">
-          <p class="hint">Shown in an iframe player. Use either a video URL or an embed link.</p>
+          <p class="hint">Shown in an iframe player. A Telegram post link (<code>t.me/channel/123</code>) is turned into an embed automatically. Use either a video URL or an embed link.</p>
         </div>
 
         <div class="grid-2">
@@ -755,6 +775,9 @@
       $("#f-pinned").checked = Boolean(video && video.pinned);
       $("#editor-delete").hidden = !video;
       $("#upload-hint").textContent = "JPG, PNG, WebP or GIF, up to 5 MB. Stored in R2.";
+      $("#video-hint").textContent = "MP4, WebM or MOV, up to 95 MB. Bigger files: send them to your Telegram bot.";
+      $("#video-progress").hidden = true;
+      $("#video-progress").value = 0;
 
       editor.showModal();
       $("#f-title").focus();
@@ -774,6 +797,180 @@
         featured: $("#f-featured").checked,
         pinned: $("#f-pinned").checked
       };
+    }
+
+    const MAX_VIDEO_BYTES = 95 * 1024 * 1024;
+    const VIDEO_MIME = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
+
+    /* A Telegram post link is a valid embed URL once it carries ?embed=1.
+       Accepts t.me/<name>/<id>, t.me/s/<name>/<id>, telegram.me/… and @name/123. */
+    function toEmbedUrl(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      const match = raw.match(
+        /^(?:https?:\/\/)?(?:www\.)?(?:t|telegram)\.me\/(?:s\/)?([A-Za-z0-9_]{4,})\/(\d+)/i
+      );
+      if (!match) return raw;
+      return `https://t.me/${match[1]}/${match[2]}?embed=1`;
+    }
+
+    /* Reads metadata from the local file before it is uploaded: duration,
+       orientation, and a poster frame grabbed at ~1s so the card is never blank. */
+    function inspectVideo(file) {
+      return new Promise((resolve) => {
+        const url = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        let settled = false;
+
+        const finish = (result) => {
+          if (settled) return;
+          settled = true;
+          URL.revokeObjectURL(url);
+          resolve(result);
+        };
+
+        const fallback = window.setTimeout(() => finish(null), 8000);
+
+        video.preload = "metadata";
+        video.muted = true;
+        video.playsInline = true;
+
+        video.addEventListener("error", () => {
+          window.clearTimeout(fallback);
+          finish(null);
+        });
+
+        video.addEventListener("loadedmetadata", () => {
+          const duration = Number.isFinite(video.duration) ? video.duration : 0;
+          const orientation = video.videoHeight > video.videoWidth ? "vertical" : "horizontal";
+          const mmss = duration
+            ? `${Math.floor(duration / 60)}:${String(Math.round(duration % 60)).padStart(2, "0")}`
+            : "";
+
+          video.addEventListener(
+            "seeked",
+            () => {
+              try {
+                const scale = Math.min(1, 720 / Math.max(video.videoWidth || 720, 1));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.round((video.videoWidth || 720) * scale);
+                canvas.height = Math.round((video.videoHeight || 1280) * scale);
+                canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(
+                  (blob) => {
+                    window.clearTimeout(fallback);
+                    finish(blob ? { duration: mmss, orientation, poster: blob } : { duration: mmss, orientation });
+                  },
+                  "image/jpeg",
+                  0.82
+                );
+              } catch (error) {
+                window.clearTimeout(fallback);
+                finish({ duration: mmss, orientation });
+              }
+            },
+            { once: true }
+          );
+
+          try {
+            video.currentTime = Math.min(1, Math.max(0.1, duration / 4));
+          } catch (error) {
+            window.clearTimeout(fallback);
+            finish({ duration: mmss, orientation });
+          }
+        });
+
+        video.src = url;
+      });
+    }
+
+    /* Raw-body upload (no multipart) so a 90 MB video streams straight to R2
+       and never has to be buffered in the browser or the Function. */
+    function uploadVideoFile(file) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload");
+        xhr.setRequestHeader("x-requested-with", "admin");
+        xhr.setRequestHeader("content-type", file.type || "video/mp4");
+        xhr.setRequestHeader("x-filename", file.name || "");
+        xhr.setRequestHeader("x-file-size", String(file.size));
+
+        xhr.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.round((event.loaded / event.total) * 100);
+          const bar = $("#video-progress");
+          bar.hidden = false;
+          bar.value = percent;
+          $("#video-hint").textContent = `Uploading ${percent}% — ${(event.loaded / 1048576).toFixed(1)} MB of ${(
+            event.total / 1048576
+          ).toFixed(1)} MB`;
+        });
+
+        xhr.addEventListener("load", () => {
+          let data = {};
+          try {
+            data = JSON.parse(xhr.responseText);
+          } catch (error) {
+            data = {};
+          }
+          if (xhr.status >= 200 && xhr.status < 300 && data.url) return resolve(data);
+          if (xhr.status === 401) return reject(new Error("Unauthorized"));
+          reject(new Error(data.error || `Upload failed (${xhr.status})`));
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Upload failed — check your connection.")));
+        xhr.send(file);
+      });
+    }
+
+    async function handleVideoFile(file) {
+      const bar = $("#video-progress");
+      const hint = $("#video-hint");
+
+      const typeOk = VIDEO_MIME.includes(file.type) || /\.(mp4|webm|mov|m4v)$/i.test(file.name || "");
+      if (!typeOk) {
+        toast("Use an MP4, WebM or MOV video", true);
+        return;
+      }
+      if (file.size > MAX_VIDEO_BYTES) {
+        toast("That video is over 95 MB — send it to your Telegram bot instead", true);
+        return;
+      }
+
+      bar.hidden = false;
+      bar.value = 0;
+      hint.textContent = "Uploading…";
+
+      try {
+        const data = await uploadVideoFile(file);
+        $("#f-video").value = data.url;
+        $("#f-embed").value = "";
+        hint.textContent = `Uploaded to R2 (${(data.size / 1048576).toFixed(1)} MB).`;
+
+        const info = await inspectVideo(file);
+        if (info) {
+          if (info.duration && !$("#f-duration").value.trim()) $("#f-duration").value = info.duration;
+          if (info.orientation) $("#f-orientation").value = info.orientation;
+          if (info.poster) {
+            const form = new FormData();
+            form.append("file", new File([info.poster], "poster.jpg", { type: "image/jpeg" }));
+            try {
+              const thumb = await api("/api/upload", { method: "POST", form });
+              $("#f-thumb").value = thumb.url;
+              hint.textContent += " Poster frame saved as the thumbnail.";
+            } catch (error) {
+              /* A missing poster is not a failed upload. */
+            }
+          }
+        }
+
+        toast("Video uploaded");
+        bar.hidden = true;
+      } catch (error) {
+        hint.textContent = "Upload failed.";
+        bar.hidden = true;
+        if (error.message !== "Unauthorized") toast(error.message, true);
+      }
     }
 
     async function uploadThumbnail(file) {
@@ -885,6 +1082,11 @@
       }
     });
 
+    $("#f-embed").addEventListener("blur", () => {
+      const normalized = toEmbedUrl($("#f-embed").value);
+      if (normalized && normalized !== $("#f-embed").value) $("#f-embed").value = normalized;
+    });
+
     $("#editor-close").addEventListener("click", () => editor.close());
     $("#editor-cancel").addEventListener("click", () => editor.close());
 
@@ -892,6 +1094,13 @@
     $("#f-thumb-file").addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0];
       if (file) uploadThumbnail(file);
+      event.target.value = "";
+    });
+
+    $("#video-button").addEventListener("click", () => $("#f-video-file").click());
+    $("#f-video-file").addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) handleVideoFile(file);
       event.target.value = "";
     });
 

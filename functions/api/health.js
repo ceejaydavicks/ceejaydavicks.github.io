@@ -28,7 +28,8 @@ export async function onRequestGet({ env }) {
     telegram:
       Boolean(env.TELEGRAM_BOT_TOKEN) &&
       Boolean(env.TELEGRAM_WEBHOOK_SECRET) &&
-      Boolean(env.ADMIN_TELEGRAM_IDS)
+      Boolean(env.ADMIN_TELEGRAM_IDS),
+    telegramChannel: Boolean(env.TELEGRAM_CHANNEL && String(env.TELEGRAM_CHANNEL).trim())
   };
 
   // Which deployment answered? Cloudflare sets these on every Pages build, so
@@ -44,6 +45,7 @@ export async function onRequestGet({ env }) {
       url: env.CF_PAGES_URL ? String(env.CF_PAGES_URL) : null
     },
     checks,
+    limits: { imageUploadMb: 5, videoUploadMb: 95, telegramDirectMb: 20 },
     database: { reachable: false, schemaReady: false, videoCount: null },
     notes: [],
     error: null,
@@ -64,6 +66,11 @@ export async function onRequestGet({ env }) {
   if (!checks.telegram) {
     report.notes.push(
       "Telegram bot is not fully configured (needs ADMIN_TELEGRAM_IDS, TELEGRAM_BOT_TOKEN and TELEGRAM_WEBHOOK_SECRET). The admin panel does not depend on it."
+    );
+  }
+  if (checks.telegram && !checks.telegramChannel) {
+    report.notes.push(
+      "TELEGRAM_CHANNEL is not set: the bot can only publish videos up to 20 MB (downloaded into R2). Point it at a public @channel and every size works."
     );
   }
 

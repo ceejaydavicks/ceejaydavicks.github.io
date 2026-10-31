@@ -44,11 +44,23 @@ Functions:
 | `PUT` / `PATCH` / `DELETE /api/videos/:id` | admin |
 | `GET /api/settings` | public — site name, Telegram link, ad slots |
 | `PUT /api/settings` | admin |
-| `POST /api/upload` | admin — thumbnail → R2 |
-| `GET /api/media/<key>` | public — streams R2 files |
+| `POST /api/upload` | admin — thumbnail (multipart, ≤ 5 MB) or video (raw body, ≤ 95 MB) → R2 |
+| `GET /api/media/<folder>/<file>` | public — streams R2 files, `Accept-Ranges` + `206 Partial Content` so `<video>` can seek |
 | `POST /api/login`, `POST /api/logout`, `GET /api/session` | password / session |
 | `GET /api/health` | public — deployment diagnostics: which binding or secret is missing (booleans only, never a value) |
 | `POST /api/telegram` | Telegram webhook (secret + admin allowlist) |
+
+### How a video gets in
+
+| Route | Size | Where it lives |
+| --- | --- | --- |
+| **/admin → Upload video** | ≤ 95 MB | R2, played from your own domain (`/api/media/videos/…`) |
+| **Telegram: post in the channel** | any (2 GB / 4 GB Premium) | Telegram, embedded with `t.me/…?embed=1` |
+| **Telegram: send the video to the bot** | any | copied into the channel server-side, then embedded |
+| **/admin → Video URL / Embed link** | — | wherever the link points |
+
+Cloudflare rejects a request body over 100 MB, which is why the panel stops at
+95 MB and the Telegram channel exists for everything larger.
 
 The public page loads `/api/videos` and `/api/settings` on boot. If the API is
 **unreachable** (static hosting, `server.py`) it falls back to `videos.js`; if the
@@ -233,7 +245,7 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `functions/_lib/auth.js` | Password check, signed session cookie (`HttpOnly`, `Secure`, `SameSite`, 12 h), D1 login throttle (5 failures → 15 min block). |
 | `functions/_lib/db.js` | D1 access; creates the tables and default settings on first use. |
 | `functions/_lib/validate.js` | Input sanitising — strips `<`, `>` and control characters, requires `http(s)` URLs. |
-| `functions/_lib/telegram.js` | The bot: link / photo / video uploads, `/list`, `/delete`, `/feature`. |
+| `functions/_lib/telegram.js` | The bot. Videos arrive two ways: a **channel post** in `TELEGRAM_CHANNEL` (any size, published as a `t.me/<channel>/<id>?embed=1` player) or a DM, which is `copyMessage`d into that channel first. Without a channel it falls back to downloading ≤ 20 MB into R2. Also `/list`, `/delete` (removes the channel post too), `/feature`, `/id`. |
 | `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |
 | `functions/_middleware.js` | Security headers on every response. |
 | `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
