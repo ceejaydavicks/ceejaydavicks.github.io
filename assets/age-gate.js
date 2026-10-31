@@ -66,45 +66,46 @@
   var STYLES = [
     ".age-gate{position:fixed;z-index:9999;inset:0;display:flex;align-items:center;justify-content:center;",
     "padding:clamp(1rem,4vw,2.5rem);overflow-y:auto;overscroll-behavior:contain;",
-    "background:radial-gradient(ellipse at 50% -10%,rgba(253,164,175,.14),transparent 55%),#0B0B0F;",
-    "color:#F4F1F8;font-family:\"Inter\",ui-sans-serif,system-ui,-apple-system,\"Segoe UI\",sans-serif;",
+    "background:radial-gradient(ellipse 64% 60% at 100% 0%,rgba(59,26,140,.25),transparent 62%),#0A0614;",
+    "color:#D9D4E3;font-family:\"Inter\",ui-sans-serif,system-ui,-apple-system,\"Segoe UI\",sans-serif;",
     "-webkit-overflow-scrolling:touch}",
 
     ".age-gate__panel{width:min(440px,100%);margin:auto;padding:clamp(1.6rem,5vw,2.4rem);",
-    "border:1px solid rgba(253,164,175,.22);border-radius:24px;text-align:center;",
-    "background:linear-gradient(160deg,rgba(24,20,28,.98),rgba(12,11,16,.98));",
-    "box-shadow:0 30px 80px rgba(0,0,0,.55)}",
+    "border:1px solid #2A1B45;border-radius:24px;text-align:center;",
+    "background:linear-gradient(160deg,rgba(19,11,34,.98),rgba(10,6,20,.98));",
+    "box-shadow:0 30px 80px rgba(5,2,12,.62)}",
 
     ".age-gate__logo{display:block;width:min(240px,72%);aspect-ratio:707/108;margin:0 auto 1.3rem;",
     "background:url(\"./assets/logo-lockup@3x.png\") center/contain no-repeat}",
 
-    ".age-gate__badge{display:inline-block;padding:.22rem .7rem;border:1px solid rgba(253,164,175,.34);",
-    "border-radius:999px;color:#FECDD3;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}",
+    ".age-gate__badge{display:inline-block;padding:.22rem .7rem;border:1px solid rgba(157,130,230,.34);",
+    "border-radius:999px;color:#C3AEF4;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}",
 
     ".age-gate__title{margin:1rem 0 .6rem;font-size:clamp(1.25rem,4.6vw,1.55rem);font-weight:600;",
     "letter-spacing:-.02em;line-height:1.25}",
 
-    ".age-gate__copy{margin:0;color:#C9C5D2;font-size:14px;line-height:1.6}",
+    ".age-gate__copy{margin:0;color:#BEB8CC;font-size:14px;line-height:1.6}",
 
     ".age-gate__actions{display:grid;gap:.6rem;margin-top:1.5rem}",
 
     ".age-gate__enter{display:block;width:100%;padding:.9rem 1.1rem;border:1px solid transparent;border-radius:12px;",
-    "background:#FDA4AF;color:#1A0A10;font:inherit;font-size:14px;font-weight:600;cursor:pointer;",
+    "background:linear-gradient(135deg,#3F2A7A 0%,#7B5FC7 100%);color:#FFFFFF;text-shadow:0 1px 2px rgba(10,6,20,.4);",
+    "font:inherit;font-size:14px;font-weight:600;cursor:pointer;",
     "transition:background .16s ease,transform .16s ease}",
 
-    ".age-gate__enter:hover{background:#FECDD3}",
+    ".age-gate__enter:hover{background:linear-gradient(135deg,#4A3390 0%,#8A70D2 100%)}",
     ".age-gate__enter:active{transform:scale(.99)}",
 
-    ".age-gate__exit{display:block;width:100%;padding:.85rem 1.1rem;border:1px solid rgba(228,228,231,.22);",
-    "border-radius:12px;color:#E4E4E7;font-size:13.5px;font-weight:500;text-decoration:none;",
+    ".age-gate__exit{display:block;width:100%;padding:.85rem 1.1rem;border:1px solid #3A2760;",
+    "border-radius:12px;color:#D9D4E3;font-size:13.5px;font-weight:500;text-decoration:none;",
     "transition:border-color .16s ease,color .16s ease}",
 
-    ".age-gate__exit:hover{border-color:rgba(253,164,175,.5);color:#FECDD3}",
+    ".age-gate__exit:hover{border-color:rgba(157,130,230,.6);color:#C3AEF4}",
 
-    ".age-gate__note{margin:1.2rem 0 0;color:#8B8794;font-size:11.5px;line-height:1.55}",
-    ".age-gate__note a{color:#FDA4AF;text-decoration:underline;text-underline-offset:3px}",
+    ".age-gate__note{margin:1.2rem 0 0;color:#857C9B;font-size:11.5px;line-height:1.55}",
+    ".age-gate__note a{color:#9D82E6;text-decoration:underline;text-underline-offset:3px}",
 
-    ".age-gate :focus-visible{outline:2px solid #FDA4AF;outline-offset:3px}",
+    ".age-gate :focus-visible{outline:2px solid #9D82E6;outline-offset:3px}",
 
     "@media (min-width:520px){.age-gate__actions{grid-template-columns:1fr 1fr}}",
 
