@@ -1,40 +1,35 @@
 # ---------------------------------------------------------------------------
 # Cloudflare Pages configuration for the admin (Functions + D1 + R2).
 #
-# IMPORTANT
-# ---------
-# If Cloudflare builds this repo from GitHub (the normal setup), create the
-# bindings and secrets in the dashboard instead:
+# HOW THIS PROJECT IS CONFIGURED  (read this before editing)
+# ----------------------------------------------------------
+# This repo is built by Cloudflare Pages from GitHub and its D1 / R2 bindings
+# are created in the dashboard (Pages project → Settings → Bindings), exactly as
+# SETUP.md walks through.
 #
-#   Pages project → Settings → Bindings          → D1 "DB", R2 "MEDIA"
-#   Pages project → Settings → Variables and Secrets → the secrets below
+# `pages_build_output_dir` is therefore DELIBERATELY NOT SET. Per Cloudflare's
+# docs, adding that key makes this file the "source of truth" for the project
+# and the dashboard bindings stop being applied — the Functions then run without
+# `env.DB` / `env.MEDIA`, and `/admin` sign-in answers 500. With the key absent,
+# Pages ignores this file (it logs a harmless "skipping file" warning) and the
+# dashboard bindings apply.
 #
-# The commented blocks at the bottom are only used when you run the project
-# locally with `npx wrangler pages dev`, or deploy with `npx wrangler pages deploy`.
+# Secrets (ADMIN_PASSWORD, SESSION_SECRET, bot token…) always live in the
+# dashboard, never in this file.
 #
-# Secrets / variables the code expects:
-#   DB                       D1 binding                 (required)
-#   MEDIA                    R2 bucket binding          (required)
-#   ADMIN_PASSWORD           password for /admin        (required)
-#   SESSION_SECRET           random 32+ characters      (recommended)
-#   ADMIN_TELEGRAM_IDS       comma-separated Telegram user IDs   (bot)
-#   TELEGRAM_BOT_TOKEN       token from @BotFather               (bot)
-#   TELEGRAM_WEBHOOK_SECRET  random string in the webhook URL    (bot)
+# OPTIONAL — configuration-as-code
+# --------------------------------
+# If you would rather version your bindings, then uncomment BOTH the
+# `pages_build_output_dir` line AND the binding blocks below with your real ids
+# (`npx wrangler d1 list` / `npx wrangler r2 bucket list`). Uncommenting the key
+# without the bindings breaks the deployment. Never ship one without the other.
 # ---------------------------------------------------------------------------
 
 name = "ceejaydavicks-github-io"
 compatibility_date = "2025-09-01"
 
-# The static site lives in the repository root, so this is its output directory.
-# It matches the Pages dashboard setting ("Build output directory: /") and lets
-# `npx wrangler pages dev` / `npx wrangler pages deploy` run without extra flags.
-pages_build_output_dir = "."
+# pages_build_output_dir = "."
 
-# ---------------------------------------------------------------------------
-# Local / CLI bindings — uncomment and fill in.
-# `npx wrangler d1 list` prints the database id of an existing database.
-# ---------------------------------------------------------------------------
-#
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "bootymansion"
@@ -43,9 +38,14 @@ pages_build_output_dir = "."
 # [[r2_buckets]]
 # binding = "MEDIA"
 # bucket_name = "bootymansion-media"
-#
-# Plain-text variables can live here; secrets belong in .dev.vars (local) or the
-# dashboard (production).
+
+# Plain-text variables can live here; secrets belong in .dev.vars (local) or in
+# the dashboard (production).
 #
 # [vars]
 # ADMIN_TELEGRAM_IDS = "123456789"
+
+# Local development only:
+#   npx wrangler pages dev . --d1 DB --r2 MEDIA
+# (the leading `.` is the static output directory; it is optional when
+# `pages_build_output_dir` above is enabled).

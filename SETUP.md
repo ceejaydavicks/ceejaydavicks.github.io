@@ -43,7 +43,15 @@ subscriptions or checkout anywhere in this project.**
 4. Tap **Add → D1 database**.
    - **Variable name:** `DB`  ← exactly this, capital letters
    - **D1 database:** `bootymansion`
-5. Add it for **Production** (and **Preview** if the option is shown).
+5. Add it for **Production** — and repeat it for **Preview** if your project
+   offers that tab (branch/preview deployments read their own bindings).
+
+> **Do not put `pages_build_output_dir` in `wrangler.toml`.** Cloudflare's docs
+> are explicit: once that key exists, the file becomes the *source of truth* for
+> the project and the bindings you add here are no longer applied — the Functions
+> then start with no `env.DB`/`env.MEDIA` and `/admin` login answers
+> **500**. This repo deliberately leaves the key out so the dashboard stays in
+> charge (see the comments at the top of `wrangler.toml`).
 
 You do **not** need to run any SQL. The Functions create the `videos`,
 `settings` and `login_attempts` tables automatically on the first request.
@@ -59,6 +67,7 @@ You do **not** need to run any SQL. The Functions create the `videos`,
 3. Back to **Pages project → Settings → Bindings → Add → R2 bucket**.
    - **Variable name:** `MEDIA`
    - **R2 bucket:** `bootymansion-media`
+   - Add it for **Production** (and **Preview**, same as the D1 binding).
 
 ---
 
@@ -91,6 +100,22 @@ Settings changes apply to the **next** deployment:
 1. **Deployments** tab → the newest deployment → **⋯ → Retry deployment**
    (or push any tiny commit).
 2. Wait for **Success**.
+3. Open `https://YOUR-SITE.pages.dev/api/health` — this page exists for exactly
+   this moment. It reports, without revealing any secret:
+
+   ```json
+   {
+     "ok": true,
+     "checks": { "adminPassword": true, "sessionSecret": true,
+                 "dbBinding": true, "mediaBinding": true, "telegram": false },
+     "database": { "reachable": true, "schemaReady": true, "videoCount": 0 },
+     "error": null, "hint": null
+   }
+   ```
+
+   `"ok": true` means sign-in will work. If something is `false`, `error` and
+   `hint` name the missing binding/secret and where to add it. This is the first
+   place to look for **any** admin problem.
 
 ---
 
@@ -98,7 +123,8 @@ Settings changes apply to the **next** deployment:
 
 1. Open `https://YOUR-SITE.pages.dev/admin` (or `https://yourdomain.com/admin`).
    There is no link to it anywhere on the site, and it asks search engines not to
-   index it.
+   index it. If sign-in ever fails, open `/api/health` first — the login card also
+   links to it.
 2. Type your `ADMIN_PASSWORD` → **Sign in**.
 3. You get a 12-hour session in an `HttpOnly`, `Secure`, `SameSite` cookie.
 
@@ -207,11 +233,13 @@ Check it any time with `https://api.telegram.org/botTOKEN/getWebhookInfo`.
 You need Node.js once:
 
 ```sh
-npx wrangler pages dev --d1 DB --r2 MEDIA
+npx wrangler pages dev . --d1 DB --r2 MEDIA
 ```
 
-(The static output directory comes from `pages_build_output_dir` in
-`wrangler.toml`, so no directory argument is needed.)
+The leading `.` is the static output directory. Wrangler may print *"A Wrangler
+configuration file was found but it does not appear to be valid… skipping"* —
+that is expected and harmless: the file is kept out of Pages' hands on purpose so
+the dashboard bindings stay in charge (Part 2).
 
 Put the secrets in a `.dev.vars` file in the project root (it is already in
 `.gitignore`, so it is never committed):
@@ -239,6 +267,8 @@ answers with a note explaining that.
 | Telegram says `{"ok":false,...}` | The webhook URL was truncated, or the token/secret is wrong. Call `setWebhook` again with exactly the values from Part 7. |
 | Bot replies `⚠️ ...` | The message inside the warning is the real error (bad URL, missing title, oversized file). |
 | Login says "Too many attempts" | Five wrong passwords in 15 minutes. Wait 15 minutes. |
+| Login says **"Request failed (500)"** | A Function threw before it could answer — almost always a binding the deployment cannot see. Open `/api/health`: it names the missing piece. Do **not** add `pages_build_output_dir` to `wrangler.toml` to "fix" it; that is what makes the dashboard bindings stop applying. |
+| The binding is listed in the dashboard but `/api/health` says `"dbBinding": false` | `wrangler.toml` contains `pages_build_output_dir` (the file then overrides the dashboard), or the binding was added only to the other environment, or the deployment predates the binding. Remove the key / add the binding for this environment / retry the deployment. |
 | Build fails with `Invalid Pages function route parameter` | A Functions filename used Next.js rest syntax. Cloudflare Pages route parameters must be a **single path segment** with a name made of letters, digits or `_` — e.g. `[id].js`, `[folder]/[file].js`, `[secret].js`. `[...key].js` is rejected; the only catch-all Pages accepts is the double-bracket `[[path]].js`. |
 
 ---

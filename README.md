@@ -47,6 +47,7 @@ Functions:
 | `POST /api/upload` | admin — thumbnail → R2 |
 | `GET /api/media/<key>` | public — streams R2 files |
 | `POST /api/login`, `POST /api/logout`, `GET /api/session` | password / session |
+| `GET /api/health` | public — deployment diagnostics: which binding or secret is missing (booleans only, never a value) |
 | `POST /api/telegram` | Telegram webhook (secret + admin allowlist) |
 
 The public page loads `/api/videos` and `/api/settings` on boot. If the API is
@@ -236,7 +237,7 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |
 | `functions/_middleware.js` | Security headers on every response. |
 | `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
-| `wrangler.toml` | Binding names and local-development notes. |
+| `wrangler.toml` | Notes for local development. It is deliberately **not** a Pages config file: setting `pages_build_output_dir` would make it the source of truth and stop the dashboard's D1/R2 bindings from being applied (the header comment explains both modes). |
 | `SETUP.md` | Step-by-step setup: D1, R2, secrets, @BotFather, webhook. |
 
 Nothing in the front end ever receives a secret: the browser only talks to
