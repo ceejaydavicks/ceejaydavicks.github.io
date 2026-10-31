@@ -4,13 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0B0B0F">
+  <meta name="color-scheme" content="dark light">
   <meta name="robots" content="index,follow">
 
   <!-- Brand assets (transparent PNG). -->
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./assets/favicon-192.png">
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-  <link rel="preload" as="image" href="./assets/logo-lockup@3x.png" fetchpriority="high">
+
+  <!-- THEME BOOTSTRAP: runs before the stylesheet so the right theme paints first.
+       Saved choice wins; otherwise the device setting decides; dark is the default. -->
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") theme = saved;
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      } catch (error) {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      }
+
+      document.documentElement.setAttribute("data-theme", theme);
+
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", theme === "light" ? "#FAFAFB" : "#0B0B0F");
+
+      var preload = document.createElement("link");
+      preload.setAttribute("rel", "preload");
+      preload.setAttribute("as", "image");
+      preload.href = theme === "light" ? "./assets/logo-lockup-light@3x.png" : "./assets/logo-lockup@3x.png";
+      preload.setAttribute("fetchpriority", "high");
+      document.head.appendChild(preload);
+    })();
+  </script>
 
   <!-- SITE NAME: visible branding, SEO title and meta copy all follow SITE_NAME in the script below. -->
   <title>BootyMansion | Curated Video Entertainment</title>
@@ -40,26 +67,130 @@
     /* ============ 1. TOKENS ============ */
     :root {
       color-scheme: dark;
+
+      /* surfaces & ink */
       --bg: #0B0B0F;
       --surface: #111116;
       --surface-2: #15151B;
       --surface-3: #0F0F14;
       --text: #F4F4F5;
       --muted: #A1A1AA;
-      --quiet: #71717A;
+      --quiet: #8A8A94;
       --line: rgba(255, 255, 255, 0.06);
       --line-soft: rgba(255, 255, 255, 0.04);
       --line-strong: rgba(255, 255, 255, 0.12);
+      --tint: rgba(255, 255, 255, 0.03);
+      --tint-soft: rgba(255, 255, 255, 0.02);
+      --tint-strong: rgba(255, 255, 255, 0.06);
+
+      /* rose accent */
       --rose: #FDA4AF;
       --rose-200: #FECDD3;
       --rose-400: #FB7185;
       --rose-soft: rgba(253, 164, 175, 0.12);
+      --rose-line: rgba(253, 164, 175, 0.3);
+      --rose-fill: rgba(253, 164, 175, 0.14);
+      --on-rose: #0B0B0F;
+
+      /* elevation + chrome */
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      --card-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+      --card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      --frame-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+      --header-bg: rgba(11, 11, 15, 0.82);
+      --panel-bg: rgba(15, 15, 20, 0.98);
+      --toast-bg: rgba(21, 21, 27, 0.96);
+
+      /* component surfaces */
+      --input-bg: rgba(255, 255, 255, 0.03);
+      --input-bg-focus: rgba(255, 255, 255, 0.05);
+      --chip-active-bg: #FFFFFF;
+      --chip-active-text: #0B0B0F;
+      --ad-label: #9D9DA6;
+      --ad-bg: linear-gradient(150deg, rgba(21, 21, 27, 0.7), rgba(12, 12, 16, 0.85));
+      --promo-bg: linear-gradient(100deg, rgba(251, 113, 133, 0.12), rgba(25, 20, 28, 0.7) 55%, rgba(15, 14, 18, 0.9));
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(251, 113, 133, 0.16), transparent 46%),
+        linear-gradient(150deg, rgba(28, 22, 30, 0.98), rgba(14, 13, 17, 0.98));
+      --cta-bg: linear-gradient(135deg, #16131A, #0F0F14);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 253, 164, 175), 0.24), transparent 62%),
+        linear-gradient(150deg, #1A1520, #09090E 78%);
+      --poster-grid: rgba(255, 255, 255, 0.035);
+      --media-bg: #0D0D12;
+      --hero-fade: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
+      --ambient: radial-gradient(ellipse at top, rgba(253, 164, 175, 0.06), transparent 60%);
+      --selection: rgba(253, 164, 175, 0.3);
+      --avatar-bg: linear-gradient(140deg, rgba(253, 164, 175, 0.32), rgba(251, 113, 133, 0.08));
+      --footer-quiet: #82828C;
+      --footer-offer: #8F8F99;
+      --ring-track: rgba(253, 164, 175, 0.14);
+      --glow: rgba(251, 113, 133, 0.14);
+
       --radius: 20px;
       --radius-lg: 28px;
       --radius-sm: 14px;
       --max: 1440px;
       --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    /* ---------------------------------------------------------------
+       LIGHT THEME — off-white page, white cards, deep rose accent so
+       buttons, links and chips stay readable on light backgrounds.
+       --------------------------------------------------------------- */
+    [data-theme="light"] {
+      color-scheme: light;
+
+      --bg: #FAFAFB;
+      --surface: #FFFFFF;
+      --surface-2: #F4F4F6;
+      --surface-3: #FFFFFF;
+      --text: #18181B;
+      --muted: #52525B;
+      --quiet: #6B6B75;
+      --line: rgba(24, 24, 27, 0.1);
+      --line-soft: rgba(24, 24, 27, 0.07);
+      --line-strong: rgba(24, 24, 27, 0.16);
+      --tint: rgba(24, 24, 27, 0.04);
+      --tint-soft: rgba(24, 24, 27, 0.025);
+      --tint-strong: rgba(24, 24, 27, 0.07);
+
+      --rose: #E11D48;
+      --rose-200: #BE123C;
+      --rose-400: #BE123C;
+      --rose-soft: rgba(225, 29, 72, 0.08);
+      --rose-line: rgba(225, 29, 72, 0.34);
+      --rose-fill: rgba(225, 29, 72, 0.1);
+      --on-rose: #FFFFFF;
+
+      --shadow: 0 20px 50px rgba(24, 24, 27, 0.08);
+      --card-shadow: 0 10px 26px rgba(24, 24, 27, 0.08);
+      --card-ring: inset 0 0 0 1px rgba(24, 24, 27, 0.06);
+      --frame-shadow: 0 22px 50px rgba(24, 24, 27, 0.16);
+      --header-bg: rgba(250, 250, 251, 0.86);
+      --panel-bg: rgba(255, 255, 255, 0.99);
+      --toast-bg: rgba(255, 255, 255, 0.98);
+
+      --input-bg: #FFFFFF;
+      --input-bg-focus: #FFFFFF;
+      --chip-active-bg: #18181B;
+      --chip-active-text: #FFFFFF;
+      --ad-label: #6B6B75;
+      --ad-bg: linear-gradient(150deg, #F7F7F9, #EFEFF2);
+      --promo-bg: linear-gradient(100deg, rgba(225, 29, 72, 0.07), rgba(255, 255, 255, 0.85) 52%, #FFFFFF);
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(225, 29, 72, 0.1), transparent 46%),
+        linear-gradient(150deg, #FFFFFF, #FFF7F8);
+      --cta-bg: linear-gradient(135deg, #FFF4F6, #FFFFFF);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 225, 29, 72), 0.16), transparent 62%),
+        linear-gradient(150deg, #F6F6F9, #E7E7EE 78%);
+      --poster-grid: rgba(24, 24, 27, 0.05);
+      --media-bg: #EDEDF0;
+      --hero-fade: linear-gradient(90deg, rgba(250, 250, 251, 0.94), rgba(250, 250, 251, 0.42) 55%, rgba(250, 250, 251, 0.94));
+      --ambient: radial-gradient(ellipse at top, rgba(225, 29, 72, 0.05), transparent 60%);
+      --selection: rgba(225, 29, 72, 0.18);
+      --avatar-bg: linear-gradient(140deg, rgba(225, 29, 72, 0.14), rgba(225, 29, 72, 0.04));
+      --footer-quiet: #6B6B75;
+      --footer-offer: #52525B;
+      --ring-track: rgba(225, 29, 72, 0.16);
+      --glow: rgba(225, 29, 72, 0.1);
     }
 
     /* ============ 2. BASE ============ */
@@ -89,7 +220,7 @@
     button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
     input { font: inherit; }
     :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 6px; }
-    ::selection { background: rgba(253, 164, 175, 0.3); }
+    ::selection { background: var(--selection); }
 
     .shell {
       width: min(var(--max), 100% - 2rem);
@@ -118,7 +249,7 @@
       z-index: -1;
       inset: 0 0 auto;
       height: 620px;
-      background: radial-gradient(ellipse at top, rgba(253, 164, 175, 0.06), transparent 60%);
+      background: var(--ambient);
       pointer-events: none;
     }
 
@@ -144,7 +275,7 @@
       z-index: 40;
       top: 0;
       border-bottom: 1px solid var(--line-soft);
-      background: rgba(11, 11, 15, 0.82);
+      background: var(--header-bg);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
@@ -172,33 +303,51 @@
       color: var(--text);
     }
 
-    /* Transparent PNG lockup: no plate, no background, width follows the ratio. */
+    /* Transparent PNG lockup: no plate, width follows the 707:108 ratio.
+       The light variant swaps in via the same element (no second <img>). */
     .brand-logo {
-      width: auto;
-      height: 36px;
+      --logo-h: 36px;
+      display: block;
+      flex: 0 0 auto;
+      height: var(--logo-h);
+      width: calc(var(--logo-h) * 707 / 108);
       max-width: 100%;
+      background-image: url("./assets/logo-lockup@3x.png");
+      background-repeat: no-repeat;
+      background-position: left center;
+      background-size: contain;
+    }
+
+    [data-theme="light"] .brand-logo {
+      background-image: url("./assets/logo-lockup-light@3x.png");
     }
 
     @media (max-width: 768px) {
-      .brand-logo { height: 30px; }
+      .brand-logo { --logo-h: 30px; }
     }
 
     @media (max-width: 420px) {
-      .brand-logo { height: 26px; }
+      .brand-logo { --logo-h: 26px; }
     }
 
     @media (max-width: 360px) {
-      .brand-logo { height: 22px; }
+      .brand-logo { --logo-h: 22px; }
+    }
+
+    @media (max-width: 340px) {
+      .brand-logo { --logo-h: 20px; }
+      .nav-actions { gap: 0.1rem; }
+      .nav-shell { gap: 0.35rem; }
     }
 
     .primary-nav {
       display: none;
       align-items: center;
-      gap: 1.75rem;
+      gap: 1.6rem;
       font-size: 13.5px;
     }
 
-    @media (min-width: 1120px) { .primary-nav { display: flex; } }
+    @media (min-width: 1140px) { .primary-nav { display: flex; } }
 
     .primary-nav a {
       color: var(--muted);
@@ -206,7 +355,7 @@
     }
 
     .primary-nav a:hover,
-    .primary-nav a.is-active { color: #fff; }
+    .primary-nav a.is-active { color: var(--text); }
 
     .nav-actions {
       display: flex;
@@ -223,13 +372,13 @@
       padding: 0 0.95rem;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--input-bg);
       transition: border-color 160ms ease, background 160ms ease;
     }
 
     .search:focus-within {
-      border-color: rgba(253, 164, 175, 0.4);
-      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--rose-line);
+      background: var(--input-bg-focus);
     }
 
     .search__icon { display: grid; place-items: center; color: var(--quiet); }
@@ -238,7 +387,7 @@
       width: 100%;
       border: 0;
       background: transparent;
-      color: #fff;
+      color: var(--text);
       font-size: 13px;
       outline: none;
     }
@@ -252,7 +401,7 @@
       .search--desktop { display: flex; width: 220px; }
     }
 
-    @media (min-width: 1200px) {
+    @media (min-width: 1260px) {
       .search--desktop { width: 300px; }
     }
 
@@ -266,7 +415,7 @@
       transition: background 160ms ease, color 160ms ease;
     }
 
-    .icon-btn:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .icon-btn:hover { background: var(--tint-strong); color: var(--text); }
 
     .btn {
       display: inline-flex;
@@ -283,7 +432,7 @@
       height: 40px;
       padding: 0 0.9rem;
       background: var(--rose);
-      color: #0B0B0F;
+      color: var(--on-rose);
       font-size: 13px;
       box-shadow: 0 12px 28px rgba(251, 113, 133, 0.2);
     }
@@ -296,7 +445,7 @@
 
     .menu-toggle { display: grid; }
 
-    @media (min-width: 1120px) { .menu-toggle { display: none; } }
+    @media (min-width: 1140px) { .menu-toggle { display: none; } }
 
     .search-mobile {
       padding: 0 0 0.8rem;
@@ -310,12 +459,10 @@
       .nav-shell { gap: 0.5rem; }
       .brand { white-space: nowrap; }
       .nav-actions { gap: 0.15rem; }
-      .icon-btn { width: 36px; height: 36px; }
-      .btn-rose { height: 36px; padding: 0 0.7rem; }
     }
 
     /* Mobile nav panel */
-    @media (max-width: 1119px) {
+    @media (max-width: 1139px) {
       .primary-nav {
         position: absolute;
         z-index: 45;
@@ -329,8 +476,8 @@
         padding: 0.5rem;
         border: 1px solid var(--line-strong);
         border-radius: 16px;
-        background: rgba(15, 15, 20, 0.98);
-        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+        background: var(--panel-bg);
+        box-shadow: var(--shadow);
       }
 
       .primary-nav.is-open { display: flex; }
@@ -341,7 +488,7 @@
         font-size: 14px;
       }
 
-      .primary-nav a:hover { background: rgba(255, 255, 255, 0.04); }
+      .primary-nav a:hover { background: var(--tint); }
     }
 
     /* ============ 4. SHARED BITS ============ */
@@ -383,7 +530,7 @@
       display: flex;
       align-items: center;
       gap: 0.55rem;
-      color: #fff;
+      color: var(--text);
     }
 
     .section-head__title .icon { color: var(--rose); }
@@ -463,7 +610,7 @@
     .hero-backdrop::after {
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
+      background: var(--hero-fade);
       content: "";
     }
 
@@ -486,7 +633,7 @@
       aspect-ratio: 16 / 9;
       border-radius: 20px;
       background: #08080B;
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+      box-shadow: var(--frame-shadow);
       isolation: isolate;
     }
 
@@ -509,13 +656,14 @@
       place-content: center;
       gap: 0.4rem;
       padding: 1.5rem;
-      color: var(--muted);
+      color: #A1A1AA;
       font-size: 13.5px;
       text-align: center;
     }
 
     .player-empty strong { color: #fff; font-weight: 500; }
-    .player-empty span { color: var(--quiet); font-size: 12.5px; }
+    .player-empty span { color: #A1A1AA; font-size: 12.5px; }
+    .player-empty a { color: #FDA4AF; font-weight: 500; }
 
     .hero-rail {
       display: flex;
@@ -540,7 +688,7 @@
       transition: color 160ms ease;
     }
 
-    .rail-btn:hover { color: #fff; }
+    .rail-btn:hover { color: var(--text); }
 
     .rail-btn__icon {
       display: grid;
@@ -549,15 +697,15 @@
       place-items: center;
       border: 1px solid var(--line-strong);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      color: #fff;
+      background: var(--tint);
+      color: var(--text);
       backdrop-filter: blur(8px);
       transition: background 160ms ease;
     }
 
-    .rail-btn:hover .rail-btn__icon { background: rgba(255, 255, 255, 0.1); }
+    .rail-btn:hover .rail-btn__icon { background: var(--tint-strong); }
     .rail-btn.is-on { color: var(--rose); }
-    .rail-btn.is-on .rail-btn__icon { border-color: rgba(253, 164, 175, 0.5); color: var(--rose); }
+    .rail-btn.is-on .rail-btn__icon { border-color: var(--rose-line); color: var(--rose); }
 
     .hero-meta {
       display: flex;
@@ -596,12 +744,12 @@
       flex: 0 0 auto;
       place-items: center;
       border-radius: 999px;
-      background: linear-gradient(140deg, rgba(253, 164, 175, 0.32), rgba(251, 113, 133, 0.08));
+      background: var(--avatar-bg);
       color: var(--rose-200);
       font-size: 13px;
       font-weight: 600;
       text-transform: uppercase;
-      box-shadow: inset 0 0 0 1px rgba(253, 164, 175, 0.3);
+      box-shadow: inset 0 0 0 1px var(--rose-line);
     }
 
     .creator .avatar { width: 40px; height: 40px; font-size: 15px; }
@@ -612,7 +760,7 @@
       gap: 0.3rem;
       font-size: 14px;
       font-weight: 500;
-      color: #fff;
+      color: var(--text);
     }
 
     .creator__name .icon { color: var(--rose); width: 15px; height: 15px; }
@@ -627,12 +775,12 @@
       padding: 0.45rem 0.85rem;
       border: 1px solid var(--line-strong);
       border-radius: 999px;
-      color: #fff;
+      color: var(--text);
       font-size: 12.5px;
       transition: border-color 160ms ease, color 160ms ease;
     }
 
-    .hero-follow:hover { border-color: rgba(253, 164, 175, 0.5); color: var(--rose-200); }
+    .hero-follow:hover { border-color: var(--rose-line); color: var(--rose-200); }
 
     .hero-stats {
       display: flex;
@@ -646,22 +794,22 @@
       font-size: 12.5px;
     }
 
-    .hero-stats b { color: #fff; font-weight: 500; }
+    .hero-stats b { color: var(--text); font-weight: 500; }
 
     .hero-offer {
       align-self: flex-start;
       margin-top: 1.1rem;
       padding: 0.55rem 1rem;
-      border: 1px solid rgba(253, 164, 175, 0.28);
+      border: 1px solid var(--rose-line);
       border-radius: 999px;
-      background: rgba(253, 164, 175, 0.07);
+      background: var(--rose-soft);
       color: var(--rose-200);
       font-size: 12.5px;
       font-weight: 500;
       transition: background 160ms ease, border-color 160ms ease;
     }
 
-    .hero-offer:hover { background: rgba(253, 164, 175, 0.14); border-color: rgba(253, 164, 175, 0.5); }
+    .hero-offer:hover { background: var(--rose-fill); border-color: var(--rose); }
 
     .upnext { margin-top: 1.6rem; }
 
@@ -677,7 +825,7 @@
       margin: 0;
       font-size: 13px;
       font-weight: 500;
-      color: #fff;
+      color: var(--text);
     }
 
     .upnext__list { display: grid; gap: 0.65rem; }
@@ -691,7 +839,7 @@
       transition: background 160ms ease;
     }
 
-    .upnext__item:hover { background: rgba(255, 255, 255, 0.03); }
+    .upnext__item:hover { background: var(--tint); }
 
     .upnext__thumb {
       position: relative;
@@ -712,7 +860,7 @@
 
     .upnext__title {
       overflow: hidden;
-      color: #fff;
+      color: var(--text);
       font-size: 13.5px;
       font-weight: 500;
       text-overflow: ellipsis;
@@ -740,15 +888,15 @@
       display: grid;
       place-content: center;
       gap: 0.3rem;
-      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border: 1px dashed var(--line-strong);
       border-radius: 14px;
-      background: linear-gradient(150deg, rgba(21, 21, 27, 0.7), rgba(12, 12, 16, 0.85));
+      background: var(--ad-bg);
       color: var(--quiet);
       text-align: center;
     }
 
     .ad-slot__label {
-      color: #9d9da6;
+      color: var(--ad-label);
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.16em;
@@ -785,9 +933,9 @@
     .promo {
       margin-top: 1.5rem;
       overflow: hidden;
-      border: 1px solid rgba(253, 164, 175, 0.2);
+      border: 1px solid var(--rose-line);
       border-radius: var(--radius);
-      background: linear-gradient(100deg, rgba(251, 113, 133, 0.12), rgba(25, 20, 28, 0.7) 55%, rgba(15, 14, 18, 0.9));
+      background: var(--promo-bg);
     }
 
     .promo__link {
@@ -800,7 +948,7 @@
       transition: background 160ms ease;
     }
 
-    .promo__link:hover { background: rgba(253, 164, 175, 0.05); }
+    .promo__link:hover { background: var(--rose-soft); }
 
     .promo__copy { display: grid; gap: 0.12rem; }
 
@@ -845,18 +993,18 @@
       padding: 0.5rem 1rem;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--tint-soft);
       color: var(--muted);
       font-size: 12.5px;
       transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
     }
 
-    .chip:hover { color: #fff; border-color: var(--line-strong); }
+    .chip:hover { color: var(--text); border-color: var(--line-strong); }
 
     .chip.is-active {
       border-color: transparent;
-      background: #fff;
-      color: #0B0B0F;
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
       font-weight: 500;
     }
 
@@ -866,8 +1014,8 @@
       overflow: hidden;
       border-radius: var(--radius);
       background: var(--surface-2);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      box-shadow: var(--card-shadow);
+      box-shadow: var(--card-shadow), var(--card-ring);
     }
 
     .poster--wide { aspect-ratio: 16 / 9; }
@@ -888,9 +1036,7 @@
     .poster__art {
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 253, 164, 175), 0.24), transparent 62%),
-        linear-gradient(150deg, #1a1520, #09090e 78%);
+      background: var(--poster-bg);
       transition: opacity 400ms ease;
     }
 
@@ -898,8 +1044,8 @@
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        linear-gradient(var(--poster-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--poster-grid) 1px, transparent 1px);
       background-size: 44px 44px;
       content: "";
       mask-image: linear-gradient(140deg, #000, transparent 72%);
@@ -917,7 +1063,7 @@
       opacity: 0;
       transition: opacity 420ms ease, transform 700ms ease;
       pointer-events: none;
-      background: #0d0d12;
+      background: var(--media-bg);
     }
 
     .poster.has-media .poster__art { opacity: 0; }
@@ -977,7 +1123,7 @@
       padding: 0.15rem 0.5rem;
       border-radius: 6px;
       background: var(--rose);
-      color: #0B0B0F;
+      color: var(--on-rose);
       font-size: 10px;
       font-weight: 600;
     }
@@ -1064,7 +1210,7 @@
 
     .media-card .poster { transition: box-shadow 200ms ease; }
 
-    .media-card:hover .poster { box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(253, 164, 175, 0.18); }
+    .media-card:hover .poster { box-shadow: var(--card-shadow), inset 0 0 0 1px var(--rose-line); }
     .media-card:hover .card__title { color: var(--rose-200); }
 
     .card__body {
@@ -1077,7 +1223,7 @@
 
     .card__title {
       margin: 0;
-      color: #fff;
+      color: var(--text);
       font-size: 14px;
       font-weight: 500;
       letter-spacing: -0.01em;
@@ -1100,11 +1246,9 @@
       display: flex;
       min-height: 100%;
       overflow: hidden;
-      border: 1px solid rgba(253, 164, 175, 0.24);
+      border: 1px solid var(--rose-line);
       border-radius: var(--radius);
-      background:
-        radial-gradient(ellipse at 92% 6%, rgba(251, 113, 133, 0.16), transparent 46%),
-        linear-gradient(150deg, rgba(28, 22, 30, 0.98), rgba(14, 13, 17, 0.98));
+      background: var(--sponsored-bg);
     }
 
     .sponsored-card__link {
@@ -1225,7 +1369,7 @@
       padding: 2rem 1.5rem;
       border: 1px solid var(--line-soft);
       border-radius: var(--radius-lg);
-      background: linear-gradient(135deg, #16131A, #0F0F14);
+      background: var(--cta-bg);
     }
 
     @media (min-width: 640px) { .telegram-cta { padding: 3rem; } }
@@ -1237,7 +1381,7 @@
       width: 18rem;
       height: 18rem;
       border-radius: 50%;
-      background: rgba(251, 113, 133, 0.12);
+      background: var(--glow);
       filter: blur(60px);
       content: "";
       pointer-events: none;
@@ -1276,7 +1420,7 @@
       height: 48px;
       padding: 0 1.65rem;
       background: var(--rose);
-      color: #0B0B0F;
+      color: var(--on-rose);
       font-size: 14px;
       box-shadow: 0 14px 32px rgba(251, 113, 133, 0.22);
     }
@@ -1316,14 +1460,14 @@
       padding: 0.45rem 0.8rem;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--tint-soft);
       color: var(--muted);
       font-size: 12px;
       transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
     }
 
     .social-link svg { width: 15px; height: 15px; fill: currentColor; }
-    .social-link:hover { border-color: rgba(253, 164, 175, 0.4); color: #fff; background: rgba(253, 164, 175, 0.07); }
+    .social-link:hover { border-color: var(--rose-line); color: var(--text); background: var(--rose-soft); }
 
     /* ============ 14. FOOTER ============ */
     .site-footer {
@@ -1355,7 +1499,7 @@
     }
 
     .footer-links a { transition: color 160ms ease; }
-    .footer-links a:hover { color: #fff; }
+    .footer-links a:hover { color: var(--text); }
 
     .footer-badge {
       padding: 0.2rem 0.7rem;
@@ -1372,12 +1516,12 @@
       justify-content: space-between;
       gap: 0.5rem;
       margin-top: 1.75rem;
-      color: #5b5b64;
+      color: var(--footer-quiet);
       font-size: 11.5px;
     }
 
     .footer-bottom p { margin: 0; }
-    .footer-offer { color: #7d7d87; text-decoration: underline; text-underline-offset: 3px; transition: color 160ms ease; }
+    .footer-offer { color: var(--footer-offer); text-decoration: underline; text-underline-offset: 3px; transition: color 160ms ease; }
     .footer-offer:hover { color: var(--rose); }
 
     /* ============ 15. TOAST / UTIL ============ */
@@ -1389,7 +1533,7 @@
       padding: 0.65rem 1.1rem;
       border: 1px solid var(--line-strong);
       border-radius: 999px;
-      background: rgba(21, 21, 27, 0.96);
+      background: var(--toast-bg);
       color: var(--text);
       font-size: 12.5px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
@@ -1404,7 +1548,106 @@
 
     .is-unconfigured { opacity: 0.75; cursor: not-allowed; }
 
-    /* ============ 16. PRELOADER ============ */
+    /* ============ 16. THEME TOGGLE ============ */
+    .theme-toggle {
+      position: relative;
+      display: grid;
+      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--tint-soft);
+      color: var(--text);
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--rose-line);
+      background: var(--tint-strong);
+      color: var(--rose);
+    }
+
+    .theme-toggle:active { transform: scale(0.94); }
+
+    /* Small phones: shrink the four nav controls together so the bar stays on one line. */
+    @media (max-width: 420px) {
+      .icon-btn,
+      .theme-toggle { width: 36px; height: 36px; }
+      .btn-rose { width: 36px; height: 36px; padding: 0; }
+    }
+
+    @media (max-width: 340px) {
+      .icon-btn,
+      .theme-toggle,
+      .btn-rose { width: 32px; height: 32px; }
+      .theme-icon { width: 16px; height: 16px; }
+    }
+
+    .theme-icon {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+
+    .theme-icon--sun { opacity: 1; transform: rotate(0deg) scale(1); }
+    .theme-icon--moon { opacity: 0; transform: rotate(-90deg) scale(0.4); }
+
+    [data-theme="light"] .theme-icon--sun { opacity: 0; transform: rotate(90deg) scale(0.4); }
+    [data-theme="light"] .theme-icon--moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+    /* Toggle row inside the mobile menu */
+    .nav-theme {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-top: 0.35rem;
+      padding: 0.8rem 0.9rem;
+      border-top: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: left;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .nav-theme:hover { background: var(--tint); color: var(--text); }
+
+    .nav-theme__icon {
+      position: relative;
+      display: grid;
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      place-items: center;
+      color: var(--rose);
+    }
+
+    .nav-theme__icon .theme-icon { width: 16px; height: 16px; }
+
+    .nav-theme { display: none; }
+
+    @media (max-width: 1139px) {
+      .nav-theme { display: flex; }
+    }
+
+    /* Light-mode touch-ups that are not simple colour tokens */
+    [data-theme="light"] .hero-backdrop { opacity: 0.16; }
+    [data-theme="light"] .poster { box-shadow: var(--card-shadow); }
+    [data-theme="light"] .site-header { border-bottom-color: var(--line); }
+    [data-theme="light"] .ad-slot { border-color: rgba(24, 24, 27, 0.18); }
+
+    /* Smooth cross-fade of every colour while the theme flips (temporary). */
+    html.is-theming *,
+    html.is-theming *::before,
+    html.is-theming *::after {
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease,
+        box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+    }
+
+    /* ============ 17. PRELOADER ============ */
     .preloader {
       position: fixed;
       z-index: 90;
@@ -1445,9 +1688,9 @@
     .preloader__ring {
       position: absolute;
       inset: 0;
-      border: 2px solid rgba(253, 164, 175, 0.14);
+      border: 2px solid var(--ring-track);
       border-radius: 50%;
-      box-shadow: 0 0 44px rgba(251, 113, 133, 0.14);
+      box-shadow: 0 0 44px var(--glow);
     }
 
     /* Smooth rose sweep on top of the static track (falls back to the track). */
@@ -1470,8 +1713,17 @@
 
     .preloader__logo {
       position: relative;
+      display: block;
       width: 86%;
-      height: auto;
+      aspect-ratio: 707 / 108;
+      background-image: url("./assets/logo-lockup@3x.png");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+
+    [data-theme="light"] .preloader__logo {
+      background-image: url("./assets/logo-lockup-light@3x.png");
     }
 
     @keyframes preloader-spin {
@@ -1486,7 +1738,7 @@
       .preloader__ring::after { animation: none; }
     }
 
-    /* ============ 17. MOTION / A11Y ============ */
+    /* ============ 18. MOTION / A11Y ============ */
     @media (hover: none) {
       .poster__play {
         width: 46px;
@@ -1514,7 +1766,7 @@
   <div class="preloader" id="preloader" aria-hidden="true">
     <div class="preloader__stage">
       <span class="preloader__ring"></span>
-      <img class="preloader__logo" src="./assets/logo-lockup@3x.png" alt="" width="707" height="108" fetchpriority="high" decoding="async">
+      <span class="preloader__logo" aria-hidden="true"></span>
     </div>
   </div>
   <script>
@@ -1550,7 +1802,7 @@
   <header class="site-header">
     <div class="shell nav-shell">
       <a class="brand" href="#top" aria-label="BootyMansion home">
-        <img class="brand-logo" src="./assets/logo-lockup@3x.png" alt="BootyMansion" width="707" height="108" fetchpriority="high" decoding="async">
+        <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
       </a>
 
       <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
@@ -1559,6 +1811,13 @@
         <a href="#shorts" data-nav>Shorts</a>
         <a href="#feed" data-nav>Feed</a>
         <a href="#follow" data-nav>Follow</a>
+        <button class="nav-theme" type="button" data-theme-toggle aria-label="Switch to light mode">
+          <span class="nav-theme__icon" aria-hidden="true">
+            <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
+            <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
+          </span>
+          <span data-theme-action-label>Switch to light mode</span>
+        </button>
       </nav>
 
       <div class="nav-actions">
@@ -1571,6 +1830,11 @@
 
         <button class="icon-btn search-toggle" type="button" aria-label="Open search" aria-expanded="false" aria-controls="search-mobile">
           <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
+        </button>
+
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode">
+          <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
+          <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
         </button>
 
         <a class="btn btn-rose" data-telegram href="#telegram">
@@ -1785,7 +2049,7 @@
     <div class="shell footer-inner">
       <div class="footer-top">
         <a class="brand" href="#top" aria-label="Back to top">
-          <img class="brand-logo" src="./assets/logo-lockup@3x.png" alt="BootyMansion" width="707" height="108" loading="lazy" decoding="async">
+          <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
         </a>
 
         <nav class="footer-links" aria-label="Footer navigation">
@@ -2309,14 +2573,13 @@
     function makeFallback(video) {
       const fallback = document.createElement("div");
       fallback.className = "player-empty";
-      fallback.innerHTML = `<strong style="color:#fff">This video cannot play here.</strong>`;
+      fallback.innerHTML = `<strong>This video cannot play here.</strong>`;
 
       if (video && video.url) {
         const link = document.createElement("a");
         link.href = video.url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.style.color = "var(--rose)";
         link.style.textDecoration = "underline";
         link.style.marginTop = "0.4rem";
         link.textContent = "Open the original video";
@@ -2759,7 +3022,7 @@
       });
 
       window.addEventListener("resize", () => {
-        if (window.innerWidth >= 1120) closeMenu();
+        if (window.innerWidth >= 1140) closeMenu();
       });
     }
 
@@ -2895,6 +3158,86 @@
     }
 
     /* ================================================================
+       THEME (dark default, saved choice, device preference on first visit)
+       ================================================================ */
+    const THEME_KEY = "theme";
+    const themeRoot = document.documentElement;
+    let themeTimer = 0;
+
+    function storedTheme() {
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        return saved === "light" || saved === "dark" ? saved : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function prefersLight() {
+      return Boolean(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+    }
+
+    function applyTheme(theme, { persist = false, animate = false } = {}) {
+      const next = theme === "light" ? "light" : "dark";
+      const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (animate && !reduceMotion) {
+        themeRoot.classList.add("is-theming");
+        clearTimeout(themeTimer);
+        themeTimer = window.setTimeout(() => themeRoot.classList.remove("is-theming"), 340);
+      }
+
+      themeRoot.setAttribute("data-theme", next);
+
+      if (persist) {
+        try { localStorage.setItem(THEME_KEY, next); } catch (error) { /* private mode */ }
+      }
+
+      const themeColor = document.querySelector('meta[name="theme-color"]');
+      if (themeColor) themeColor.setAttribute("content", next === "light" ? "#FAFAFB" : "#0B0B0F");
+
+      const label = `Switch to ${next === "light" ? "dark" : "light"} mode`;
+      document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+      });
+      document.querySelectorAll("[data-theme-action-label]").forEach((node) => {
+        node.textContent = label;
+      });
+    }
+
+    function setupTheme() {
+      applyTheme(themeRoot.getAttribute("data-theme") || storedTheme() || (prefersLight() ? "light" : "dark"));
+
+      document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const next = themeRoot.getAttribute("data-theme") === "light" ? "dark" : "light";
+          applyTheme(next, { persist: true, animate: true });
+          closeMenu();
+        });
+      });
+
+      // Follow the device setting until the visitor makes an explicit choice.
+      if (window.matchMedia) {
+        const query = window.matchMedia("(prefers-color-scheme: light)");
+        const followSystem = (event) => {
+          if (!storedTheme()) applyTheme(event.matches ? "light" : "dark", { animate: true });
+        };
+        if (query.addEventListener) query.addEventListener("change", followSystem);
+        else if (query.addListener) query.addListener(followSystem);
+      }
+
+      // Warm the other logo variant when the browser is idle so the swap is instant.
+      const warm = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1400));
+      warm(() => {
+        const other = new Image();
+        other.src = themeRoot.getAttribute("data-theme") === "light"
+          ? "./assets/logo-lockup@3x.png"
+          : "./assets/logo-lockup-light@3x.png";
+      });
+    }
+
+    /* ================================================================
        BRANDING SYNC + BOOT
        ================================================================ */
     function syncBranding() {
@@ -2929,6 +3272,7 @@
     }
 
     syncBranding();
+    setupTheme();
     renderFeatured();
     renderUpNext();
     renderChips();

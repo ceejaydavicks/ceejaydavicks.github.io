@@ -58,6 +58,26 @@ Every file keeps its transparent background; the page draws no plate behind it.
 To rebrand, replace these files (keep the names) or point the `img` tags in
 `index.html` at new ones.
 
+The nav, footer and preloader logos are CSS background sprites on `.brand-logo`
+/ `.preloader__logo`, so a theme swap costs no extra markup: `logo-lockup@3x.png`
+is the white-lettering lockup for dark mode and `logo-lockup-light@3x.png` is
+the near-black-lettering lockup used when `[data-theme="light"]` is set.
+
+## Theme (dark / light)
+
+- Dark is the default look. A first visit follows the device
+  (`prefers-color-scheme`); once someone clicks the toggle the choice is saved to
+  `localStorage` under `theme` and wins on every later visit.
+- The toggle is the round sun/moon button in the top-right nav (next to search and
+  Telegram) and repeats inside the mobile menu. The sun shows in dark mode, the
+  moon in light mode, with a cross-fade/rotate swap.
+- A tiny inline script in `<head>` sets `data-theme` before the stylesheet loads,
+  so there is no flash of the wrong theme (it also preloads the matching logo).
+- Every colour is a CSS variable: `:root` holds the dark palette and
+  `[data-theme="light"]` overrides it (`#FAFAFB` page, white cards, `#E11D48`
+  rose). Thumbnail captions stay white over the dark gradient in both modes.
+- To re-skin light mode, edit only the `[data-theme="light"]` block.
+
 ## Branding and links
 
 Everything is configured at the top of the script block in `index.html`:
