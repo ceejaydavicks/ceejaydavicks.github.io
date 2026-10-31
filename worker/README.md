@@ -1,7 +1,8 @@
 # `worker/` — the AfterDark catalogue Worker (verbatim copy)
 
-A **separate** Cloudflare Worker app, stored here exactly as published, for the
-planned move off the Pages + D1 setup.
+A **separate** Cloudflare Worker app, stored here exactly as published.
+**Start with [SETUP.md](SETUP.md)** — it walks through KV, the three secrets,
+deploy and the webhook in 5–10 minutes.
 
 ## Provenance
 
@@ -35,6 +36,12 @@ A single-file Worker that owns its own catalogue:
 It does **not** read the site's D1 database and does not serve the Pages site.
 The two apps are independent.
 
+**It is headless.** `worker.js` contains no dashboard page — the `/admin` UI
+belongs to the AfterDark site, which this repo does not copy. You operate this
+Worker entirely from Telegram (`/start`, send a video, send a link → ✅ Publish,
+`/videos`, `/pending`, `/rename`, `/remove`); `/api/admin/*` is available for
+scripts with `Authorization: Bearer ADMIN_TOKEN`.
+
 ## Required Cloudflare setup
 
 | Kind | Name | Needed |
@@ -57,6 +64,9 @@ npx wrangler secret put WEBHOOK_SECRET
 npx wrangler secret put ADMIN_TOKEN
 npx wrangler deploy                         # note the *.workers.dev URL
 ```
+
+Full walkthrough, verification steps and troubleshooting: **[SETUP.md](SETUP.md)**.
+For local runs, copy `.dev.vars.example` to `.dev.vars` (gitignored).
 
 Then point **this worker's own bot** at it:
 
@@ -91,7 +101,8 @@ Check it with `https://<worker>.workers.dev/health` and
 The live site keeps working exactly as it did: Pages Functions + D1, the scraper
 in `functions/_lib/scrape.js`, and the bot in `functions/_lib/telegram.js`. This
 folder is inert until someone runs `wrangler deploy` inside it — nothing in the
-Pages build compiles or serves it.
+Pages build compiles or serves it. Wiring the site's front end to this Worker's
+feed is a separate, opt-in change (see step 6 of SETUP.md).
 
 Two small protections are in place:
 

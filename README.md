@@ -256,7 +256,7 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
 | `wrangler.toml` | Notes for local development. It is deliberately **not** a Pages config file: setting `pages_build_output_dir` would make it the source of truth and stop the dashboard's D1/R2 bindings from being applied (the header comment explains both modes). |
 | `SETUP.md` | Step-by-step setup: D1, R2, secrets, @BotFather, webhook. |
-| `worker/` | A verbatim copy of the AfterDark standalone Worker (KV-based, separate app) for the planned migration — not part of this site build; see `worker/README.md`. |
+| `worker/` | A verbatim copy of the AfterDark standalone Worker (KV-based, separate app), ready to deploy with your own KV + secrets — see `worker/SETUP.md`. Not part of this site build. |
 
 Nothing in the front end ever receives a secret: the browser only talks to
 `/api/*`, and the password, bot token and session key stay in Cloudflare's
