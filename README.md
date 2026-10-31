@@ -29,7 +29,9 @@ the deploys, D1 database, R2 bucket, secrets and Telegram bot.
 
 Open `/admin` on the deployed site, sign in, and tap **+ Add video**. There are
 two flows: paste an embed/video link, or upload a thumbnail to R2 and paste the
-video URL. **Feature** and **Pin** control the hero player and list order, the
+video URL. **Duration** accepts `mm:ss` (or `42s`, `1m 5s`) and decides whether
+the clip becomes a Short — see [Shorts](#shorts-under-a-minute).
+**Feature** and **Pin** control the hero player and list order, the
 search box filters the list, and the **Settings** tab edits the site name,
 Telegram link and the three ad slots.
 
@@ -155,11 +157,39 @@ Cards keep the shared poster behaviour: hover lift/zoom, lazy-loaded thumbnails
 (only frames near the viewport are fetched), and the "open the original video"
 fallback.
 
-The feed only appears once the library is full enough to fill Up next and the
-rows above it (~15 videos) — which the shipped sample library does, so every row
-renders on a fresh copy. Delete samples and those rows hide themselves again
-rather than leaving gaps. The "View all" library view shows the same masonry as
-soon as there are two or more videos.
+Every section is built from real rows and hidden when it has none: with a big
+library the featured player takes the first release, Up next the next three,
+"Recommended for you" the following eight and the feed six more. On a small
+library Up next stops at one card so the grid still gets something, and Shorts
+are filtered out of all of it (see below). Delete the samples and the empty rows
+disappear rather than leaving gaps. The "View all" library view shows the same
+masonry as soon as there are two or more videos.
+
+## Shorts (under a minute)
+
+A clip is a **Short** when its length is under 60 seconds. Nothing is tagged by
+hand: the length decides, so an existing video can never be mistagged and a new
+upload is classified the moment it lands.
+
+- `videos.duration_seconds` (integer) is the source of truth; `videos.duration`
+  keeps the `m:ss` label the cards print. Older databases are upgraded in place
+  on the first request (`ALTER TABLE … ADD COLUMN duration_seconds`).
+- The admin's **Duration** field accepts `0:42`, `42`, `42s`, `1m 5s`, `1h 2m 3s`
+  or `PT1M5S` and shows "Short (under a minute)" or "Regular video" live as you
+  type. The videos table shows the same badge per row.
+- The Telegram bot reads the length from the file metadata and stores both
+  values. An embed link carries no metadata, so type the duration in the admin —
+  until then the clip counts as a regular video.
+- The rule is strictly `< 60`. A 1:00 clip is regular, an unknown (0) length is
+  regular, and orientation plays no part — a 16:9 clip under a minute is still a
+  Short.
+- Shorts carry a "Short" badge, fill the horizontal shelf between the hero and
+  "Recommended for you" (with the scroll arrow on desktop), answer the "Shorts"
+  chip in search and drive the mobile **Shorts** tab. They are removed from the
+  hero, Up next, "Recommended for you" and the feed so nothing repeats.
+- A Short only leads the hero when the library holds no regular video at all —
+  the wide player expects a full-length release. In that case it is dropped from
+  the shelf so the same clip never shows twice.
 
 ## Brand assets
 
@@ -188,38 +218,53 @@ the near-black-lettering lockup used when `[data-theme="light"]` is set.
 - A tiny inline script in `<head>` sets `data-theme` before the stylesheet loads,
   so there is no flash of the wrong theme (it also preloads the matching logo).
 - Every colour is a CSS variable: `:root` holds the dark palette and
-  `[data-theme="light"]` overrides it (`#FAFAFB` page, white cards). Thumbnail
-  captions stay white over the dark gradient in both modes.
+  `[data-theme="light"]` overrides it (`#F7F7FA` page, white cards). The light
+  block re-declares colour values only — no sizes, spacing, motion or markup —
+  so the two themes are pixel-for-pixel twins and the toggle never moves
+  anything. Thumbnail captions stay white over the dark gradient in both modes.
 - To re-skin light mode, edit only the `[data-theme="light"]` block.
 
-### Palette (matches the logo)
+### Palette (crimson-rose)
 
-The theme is the logo's own colours: deep purple, near-black, silver-lavender.
+The accent is crimson-rose; the logo keeps its own purple artwork.
 
 | Token | Dark | Light | Used for |
 | --- | --- | --- | --- |
-| `--bg` | `#0A0614` | `#FAFAFB` | page |
-| `--surface` / `--surface-2` | `#130B22` / `#190F2C` | `#FFFFFF` / `#F4F4F6` | cards, panels |
-| `--line` / `--line-strong` | `#2A1B45` / `#3A2760` | `rgba(24,24,27,.1/.16)` | borders |
-| `--text` | `#D9D4E3` | `#18181B` | body copy |
-| `--muted` / `--quiet` | `#8F86A3` / `#857C9B` | `#52525B` / `#6B6B75` | secondary copy |
-| `--accent` / `--accent-hi` / `--accent-deep` | `#6B4BB5` / `#9D82E6` / `#3F2A7A` | `#6B4BB5` / `#9D82E6` / `#3F2A7A` | accent |
-| `--accent-gradient` | `#3F2A7A → #9D82E6` | `#3F2A7A → #6B4BB5` | primary fills |
+| `--bg` | `#0B0B0F` | `#F7F7FA` | page |
+| `--surface` / `--surface-2` | `#15151B` / `#1B1B22` | `#FFFFFF` / `#F2F2F7` | cards, panels |
+| `--line` / `--line-strong` | `#26262F` / `#33333D` | `#E4E4EC` / `#D5D5DF` | borders |
+| `--text` | `#F4F4F6` | `#14141A` | body copy |
+| `--muted` / `--quiet` | `#9A9AA8` / `#86869A` | `#6B6B7A` / `#686878` | secondary copy |
+| `--accent` / `--accent-hi` / `--accent-deep` | `#F43F5E` / `#FB7185` / `#BE123C` | same | accent, links |
+| `--accent-gradient` | `#FB7185 → #E11D48` | same | decorative fills, poster tags, preloader ring |
+| `--accent-gradient-ink` | `#E11D48 → #BE123C` | same | fills carrying white text (buttons, active nav pill, active chip, Featured badge) |
 
-- The dark page carries one soft violet glow: `--ambient`, a radial
-  `rgba(59,26,140,.25)` in the top-right corner, drawn by `.ambient`.
-- `--accent-gradient` fills the big surfaces; `--accent-gradient-ink` is the same
-  ramp with a darker light end and is used wherever small white text sits on the
-  fill (category chips, the Featured badge, poster tags) to keep contrast ≥ 4.5:1.
-- `--rose*` are kept as aliases of the accent so older rules keep resolving.
+- Fonts: **Plus Jakarta Sans** for headings and the logo (`--font-display`),
+  **Inter** for body copy and controls (`--font-body`). Both load from Google
+  Fonts with preconnects and fall back to system sans.
+- The dark page carries one soft rose glow: `--ambient`, a radial
+  `rgba(244,63,94,.18)` in the top-right corner, drawn by `.ambient`.
+- `--accent-gradient` is the bright ramp from the brief; `--accent-gradient-ink`
+  is the same family, darkened, and is used wherever small white text sits on the
+  fill so contrast stays ≥ 4.5:1 (white on `#FB7185` is only 2.6:1).
+  `--rose*` stay as aliases of the accent so older rules keep resolving.
+- Fixed surfaces never flip: `--player-bg` (`#08080C`) keeps the video stage
+  dark in both themes, and `--banner-bg` / `--banner-text` / `--banner-muted`
+  keep the 18+/Telegram banner on its own rose-black card.
 - **Telegram is never the accent.** `--tg: #229ED9` and `--tg-hover: #1C8CC2` are
   declared once in `:root` and never overridden, so every Telegram control — nav
   button, `.hero-follow`, `.btn-telegram`, the footer pill, the rail icon — stays
   Telegram blue with a white plane and white text in both themes.
-- The legal pages (`assets/legal.css`) and `/admin` mirror the same palette; the
-  age gate (`assets/age-gate.js`) keeps its styles inline and uses the same
-  `#0A0614` / `#2A1B45` / purple-gradient values. In `/admin`, `--danger` stays
+- The legal pages (`assets/legal.css`) and `/admin` mirror the same palette and
+  read the same saved/device theme, so a light-mode visitor gets light legal and
+  admin pages too. The age gate (`assets/age-gate.js`) keeps its styles inline
+  and uses the same `#0B0B0F` / `#26262F` / rose-gradient values. In `/admin`, `--danger` stays
   red on purpose: it marks destructive actions, not the brand accent.
+- Contrast was checked section by section in both themes: body copy ≥ 16:1,
+  muted ≥ 6.5:1 (dark) / ≥ 4.9:1 (light), quiet ≥ 4.8:1 (≥ 4.9:1 on nested
+  surfaces), white on the ink
+  gradient ≥ 4.7:1. `--quiet` and the light-theme link rose are the tightest
+  pairs and are the ones to re-check after any palette change.
 
 ## Branding and links
 

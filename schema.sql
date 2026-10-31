@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS videos (
   thumbnail_url TEXT NOT NULL DEFAULT '',
   video_url TEXT NOT NULL DEFAULT '',
   embed_url TEXT NOT NULL DEFAULT '',
-  duration TEXT NOT NULL DEFAULT '',
+  duration TEXT NOT NULL DEFAULT '',           -- display label, e.g. "12:48"
+  duration_seconds INTEGER NOT NULL DEFAULT 0,  -- 0 = unknown; < 60 means a Short
   "views" TEXT NOT NULL DEFAULT '',
   tag TEXT NOT NULL DEFAULT '',
   orientation TEXT NOT NULL DEFAULT 'horizontal',
