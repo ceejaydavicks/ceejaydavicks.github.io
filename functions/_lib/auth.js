@@ -122,12 +122,12 @@ export function isLocalRequest(request) {
 export function sessionCookie(request, token) {
   // Secure everywhere except plain-HTTP local development, where browsers drop it.
   const secure = isLocalRequest(request) ? "" : "; Secure";
-  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${SESSION_TTL_SECONDS}${secure}`;
+  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secure}`;
 }
 
 export function clearedSessionCookie(request) {
   const secure = isLocalRequest(request) ? "" : "; Secure";
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`;
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
 }
 
 /* True when the request carries a valid admin session and passes the
