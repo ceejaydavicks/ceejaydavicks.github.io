@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0B0B0F">
+  <meta name="theme-color" content="#0A0614">
   <meta name="color-scheme" content="dark light">
   <meta name="robots" content="index,follow">
   <!-- Adult-content rating signals (required on every page). -->
@@ -31,7 +31,7 @@
       document.documentElement.setAttribute("data-theme", theme);
 
       var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute("content", theme === "light" ? "#FAFAFB" : "#0B0B0F");
+      if (meta) meta.setAttribute("content", theme === "light" ? "#FAFAFB" : "#0A0614");
 
       var preload = document.createElement("link");
       preload.setAttribute("rel", "preload");
@@ -71,60 +71,71 @@
     :root {
       color-scheme: dark;
 
-      /* surfaces & ink */
-      --bg: #0B0B0F;
-      --surface: #111116;
-      --surface-2: #15151B;
-      --surface-3: #0F0F14;
-      --text: #F4F4F5;
-      --muted: #A1A1AA;
-      --quiet: #8A8A94;
-      --line: rgba(255, 255, 255, 0.06);
-      --line-soft: rgba(255, 255, 255, 0.04);
-      --line-strong: rgba(255, 255, 255, 0.12);
-      --tint: rgba(255, 255, 255, 0.03);
-      --tint-soft: rgba(255, 255, 255, 0.02);
-      --tint-strong: rgba(255, 255, 255, 0.06);
+      /* surfaces & ink — near-black page, deep purple panels, silver-lavender text */
+      --bg: #0A0614;
+      --surface: #130B22;
+      --surface-2: #190F2C;
+      --surface-3: #0E0819;
+      --text: #D9D4E3;
+      --muted: #8F86A3;
+      --quiet: #857C9B;
+      --line: #2A1B45;
+      --line-soft: #1E1336;
+      --line-strong: #3A2760;
+      --tint: rgba(157, 130, 230, 0.05);
+      --tint-soft: rgba(157, 130, 230, 0.035);
+      --tint-strong: rgba(157, 130, 230, 0.09);
 
-      /* rose accent */
-      --rose: #FDA4AF;
-      --rose-200: #FECDD3;
-      --rose-400: #FB7185;
-      --rose-soft: rgba(253, 164, 175, 0.12);
-      --rose-line: rgba(253, 164, 175, 0.3);
-      --rose-fill: rgba(253, 164, 175, 0.14);
-      --on-rose: #0B0B0F;
+      /* purple accent — taken from the logo lockup */
+      --accent: #6B4BB5;
+      --accent-hi: #9D82E6;
+      --accent-deep: #3F2A7A;
+      --accent-gradient: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent-hi) 100%);
+      /* same ramp, darker end: keeps white text on small fills above 4.5:1 */
+      --accent-gradient-ink: linear-gradient(135deg, var(--accent-deep) 0%, #7B5FC7 100%);
+      /* legacy names kept so existing rules pick the accent up */
+      --rose: var(--accent-hi);
+      --rose-200: #C3AEF4;
+      --rose-400: #B49BEF;
+      --rose-soft: rgba(107, 75, 181, 0.2);
+      --rose-line: rgba(157, 130, 230, 0.38);
+      --rose-fill: rgba(107, 75, 181, 0.24);
+      --on-rose: #FAF7FF;
+
+      /* Telegram stays Telegram blue in both themes */
+      --tg: #229ED9;
+      --tg-hover: #1C8CC2;
 
       /* elevation + chrome */
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-      --card-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
-      --card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-      --frame-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
-      --header-bg: rgba(11, 11, 15, 0.82);
-      --panel-bg: rgba(15, 15, 20, 0.98);
-      --toast-bg: rgba(21, 21, 27, 0.96);
+      --shadow: 0 24px 60px rgba(5, 2, 12, 0.62);
+      --card-shadow: 0 18px 40px rgba(5, 2, 12, 0.55);
+      --card-ring: inset 0 0 0 1px rgba(157, 130, 230, 0.07);
+      --frame-shadow: 0 30px 70px rgba(5, 2, 12, 0.66);
+      --header-bg: rgba(10, 6, 20, 0.82);
+      --panel-bg: rgba(19, 11, 34, 0.98);
+      --toast-bg: rgba(25, 15, 44, 0.96);
 
       /* component surfaces */
-      --input-bg: rgba(255, 255, 255, 0.03);
-      --input-bg-focus: rgba(255, 255, 255, 0.05);
-      --chip-active-bg: #FFFFFF;
-      --chip-active-text: #0B0B0F;
-      --ad-label: #9D9DA6;
-      --ad-bg: linear-gradient(150deg, rgba(21, 21, 27, 0.7), rgba(12, 12, 16, 0.85));
-      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(251, 113, 133, 0.16), transparent 46%),
-        linear-gradient(150deg, rgba(28, 22, 30, 0.98), rgba(14, 13, 17, 0.98));
-      --cta-bg: linear-gradient(135deg, #16131A, #0F0F14);
-      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 253, 164, 175), 0.24), transparent 62%),
-        linear-gradient(150deg, #1A1520, #09090E 78%);
-      --poster-grid: rgba(255, 255, 255, 0.035);
-      --media-bg: #0D0D12;
-      --hero-fade: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
-      --ambient: radial-gradient(ellipse at top, rgba(253, 164, 175, 0.06), transparent 60%);
-      --selection: rgba(253, 164, 175, 0.3);
-      --avatar-bg: linear-gradient(140deg, rgba(253, 164, 175, 0.32), rgba(251, 113, 133, 0.08));
-      --footer-quiet: #82828C;
-      --ring-track: rgba(253, 164, 175, 0.14);
-      --glow: rgba(251, 113, 133, 0.14);
+      --input-bg: rgba(157, 130, 230, 0.06);
+      --input-bg-focus: rgba(157, 130, 230, 0.1);
+      --chip-active-bg: var(--accent-gradient-ink);
+      --chip-active-text: #FFFFFF;
+      --ad-label: #8F86A3;
+      --ad-bg: linear-gradient(150deg, rgba(25, 15, 44, 0.7), rgba(12, 8, 24, 0.85));
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(157, 130, 230, 0.16), transparent 46%),
+        linear-gradient(150deg, rgba(27, 17, 48, 0.98), rgba(12, 8, 24, 0.98));
+      --cta-bg: linear-gradient(135deg, #1A1030, #0E0819);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 157, 130, 230), 0.26), transparent 62%),
+        linear-gradient(150deg, #1A1030, #09060F 78%);
+      --poster-grid: rgba(157, 130, 230, 0.05);
+      --media-bg: #0C0817;
+      --hero-fade: linear-gradient(90deg, rgba(10, 6, 20, 0.92), rgba(10, 6, 20, 0.35) 55%, rgba(10, 6, 20, 0.92));
+      --ambient: radial-gradient(ellipse 64% 100% at 100% 0%, rgba(59, 26, 140, 0.25), transparent 62%);
+      --selection: rgba(157, 130, 230, 0.3);
+      --avatar-bg: linear-gradient(140deg, rgba(157, 130, 230, 0.32), rgba(107, 75, 181, 0.1));
+      --footer-quiet: #8A81A0;
+      --ring-track: rgba(157, 130, 230, 0.16);
+      --glow: rgba(107, 75, 181, 0.4);
 
       --radius: 20px;
       --radius-lg: 28px;
@@ -154,12 +165,17 @@
       --tint-soft: rgba(24, 24, 27, 0.025);
       --tint-strong: rgba(24, 24, 27, 0.07);
 
-      --rose: #E11D48;
-      --rose-200: #BE123C;
-      --rose-400: #BE123C;
-      --rose-soft: rgba(225, 29, 72, 0.08);
-      --rose-line: rgba(225, 29, 72, 0.34);
-      --rose-fill: rgba(225, 29, 72, 0.1);
+      --accent: #6B4BB5;
+      --accent-hi: #9D82E6;
+      --accent-deep: #3F2A7A;
+      --accent-gradient: linear-gradient(135deg, #3F2A7A 0%, #6B4BB5 100%);
+      --accent-gradient-ink: linear-gradient(135deg, #3F2A7A 0%, #553A9C 100%);
+      --rose: #6B4BB5;
+      --rose-200: #3F2A7A;
+      --rose-400: #6B4BB5;
+      --rose-soft: rgba(107, 75, 181, 0.08);
+      --rose-line: rgba(107, 75, 181, 0.3);
+      --rose-fill: rgba(107, 75, 181, 0.1);
       --on-rose: #FFFFFF;
 
       --shadow: 0 20px 50px rgba(24, 24, 27, 0.08);
@@ -172,24 +188,24 @@
 
       --input-bg: #FFFFFF;
       --input-bg-focus: #FFFFFF;
-      --chip-active-bg: #18181B;
+      --chip-active-bg: var(--accent-gradient-ink);
       --chip-active-text: #FFFFFF;
       --ad-label: #6B6B75;
       --ad-bg: linear-gradient(150deg, #F7F7F9, #EFEFF2);
-      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(225, 29, 72, 0.1), transparent 46%),
-        linear-gradient(150deg, #FFFFFF, #FFF7F8);
-      --cta-bg: linear-gradient(135deg, #FFF4F6, #FFFFFF);
-      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 225, 29, 72), 0.16), transparent 62%),
+      --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(107, 75, 181, 0.1), transparent 46%),
+        linear-gradient(150deg, #FFFFFF, #F8F4FF);
+      --cta-bg: linear-gradient(135deg, #F5F0FF, #FFFFFF);
+      --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 107, 75, 181), 0.16), transparent 62%),
         linear-gradient(150deg, #F6F6F9, #E7E7EE 78%);
       --poster-grid: rgba(24, 24, 27, 0.05);
       --media-bg: #EDEDF0;
       --hero-fade: linear-gradient(90deg, rgba(250, 250, 251, 0.94), rgba(250, 250, 251, 0.42) 55%, rgba(250, 250, 251, 0.94));
-      --ambient: radial-gradient(ellipse at top, rgba(225, 29, 72, 0.05), transparent 60%);
-      --selection: rgba(225, 29, 72, 0.18);
-      --avatar-bg: linear-gradient(140deg, rgba(225, 29, 72, 0.14), rgba(225, 29, 72, 0.04));
+      --ambient: radial-gradient(ellipse 64% 100% at 100% 0%, rgba(107, 75, 181, 0.09), transparent 62%);
+      --selection: rgba(107, 75, 181, 0.18);
+      --avatar-bg: linear-gradient(140deg, rgba(107, 75, 181, 0.14), rgba(107, 75, 181, 0.04));
       --footer-quiet: #6B6B75;
-      --ring-track: rgba(225, 29, 72, 0.16);
-      --glow: rgba(225, 29, 72, 0.1);
+      --ring-track: rgba(107, 75, 181, 0.16);
+      --glow: rgba(107, 75, 181, 0.12);
     }
 
     /* ============ 2. BASE ============ */
@@ -427,16 +443,31 @@
       transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
     }
 
-    .btn-rose {
+    /* Primary accent button — purple gradient from the logo palette. */
+    .btn-accent {
       height: 40px;
       padding: 0 0.9rem;
-      background: var(--rose);
-      color: var(--on-rose);
+      background: var(--accent-gradient);
+      color: #FFFFFF;
       font-size: 13px;
-      box-shadow: 0 12px 28px rgba(251, 113, 133, 0.2);
+      text-shadow: 0 1px 2px rgba(10, 6, 20, 0.4);
+      box-shadow: 0 12px 28px rgba(63, 42, 122, 0.35);
     }
 
-    .btn-rose:hover { background: var(--rose-200); }
+    .btn-accent:hover { background: linear-gradient(135deg, #33215F 0%, #8B6FDB 100%); }
+
+    /* Telegram actions are Telegram blue with a white plane — in BOTH themes. */
+    .btn-telegram-nav {
+      height: 40px;
+      padding: 0 0.9rem;
+      background: var(--tg);
+      color: #FFFFFF;
+      font-size: 13px;
+      box-shadow: 0 12px 28px rgba(34, 158, 217, 0.26);
+    }
+
+    .btn-telegram-nav:hover { background: var(--tg-hover); color: #FFFFFF; }
+    .btn-telegram-nav .icon { color: #FFFFFF; }
 
     .telegram-label { display: none; }
 
@@ -509,7 +540,7 @@
       height: 6px;
       border-radius: 50%;
       background: var(--rose);
-      box-shadow: 0 0 12px rgba(253, 164, 175, 0.8);
+      box-shadow: 0 0 12px rgba(157, 130, 230, 0.75);
     }
 
     .section { margin-top: 4rem; }
@@ -631,7 +662,7 @@
       overflow: hidden;
       aspect-ratio: 16 / 9;
       border-radius: 20px;
-      background: #08080B;
+      background: #0A0614;
       box-shadow: var(--frame-shadow);
       isolation: isolate;
     }
@@ -641,7 +672,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #08080B;
+      background: #0A0614;
       object-fit: contain;
     }
 
@@ -662,7 +693,7 @@
 
     .player-empty strong { color: #fff; font-weight: 500; }
     .player-empty span { color: #A1A1AA; font-size: 12.5px; }
-    .player-empty a { color: #FDA4AF; font-weight: 500; }
+    .player-empty a { color: var(--accent-hi); font-weight: 500; }
 
     .video-frame iframe {
       position: absolute;
@@ -670,16 +701,16 @@
       width: 100%;
       height: 100%;
       border: 0;
-      background: #08080B;
+      background: #0A0614;
     }
 
     .empty-library {
       display: grid;
       gap: 0.55rem;
       padding: clamp(1.6rem, 5vw, 2.6rem);
-      border: 1px solid rgba(221, 212, 237, 0.12);
+      border: 1px solid var(--line);
       border-radius: 18px;
-      background: linear-gradient(160deg, #14121A, #0C0B10);
+      background: linear-gradient(160deg, #1A1030, #0C0817);
       text-align: center;
       justify-items: center;
     }
@@ -727,6 +758,8 @@
     }
 
     .rail-btn:hover .rail-btn__icon { background: var(--tint-strong); }
+    .rail-btn[data-telegram] .rail-btn__icon { border-color: rgba(34, 158, 217, 0.45); color: var(--tg); }
+    .rail-btn[data-telegram]:hover .rail-btn__icon { background: rgba(34, 158, 217, 0.16); color: var(--tg); }
     .rail-btn.is-on { color: var(--rose); }
     .rail-btn.is-on .rail-btn__icon { border-color: var(--rose-line); color: var(--rose); }
 
@@ -795,15 +828,18 @@
       align-items: center;
       gap: 0.35rem;
       margin-left: auto;
-      padding: 0.45rem 0.85rem;
-      border: 1px solid var(--line-strong);
+      padding: 0.45rem 0.9rem;
+      border: 1px solid transparent;
       border-radius: 999px;
-      color: var(--text);
+      background: var(--tg);
+      color: #FFFFFF;
       font-size: 12.5px;
-      transition: border-color 160ms ease, color 160ms ease;
+      font-weight: 500;
+      transition: background 160ms ease, color 160ms ease;
     }
 
-    .hero-follow:hover { border-color: var(--rose-line); color: var(--rose-200); }
+    .hero-follow:hover { background: var(--tg-hover); color: #FFFFFF; }
+    .hero-follow .icon { color: #FFFFFF; }
 
     .hero-stats {
       display: flex;
@@ -1070,9 +1106,10 @@
       gap: 0.4rem;
       padding: 0.25rem 0.6rem;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.45);
+      background: var(--accent-gradient-ink);
       color: #fff;
       font-size: 10.5px;
+      text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
       font-weight: 500;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -1087,6 +1124,8 @@
       animation: pulse 2.4s ease-in-out infinite;
     }
 
+    .poster__badge .pulse { background: #FFFFFF; }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.45; transform: scale(0.8); }
@@ -1099,10 +1138,11 @@
       left: 0.75rem;
       padding: 0.15rem 0.5rem;
       border-radius: 6px;
-      background: var(--rose);
-      color: var(--on-rose);
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
       font-size: 10px;
       font-weight: 600;
+      text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
     }
 
     .poster__badge + .poster__tag { left: auto; right: 0.75rem; }
@@ -1479,13 +1519,14 @@
     .btn-telegram {
       height: 48px;
       padding: 0 1.65rem;
-      background: var(--rose);
-      color: var(--on-rose);
+      background: var(--tg);
+      color: #FFFFFF;
       font-size: 14px;
-      box-shadow: 0 14px 32px rgba(251, 113, 133, 0.22);
+      box-shadow: 0 14px 32px rgba(34, 158, 217, 0.28);
     }
 
-    .btn-telegram:hover { background: var(--rose-200); }
+    .btn-telegram:hover { background: var(--tg-hover); color: #FFFFFF; }
+    .btn-telegram .icon { color: #FFFFFF; }
 
     /* ============ 13. FOLLOW / SOCIALS ============ */
     .follow {
@@ -1560,6 +1601,22 @@
 
     .footer-links a { transition: color 160ms ease; }
     .footer-links a:hover { color: var(--text); }
+
+    /* Telegram link in the footer: same blue pill, never the accent. */
+    .footer-links a[data-telegram] {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: -0.2rem 0;
+      padding: 0.16rem 0.6rem;
+      border-radius: 999px;
+      background: var(--tg);
+      color: #FFFFFF;
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .footer-links a[data-telegram]:hover { background: var(--tg-hover); color: #FFFFFF; }
+    .footer-links a[data-telegram] .icon { width: 12px; height: 12px; color: #FFFFFF; }
 
     .footer-badge {
       padding: 0.2rem 0.7rem;
@@ -1646,13 +1703,13 @@
     @media (max-width: 420px) {
       .icon-btn,
       .theme-toggle { width: 36px; height: 36px; }
-      .btn-rose { width: 36px; height: 36px; padding: 0; }
+      .btn-telegram-nav { width: 36px; height: 36px; padding: 0; }
     }
 
     @media (max-width: 340px) {
       .icon-btn,
       .theme-toggle,
-      .btn-rose { width: 32px; height: 32px; }
+      .btn-telegram-nav { width: 32px; height: 32px; }
       .theme-icon { width: 16px; height: 16px; }
     }
 
@@ -1751,7 +1808,7 @@
       position: absolute;
       inset: 16%;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(251, 113, 133, 0.16), transparent 70%);
+      background: radial-gradient(circle, rgba(107, 75, 181, 0.3), transparent 70%);
       filter: blur(18px);
       content: "";
     }
@@ -1764,7 +1821,7 @@
       box-shadow: 0 0 44px var(--glow);
     }
 
-    /* Smooth rose sweep on top of the static track (falls back to the track). */
+    /* Smooth violet sweep on top of the static track (falls back to the track). */
     .preloader__ring::after {
       position: absolute;
       inset: -2px;
@@ -1772,8 +1829,8 @@
       background: conic-gradient(
         from 0deg,
         transparent 0 8%,
-        rgba(253, 164, 175, 0.08) 26%,
-        var(--rose) 94%,
+        rgba(157, 130, 230, 0.1) 26%,
+        var(--accent-hi) 94%,
         transparent 100%
       );
       content: "";
@@ -1920,7 +1977,7 @@
           <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
         </button>
 
-        <a class="btn btn-rose" data-telegram href="#telegram">
+        <a class="btn btn-telegram-nav" data-telegram href="#telegram">
           <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
           <span class="telegram-label">Telegram</span>
         </a>
@@ -2112,7 +2169,10 @@
           <a href="#shorts">Shorts</a>
           <a href="#feed">Feed</a>
           <a href="#follow">Follow</a>
-          <a data-telegram href="#telegram">Telegram</a>
+          <a data-telegram href="#telegram">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            Telegram
+          </a>
         </nav>
 
         <span class="footer-badge">18+ only</span>
@@ -2230,7 +2290,7 @@
 
     const plural = (count) => (count === 1 ? "" : "s");
 
-    const tone = (index) => ["253, 164, 175", "244, 114, 182", "251, 113, 133", "232, 121, 168", "253, 186, 187"][index % 5];
+    const tone = (index) => ["157, 130, 230", "107, 75, 181", "185, 165, 240", "139, 106, 214", "122, 95, 201"][index % 5];
 
     function toast(message) {
       const node = $("#toast");
@@ -3101,7 +3161,7 @@
         frame.referrerPolicy = "strict-origin-when-cross-origin";
         frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
         frame.setAttribute("allowfullscreen", "");
-        frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#08080B";
+        frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#0A0614";
         player.replaceChildren(frame);
       } else if (!video.directUrl) {
         player.replaceChildren(makeFallback(video));
@@ -3671,7 +3731,7 @@
       }
 
       const themeColor = document.querySelector('meta[name="theme-color"]');
-      if (themeColor) themeColor.setAttribute("content", next === "light" ? "#FAFAFB" : "#0B0B0F");
+      if (themeColor) themeColor.setAttribute("content", next === "light" ? "#FAFAFB" : "#0A0614");
 
       const label = `Switch to ${next === "light" ? "dark" : "light"} mode`;
       document.querySelectorAll("[data-theme-toggle]").forEach((button) => {

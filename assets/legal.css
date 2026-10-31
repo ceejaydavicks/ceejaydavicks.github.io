@@ -6,15 +6,16 @@
 
 :root {
   color-scheme: dark;
-  --bg: #0B0B0F;
-  --panel: #111116;
-  --line: rgba(221, 212, 237, 0.12);
-  --line-strong: rgba(221, 212, 237, 0.2);
-  --text: #F4F1F8;
-  --muted: #A1A1AA;
-  --quiet: #7C7C86;
-  --rose: #FDA4AF;
-  --rose-soft: rgba(253, 164, 175, 0.1);
+  --bg: #0A0614;
+  --panel: #130B22;
+  --line: #2A1B45;
+  --line-strong: #3A2760;
+  --text: #D9D4E3;
+  --muted: #8F86A3;
+  --quiet: #857C9B;
+  --rose: #9D82E6;
+  --rose-soft: rgba(107, 75, 181, 0.2);
+  --ambient: radial-gradient(ellipse 64% 60% at 100% 0%, rgba(59, 26, 140, 0.25), transparent 62%);
   --logo: url("./logo-lockup@3x.png");
   --font: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -28,8 +29,9 @@
   --text: #18181B;
   --muted: #52525B;
   --quiet: #71717A;
-  --rose: #E11D48;
-  --rose-soft: rgba(225, 29, 72, 0.07);
+  --rose: #6B4BB5;
+  --rose-soft: rgba(107, 75, 181, 0.08);
+  --ambient: radial-gradient(ellipse 64% 60% at 100% 0%, rgba(107, 75, 181, 0.08), transparent 62%);
   --logo: url("./logo-lockup-light@3x.png");
 }
 
@@ -41,7 +43,7 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--ambient), var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;

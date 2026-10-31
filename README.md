@@ -188,9 +188,38 @@ the near-black-lettering lockup used when `[data-theme="light"]` is set.
 - A tiny inline script in `<head>` sets `data-theme` before the stylesheet loads,
   so there is no flash of the wrong theme (it also preloads the matching logo).
 - Every colour is a CSS variable: `:root` holds the dark palette and
-  `[data-theme="light"]` overrides it (`#FAFAFB` page, white cards, `#E11D48`
-  rose). Thumbnail captions stay white over the dark gradient in both modes.
+  `[data-theme="light"]` overrides it (`#FAFAFB` page, white cards). Thumbnail
+  captions stay white over the dark gradient in both modes.
 - To re-skin light mode, edit only the `[data-theme="light"]` block.
+
+### Palette (matches the logo)
+
+The theme is the logo's own colours: deep purple, near-black, silver-lavender.
+
+| Token | Dark | Light | Used for |
+| --- | --- | --- | --- |
+| `--bg` | `#0A0614` | `#FAFAFB` | page |
+| `--surface` / `--surface-2` | `#130B22` / `#190F2C` | `#FFFFFF` / `#F4F4F6` | cards, panels |
+| `--line` / `--line-strong` | `#2A1B45` / `#3A2760` | `rgba(24,24,27,.1/.16)` | borders |
+| `--text` | `#D9D4E3` | `#18181B` | body copy |
+| `--muted` / `--quiet` | `#8F86A3` / `#857C9B` | `#52525B` / `#6B6B75` | secondary copy |
+| `--accent` / `--accent-hi` / `--accent-deep` | `#6B4BB5` / `#9D82E6` / `#3F2A7A` | `#6B4BB5` / `#9D82E6` / `#3F2A7A` | accent |
+| `--accent-gradient` | `#3F2A7A → #9D82E6` | `#3F2A7A → #6B4BB5` | primary fills |
+
+- The dark page carries one soft violet glow: `--ambient`, a radial
+  `rgba(59,26,140,.25)` in the top-right corner, drawn by `.ambient`.
+- `--accent-gradient` fills the big surfaces; `--accent-gradient-ink` is the same
+  ramp with a darker light end and is used wherever small white text sits on the
+  fill (category chips, the Featured badge, poster tags) to keep contrast ≥ 4.5:1.
+- `--rose*` are kept as aliases of the accent so older rules keep resolving.
+- **Telegram is never the accent.** `--tg: #229ED9` and `--tg-hover: #1C8CC2` are
+  declared once in `:root` and never overridden, so every Telegram control — nav
+  button, `.hero-follow`, `.btn-telegram`, the footer pill, the rail icon — stays
+  Telegram blue with a white plane and white text in both themes.
+- The legal pages (`assets/legal.css`) and `/admin` mirror the same palette; the
+  age gate (`assets/age-gate.js`) keeps its styles inline and uses the same
+  `#0A0614` / `#2A1B45` / purple-gradient values. In `/admin`, `--danger` stays
+  red on purpose: it marks destructive actions, not the brand accent.
 
 ## Branding and links
 
