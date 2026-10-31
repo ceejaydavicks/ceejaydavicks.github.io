@@ -31,13 +31,41 @@ export async function onRequestGet({ env }) {
       Boolean(env.ADMIN_TELEGRAM_IDS)
   };
 
+  // Which deployment answered? Cloudflare sets these on every Pages build, so
+  // the report proves whether you are looking at production or a preview, and at
+  // which commit — the usual source of "I added the binding but it still fails".
+  const branch = env.CF_PAGES_BRANCH ? String(env.CF_PAGES_BRANCH) : null;
   const report = {
     ok: false,
+    deployment: {
+      environment: branch ? (branch === "main" ? "production" : "preview") : "local",
+      branch,
+      commit: env.CF_PAGES_COMMIT_SHA ? String(env.CF_PAGES_COMMIT_SHA).slice(0, 7) : null,
+      url: env.CF_PAGES_URL ? String(env.CF_PAGES_URL) : null
+    },
     checks,
     database: { reachable: false, schemaReady: false, videoCount: null },
+    notes: [],
     error: null,
     hint: null
   };
+
+  // Optional pieces: say what still works without them instead of failing.
+  if (!checks.sessionSecret) {
+    report.notes.push(
+      "SESSION_SECRET is not set — the session cookie is signed with ADMIN_PASSWORD instead. Sign-in works; changing the password signs everyone out."
+    );
+  }
+  if (!checks.mediaBinding) {
+    report.notes.push(
+      "No MEDIA (R2) binding: thumbnail uploads and Telegram video files are unavailable. External image URLs, video URLs and embed links still work."
+    );
+  }
+  if (!checks.telegram) {
+    report.notes.push(
+      "Telegram bot is not fully configured (needs ADMIN_TELEGRAM_IDS, TELEGRAM_BOT_TOKEN and TELEGRAM_WEBHOOK_SECRET). The admin panel does not depend on it."
+    );
+  }
 
   if (!checks.adminPassword) {
     report.error = "ADMIN_PASSWORD is not set on this deployment.";
@@ -48,7 +76,10 @@ export async function onRequestGet({ env }) {
 
   if (!checks.dbBinding) {
     report.error = "Missing D1 binding named DB.";
-    report.hint = DB_HINT;
+    report.hint =
+      report.deployment.environment === "preview"
+        ? "This is a preview deployment: bindings are added per environment. Pages project → Settings → Bindings → Preview tab → add D1 database with the variable name DB, then retry the preview deployment."
+        : DB_HINT;
     return json(report, 503);
   }
 
