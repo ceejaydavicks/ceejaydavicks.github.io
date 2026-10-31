@@ -5,6 +5,7 @@
 # tooling/documentation.
 
 /functions
+/worker
 /wrangler.toml
 /schema.sql
 /server.py
