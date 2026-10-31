@@ -32,6 +32,20 @@ Only `title` and `url` are required. Optional fields — `thumb`, `creator`,
 `format: "short"` — appear automatically when provided. The schema is documented
 at the top of `videos.js`.
 
+### Sample library
+
+The first 25 entries in `videos.js` are placeholders that keep every row of the
+page full while the real library is being built. Their thumbnails are generated
+SVGs in `assets/samples/` and their `url` values point at `example.com`, so a
+sample card shows its thumbnail but cannot play — clicking one lands on the
+player's "this video could not play here" fallback.
+
+Replacing a sample with a real clip is a one-line edit: swap its `url` for a
+Videy share link or a direct `.mp4`, and optionally its `thumb`. Removing an
+entry shortens the page (rows hide themselves when they run out of real videos).
+The original Videy upload sits at the end of the list; move it to the top if you
+want it featured again.
+
 How the list is used: the first entry is the featured video, the next three fill
 "Up next", then the Vertical Shorts row, Trending Now and the Mixed Feed are
 filled in order. Rows with no videos left are hidden automatically instead of
@@ -69,7 +83,9 @@ Cards keep the shared poster behaviour: hover lift/zoom, lazy-loaded thumbnails
 fallback.
 
 The feed only appears once the library is full enough to fill Up next and the
-rows above it (~15 videos); the "View all" library view shows the same masonry as
+rows above it (~15 videos) — which the shipped sample library does, so every row
+renders on a fresh copy. Delete samples and those rows hide themselves again
+rather than leaving gaps. The "View all" library view shows the same masonry as
 soon as there are two or more videos.
 
 ## Brand assets

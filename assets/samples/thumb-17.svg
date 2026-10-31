@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A1024"/><stop offset="1" stop-color="#5B2668"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#g)"/>
+  <circle cx="960" cy="454" r="281" fill="#FDA4AF" opacity="0.14"/>
+  <circle cx="1498" cy="216" r="86" fill="#FECDD3" opacity="0.22"/>
+  <text x="50%" y="52%" fill="#FECDD3" font-family="system-ui, sans-serif" font-size="81" font-weight="600" text-anchor="middle">CARD 17</text>
+  <text x="50%" y="60%" fill="#FDA4AF" opacity="0.75" font-family="system-ui, sans-serif" font-size="41" letter-spacing="4" text-anchor="middle">16:9</text>
+</svg>
