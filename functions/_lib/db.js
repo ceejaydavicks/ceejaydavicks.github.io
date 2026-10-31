@@ -20,6 +20,7 @@ const SCHEMA = [
     pinned INTEGER NOT NULL DEFAULT 0,
     tg_chat TEXT,
     tg_message_id INTEGER,
+    source_url TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE INDEX IF NOT EXISTS videos_order_idx
@@ -52,7 +53,11 @@ const DEFAULT_SETTINGS = {
    is attempted and a "duplicate column" error is ignored. */
 const LATE_COLUMNS = [
   ["tg_chat", "ALTER TABLE videos ADD COLUMN tg_chat TEXT"],
-  ["tg_message_id", "ALTER TABLE videos ADD COLUMN tg_message_id INTEGER"]
+  ["tg_message_id", "ALTER TABLE videos ADD COLUMN tg_message_id INTEGER"],
+  /* The page a scraped row came from. Kept separately from video_url because a
+     mirrored file lives in R2 under a fresh key every time — without this, the
+     same page pasted twice looked like a different video. */
+  ["source_url", "ALTER TABLE videos ADD COLUMN source_url TEXT NOT NULL DEFAULT ''"]
 ];
 
 /* One Telegram message may only ever produce one row: webhook updates are
@@ -116,6 +121,7 @@ export const VIDEO_COLUMNS = [
   "orientation",
   "featured",
   "pinned",
+  "source_url",
   "created_at"
 ].join(", ");
 
@@ -144,8 +150,8 @@ export async function insertVideo(env, values) {
   const result = await env.DB.prepare(
     `INSERT INTO videos
        (title, creator, thumbnail_url, video_url, embed_url, duration, "views", tag,
-        orientation, featured, pinned, tg_chat, tg_message_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        orientation, featured, pinned, tg_chat, tg_message_id, source_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       values.title,
@@ -160,7 +166,8 @@ export async function insertVideo(env, values) {
       values.featured,
       values.pinned,
       values.tg_chat === undefined ? null : values.tg_chat,
-      values.tg_message_id === undefined ? null : values.tg_message_id
+      values.tg_message_id === undefined ? null : values.tg_message_id,
+      values.source_url === undefined ? "" : values.source_url
     )
     .run();
 
@@ -210,6 +217,24 @@ export async function findVideoByTelegram(env, chat, messageId) {
   return env.DB
     .prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE tg_chat = ? AND tg_message_id = ?`)
     .bind(String(chat), Number(messageId))
+    .first();
+}
+
+/* Scraped links are deduped on the playable URL: re-pasting a page (or a
+   Telegram webhook retry) must not add the same video twice. */
+export async function findVideoBySourceUrl(env, urls) {
+  const values = [...new Set((urls || []).filter((url) => typeof url === "string" && url))];
+  if (!values.length) return null;
+
+  const placeholders = values.map(() => "?").join(", ");
+  return env.DB.prepare(
+    `SELECT ${VIDEO_COLUMNS} FROM videos
+     WHERE source_url IN (${placeholders})
+        OR video_url IN (${placeholders})
+        OR embed_url IN (${placeholders})
+     LIMIT 1`
+  )
+    .bind(...values, ...values, ...values)
     .first();
 }
 

@@ -84,6 +84,9 @@ type **Secret** (not "Text"), then **Save**:
 | `TELEGRAM_BOT_TOKEN` | The token @BotFather gives you. | For the bot |
 | `TELEGRAM_WEBHOOK_SECRET` | A random string, letters and numbers only. | For the bot |
 | `TELEGRAM_CHANNEL` | Your **public** channel as `@username` (Part 7b). Without it the bot can only publish videos up to 20 MB. | For the bot |
+| `SCRAPE_MIRROR_MAX_MB` | Largest scraped file copied into R2, in MB (default `90`). Bigger files are linked, not copied. | Optional |
+| `SCRAPE_MIRROR` | `off` stops scraped files being copied into R2 at all (thumbnails are still copied). | Optional |
+| `SCRAPE_ALLOW_PAGE` | `on` also publishes a scraped page whose player could not be read, as an iframe of the page. Off by default. | Optional |
 
 Tip for a random string on a phone: open a password generator, or just mash the
 keyboard for ~40 characters. Never reuse your admin password as the webhook
@@ -194,6 +197,7 @@ Worker, and the site plays it with Telegram's own player.
 3. Still in @BotFather: `/setcommands` → pick your bot → paste:
 
    ```
+   scrape - Scrape a page link
    list - Show the newest videos
    delete - Delete a video by id
    feature - Make a video the featured one
@@ -257,6 +261,33 @@ nothing.
 
 You should see `{"ok":true,"result":true,"description":"Webhook was set"}`.
 
+### The easy way: let the site register itself
+
+Once `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` are saved and the
+deployment is retried, open this on your phone:
+
+```
+https://YOUR-SITE.pages.dev/api/telegram/setup?secret=SECRET
+```
+
+It reports what Telegram says about your bot — whether the token works, which
+webhook URL is registered, how many updates are queued and the last delivery
+error — next to what this deployment expects, and lists what to fix. That page is
+the fastest way to answer "why is my bot not posting?".
+
+To register the webhook from the site instead of pasting the long `setWebhook`
+URL, send a **POST** to the same address (a browser will not do that, so use
+`curl` or a REST client):
+
+```sh
+curl -X POST "https://YOUR-SITE.pages.dev/api/telegram/setup?secret=SECRET" \
+  -H "content-type: application/json" -d '{"drop_pending_updates":true}'
+```
+
+It sets the URL, the `secret_token` and `allowed_updates` for you. `secret` can
+also be sent as the `X-Telegram-Bot-Api-Secret-Token` header instead of in the
+query string.
+
 Check it any time with `https://api.telegram.org/botTOKEN/getWebhookInfo`.
 
 > The secret is checked **twice**: Telegram echoes it back in the
@@ -274,20 +305,47 @@ reply clutter: it only speaks up if something went wrong.
 channel (`copyMessage`, a server-side copy — nothing is downloaded) and publishes
 it the same way, replying `Published ✅ Poolside (#12)`.
 
+- **Any page link (the automatic path):** paste a link to a video page and just
+  send it — no caption needed. The bot fetches the page, reads the title, poster,
+  duration and player (Open Graph tags, schema.org `VideoObject` data, `<video>`
+  and `<source>` tags, iframe players, JS player configs, WordPress's REST API)
+  and publishes what it finds. A **listing page** publishes every video on it, up
+  to 12 per message — Cloudflare limits outbound requests per invocation, so the
+  bot stops there and tells you. You get one line per video,
+  `Published ✅ Title (#12, file)`.
+  - **Files are copied to your site.** A scraped `.mp4`/`.webm` up to
+    `SCRAPE_MIRROR_MAX_MB` (default 90 MB) is downloaded into R2 and served from
+    `/api/media/videos/…`, so the source site cannot hotlink-block or delete it.
+    Bigger files are played from the original URL and the reply says so.
+  - **Thumbnails** are always copied into R2 (up to 3 MB) for the same reason.
+  - **Links in the channel** are scraped the same way and published **silently**
+    — the channel stays free of bot chatter, and you get a DM only if something
+    fails.
+  - **A direct video file link** (`…/clip.mp4`) needs no page: it is copied and
+    published under the file name.
+  - **Duplicates are skipped**, keyed on the page the row came from
+    (`source_url`), so pasting the same link twice answers
+    `⏭️ Already on the site as #12` instead of adding a second row.
 - **Link + caption:** `My video title | Creator name | 4K https://example.com/embed/abc`
-  → published and answered with `Published ✅ … (#12)`.
+  → the caption wins for a single link, published and answered with
+  `Published ✅ … (#12)`. Without a caption the scraped title is used.
 - **Photo + caption:** the photo is saved to R2 and becomes a **draft** thumbnail
   entry; add the video link in `/admin` to publish it.
 - **Video under 20 MB with no channel configured:** stored in R2 and published
   directly (the old behaviour, still supported).
-- **Commands:** `/list` (newest 15), `/delete 12` (also deletes the channel post),
-  `/feature 12`, `/id`, `/help`.
+- **Commands:** `/scrape <url>` (scrape now), `/list` (newest 15),
+  `/delete 12` (also deletes the channel post), `/feature 12`, `/id`, `/help`.
 - Messages from any other Telegram account are ignored and answered with
   `⛔ This bot only accepts uploads from the site admin.` Posts in any other
   channel are ignored silently.
 
 Every row remembers which Telegram message it came from, so a webhook Telegram
-retries cannot publish the same video twice.
+retries cannot publish the same video twice. Scraped rows remember the page they
+came from (`source_url`) instead, and are deduped on it.
+
+Telegram's retry rule also means **one channel post produces one row**: put a
+single video per channel message. A link post is the exception — every video the
+scraped page lists becomes its own row.
 
 ---
 

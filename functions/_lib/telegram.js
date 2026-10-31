@@ -32,29 +32,64 @@ import {
   deleteVideo,
   setVideoFlags,
   findVideoByTelegram,
+  findVideoBySourceUrl,
   getVideoSourceRefs
 } from "./db.js";
 import { cleanText, fail, json } from "./http.js";
 import { validateVideoInput } from "./validate.js";
+import { extractUrls, formatDuration, normaliseUrl, scrapeUrl } from "./scrape.js";
 
 const BOT_DOWNLOAD_LIMIT = 20 * 1024 * 1024; // getFile cap for bots
 const MAX_MESSAGE = 4000;
-const TELEGRAM_API = "https://api.telegram.org";
+const DEFAULT_TELEGRAM_API = "https://api.telegram.org";
+
+/* How much of a scraped file may be copied into R2 automatically. Cloudflare
+   accepts the upload, but a bigger file is left on the original host and
+   played from there instead. */
+const DEFAULT_MIRROR_MAX_MB = 90;
+const MAX_THUMB_BYTES = 3 * 1024 * 1024;
+
+/* A message can carry up to three links and a page can list many videos; every
+   mirrored file is an outbound subrequest, so one webhook call is bounded. */
+const MAX_PUBLISH_PER_MESSAGE = 12;
 
 const HELP = [
   "Videos:",
   "- Post a video in your channel → it appears on the site (any size)",
   "- Or send a video here → the bot copies it to the channel (any size)",
-  "- Or send a link / photo with the caption: Title | Creator | Tag",
+  "- Or paste any video page link → the bot scrapes it and publishes it",
+  "- A link posted in the channel is scraped the same way",
+  "- Optional: keep a caption as Title | Creator | Tag to override the title",
   "",
   "Commands:",
+  "/scrape <url> — scrape a page now",
   "/list — newest videos",
   "/delete <id> — remove a video (and its channel post)",
   "/feature <id> — make a video the featured one",
   "/id — show your ids and the configured channel"
 ].join("\n");
 
-/* ---- configuration ------------------------------------------------------ */
+/* ---- configuration (both naming schemes are accepted) ------------------- */
+
+/* The values documented for this repo (TELEGRAM_*) win; the names used by the
+   AfterDark worker template (BOT_TOKEN, WEBHOOK_SECRET, ALLOWED_USER_IDS) work
+   as fallbacks, so a bot configured for that template keeps working. */
+export function botToken(env) {
+  return String((env && (env.TELEGRAM_BOT_TOKEN || env.BOT_TOKEN)) || "").trim();
+}
+
+export function webhookSecret(env) {
+  return String((env && (env.TELEGRAM_WEBHOOK_SECRET || env.WEBHOOK_SECRET)) || "").trim();
+}
+
+/* Overridable only so the test suite can point at a local mock of the Bot API;
+   production always talks to Telegram. */
+export function telegramApiBase(env) {
+  const base = String((env && env.TELEGRAM_API_BASE) || DEFAULT_TELEGRAM_API).trim();
+  return base.replace(/\/+$/, "");
+}
+
+/* ---- channel configuration ---------------------------------------------- */
 
 /* TELEGRAM_CHANNEL accepts "@name", "name", "https://t.me/name" or "https://t.me/s/name".
    TELEGRAM_CHANNEL_ID (optional) pins the numeric id, e.g. -1001234567890. */
@@ -93,8 +128,8 @@ function isConfiguredChannel(env, chat) {
   return false;
 }
 
-function secretMatches(request, env, params) {
-  const expected = (env.TELEGRAM_WEBHOOK_SECRET || "").trim();
+export function secretMatches(request, env, params) {
+  const expected = webhookSecret(env);
   if (!expected) return false;
 
   const header = (request.headers.get("x-telegram-bot-api-secret-token") || "").trim();
@@ -109,26 +144,14 @@ function secretMatches(request, env, params) {
   return header === expected || pathSecret === expected;
 }
 
-function allowedIds(env) {
-  return String(env.ADMIN_TELEGRAM_IDS || "")
+export function allowedIds(env) {
+  return String(env.ADMIN_TELEGRAM_IDS || env.ALLOWED_USER_IDS || "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
 }
 
 /* ---- parsing helpers ---------------------------------------------------- */
-
-function extractUrl(text) {
-  const match = String(text || "").match(/https?:\/\/[^\s<>"']+/i);
-  if (!match) return "";
-  const url = match[0].replace(/[.,;:!?)]+$/, "");
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "";
-  } catch (error) {
-    return "";
-  }
-}
 
 function parseCaption(text) {
   const parts = String(text || "").split("|");
@@ -146,8 +169,10 @@ function fileTitle(media) {
 
 /* ---- telegram api ------------------------------------------------------- */
 
-async function telegram(env, method, payload) {
-  const response = await fetch(`${TELEGRAM_API}/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
+export async function telegram(env, method, payload) {
+  const token = botToken(env);
+  if (!token) throw new Error("Telegram bot is not configured: set TELEGRAM_BOT_TOKEN.");
+  const response = await fetch(`${telegramApiBase(env)}/bot${token}/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload || {})
@@ -161,7 +186,7 @@ async function telegram(env, method, payload) {
    row is already gone, and a missing/blocked bot must not turn a delete into an
    error. */
 export async function deleteTelegramPost(env, refs) {
-  if (!refs || !refs.tg_message_id || !env.TELEGRAM_BOT_TOKEN) return false;
+  if (!refs || !refs.tg_message_id || !botToken(env)) return false;
   try {
     await telegram(env, "deleteMessage", {
       chat_id: refs.tg_chat,
@@ -190,7 +215,7 @@ async function downloadFile(env, fileId) {
   const file = await telegram(env, "getFile", { file_id: fileId });
   if (!file || !file.file_path) throw new Error("Telegram did not return a file path.");
 
-  const response = await fetch(`${TELEGRAM_API}/file/bot${env.TELEGRAM_BOT_TOKEN}/${file.file_path}`);
+  const response = await fetch(`${telegramApiBase(env)}/file/bot${botToken(env)}/${file.file_path}`);
   if (!response.ok) throw new Error("Could not download the file from Telegram.");
 
   return {
@@ -225,6 +250,7 @@ async function createEntry(env, fields) {
   const values = { ...parsed.values };
   if (fields.tg_chat !== undefined) values.tg_chat = fields.tg_chat;
   if (fields.tg_message_id !== undefined) values.tg_message_id = fields.tg_message_id;
+  if (fields.source_url !== undefined) values.source_url = fields.source_url;
 
   try {
     return await insertVideo(env, values);
@@ -350,33 +376,338 @@ async function publishVideo(env, { chat, message, text, fromChannel = false }) {
   return lines.join("\n");
 }
 
-async function handleLink(env, message, chatId, text) {
-  const url = extractUrl(text);
-  if (!url) {
-    await reply(env, chatId, "That does not look like a link. Send the link with a caption: Title | Creator | Tag");
-    return;
+/* ---- scraped links ------------------------------------------------------ */
+
+/* Copying a scraped file into R2 is what makes the video "ours": the site then
+   serves it from /api/media/… and the source host can neither hotlink-block
+   playback nor delete the file. Files larger than the cap are left in place and
+   played from the original URL. */
+
+function mirrorMaxBytes(env) {
+  const mb = Number(env.SCRAPE_MIRROR_MAX_MB);
+  const limit = Number.isFinite(mb) && mb > 0 ? mb : DEFAULT_MIRROR_MAX_MB;
+  return Math.round(limit * 1024 * 1024);
+}
+
+function mirrorEnabled(env) {
+  if (!env.MEDIA) return false;
+  return !/^(?:0|off|false|no)$/i.test(String(env.SCRAPE_MIRROR || "").trim());
+}
+
+function mbLabel(bytes) {
+  return `${(Number(bytes || 0) / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function extensionFor(url, contentType) {
+  const byType = {
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/quicktime": "mov",
+    "video/x-m4v": "m4v",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif"
+  };
+  if (byType[contentType]) return byType[contentType];
+  try {
+    const match = new URL(url).pathname.match(/\.([a-z0-9]{2,5})$/i);
+    if (match) return match[1].toLowerCase();
+  } catch (error) {
+    /* fall through */
+  }
+  return contentType.startsWith("image/") ? "jpg" : "mp4";
+}
+
+/* Fetch a remote file with the source page as Referer (so hotlink protection
+   sees a normal browser). Returns the response still unread, so the body can be
+   streamed straight into R2 instead of buffered in memory. */
+async function fetchRemoteFile(url, { referer, maxBytes }) {
+  let response;
+  try {
+    response = await fetch(url, {
+      redirect: "follow",
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        accept: "*/*",
+        ...(referer ? { referer } : {})
+      },
+      signal: AbortSignal.timeout(30000)
+    });
+  } catch (error) {
+    return { error: "could not be reached" };
   }
 
-  const { title, creator, tag } = parseCaption(text.replace(url, ""));
-  if (!title) {
-    await reply(env, chatId, "Add a caption in the format: Title | Creator | Tag");
-    return;
+  if (!response.ok) {
+    if (response.body) await response.body.cancel().catch(() => {});
+    return { error: `answered HTTP ${response.status}` };
   }
 
-  const isFile = /\.(mp4|webm|mov|m4v)$/i.test(new URL(url).pathname);
-  const video = await createEntry(env, {
-    title,
-    creator,
-    tag,
-    thumbnail_url: "",
-    video_url: isFile ? url : "",
-    embed_url: isFile ? "" : url,
-    orientation: "horizontal",
-    featured: false,
-    pinned: false
+  const contentType = String(response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  const length = Number(response.headers.get("content-length") || 0);
+
+  if (length && length > maxBytes) {
+    if (response.body) await response.body.cancel().catch(() => {});
+    return { error: `is ${mbLabel(length)}, over the ${mbLabel(maxBytes)} copy limit`, oversized: true, length };
+  }
+
+  /* Without a size there is no way to stay under the limit while streaming, so
+     the original URL is used instead of risking a huge upload. */
+  if (!length) {
+    if (response.body) await response.body.cancel().catch(() => {});
+    return { error: "did not report its size" };
+  }
+
+  return { response, contentType, length };
+}
+
+async function storeRemote(env, url, { referer, folder, maxBytes, kind }) {
+  const fetched = await fetchRemoteFile(url, { referer, maxBytes });
+  if (fetched.error) return fetched;
+
+  const key = `${folder}/${kind}-${Date.now()}-${randomKey()}.${extensionFor(url, fetched.contentType)}`;
+  await env.MEDIA.put(key, fetched.response.body, {
+    httpMetadata: {
+      contentType: fetched.contentType || (kind === "thumb" ? "image/jpeg" : "video/mp4"),
+      cacheControl: "public, max-age=31536000, immutable"
+    }
   });
+  return { url: `/api/media/${key}`, bytes: fetched.length };
+}
 
-  await reply(env, chatId, `Published ✅ ${video.title} (#${video.id})`);
+/* Thumbnails are small, so they are mirrored even when video mirroring is off —
+   an external poster is the first thing a hotlink-blocking host breaks. */
+async function mirrorThumbnail(env, url, referer) {
+  if (!url || !env.MEDIA) return url || "";
+  const stored = await storeRemote(env, url, {
+    referer,
+    folder: "thumbs",
+    maxBytes: MAX_THUMB_BYTES,
+    kind: "scrape"
+  });
+  return stored.url || url;
+}
+
+/* -> { url } on success, { error, oversized } when the file stays remote. */
+async function mirrorVideo(env, url, referer) {
+  if (!mirrorEnabled(env)) return { error: "R2 mirroring is off" };
+  return storeRemote(env, url, {
+    referer,
+    folder: "videos",
+    maxBytes: mirrorMaxBytes(env),
+    kind: "scrape"
+  });
+}
+
+/* A tag chip only when the page actually declared keywords — the title and the
+   host are not categories, and a wrong chip is worse than none. */
+function tagFor(item) {
+  const candidates = Array.isArray(item.tags) ? item.tags : [];
+  return cleanText(candidates.find((tag) => tag && tag.length <= 32) || "", 32);
+}
+
+/**
+ * Publish one scraped item. Returns { video } | { skipped } | { error }.
+ * `skipped` means "nothing to do" (duplicate, or a page with no player);
+ * `error` means the write or the copy failed but is worth telling the admin.
+ */
+async function publishScrapedItem(env, item, { referer }) {
+  const title = cleanText(item.title, 200);
+  if (!title) return { skipped: "no title found" };
+
+  const playable = item.sourceKind === "file" || item.sourceKind === "embed";
+  const allowPage = /^(?:1|on|true|yes)$/i.test(String(env.SCRAPE_ALLOW_PAGE || "").trim());
+  if (!playable && !allowPage) {
+    return { skipped: "the page has no readable player — send the direct video or embed link" };
+  }
+
+  /* Dedupe on the page URL, not the playable URL: a mirrored file gets a new
+     R2 key on every mirror, so video_url alone would never match twice. */
+  const sourceUrl = normaliseUrl(item.sourceUrl);
+  const duplicate = await findVideoBySourceUrl(env, [sourceUrl]);
+  if (duplicate) return { skipped: `already on the site as #${duplicate.id}` };
+
+  const notes = [];
+  let videoUrl = "";
+  let embedUrl = "";
+
+  if (item.sourceKind === "file") {
+    const mirrored = await mirrorVideo(env, item.sourceUrl, referer);
+    videoUrl = mirrored.url || item.sourceUrl;
+    if (mirrored.error) {
+      notes.push(
+        mirrored.oversized
+          ? `kept the original file (${mbLabel(mirrored.length)}) — over the copy limit`
+          : `kept the original file (${mirrored.error})`
+      );
+    }
+  } else {
+    embedUrl = item.sourceUrl;
+  }
+
+  const thumbnail = await mirrorThumbnail(env, item.thumbnail, referer);
+  const duration = formatDuration(item.durationSec);
+
+  let video;
+  try {
+    video = await createEntry(env, {
+      title,
+      creator: cleanText(item.creator || "", 80),
+      tag: tagFor(item),
+      thumbnail_url: thumbnail,
+      video_url: videoUrl,
+      embed_url: embedUrl,
+      duration,
+      orientation: "horizontal",
+      featured: false,
+      pinned: false,
+      source_url: sourceUrl
+    });
+  } catch (error) {
+    return { error: error && error.message ? error.message : "could not save the video" };
+  }
+
+  return { video, notes };
+}
+
+function shortUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`.slice(0, 60);
+  } catch (error) {
+    return String(url || "").slice(0, 60);
+  }
+}
+
+/* Message the site owner(s) directly — used when a channel post fails, because
+   the channel itself must stay silent. */
+async function notifyOwners(env, text) {
+  const ids = allowedIds(env);
+  if (!ids.length || !botToken(env)) return;
+  try {
+    await telegram(env, "sendMessage", {
+      chat_id: ids[0],
+      text: String(text).slice(0, MAX_MESSAGE),
+      disable_web_page_preview: true
+    });
+  } catch (error) {
+    /* best effort: a failed alert must never fail the webhook */
+  }
+}
+
+async function handleLink(env, message, chatId, text, { notify = true } = {}) {
+  const urls = extractUrls(text);
+  if (!urls.length) {
+    if (notify) await reply(env, chatId, "That does not look like a link. Send the page, video or embed link.");
+    return { published: 0, skipped: 0, failed: 0 };
+  }
+
+  /* An explicit "Title | Creator | Tag" caption still wins for a single link;
+     without one the scraped title is used, which is the automatic path. */
+  const caption = parseCaption(text.replace(/https?:\/\/\S+/gi, " "));
+
+  if (notify) {
+    await reply(env, chatId, `🔎 Scraping ${urls.length === 1 ? "the link" : `${urls.length} links`} — this can take a few seconds…`);
+  }
+
+  const lines = [];
+  const totals = { published: 0, skipped: 0, failed: 0 };
+  let budget = MAX_PUBLISH_PER_MESSAGE;
+  let capped = false;
+
+  for (const url of urls) {
+    let result;
+    try {
+      result = await scrapeUrl(url);
+    } catch (error) {
+      result = { error: (error && error.message) || "the page could not be scraped" };
+    }
+
+    if (result.error) {
+      totals.failed += 1;
+      lines.push(`⚠️ ${shortUrl(url)} — ${result.error}`);
+
+      /* The manual flow still applies: a caption plus a link is a usable row
+         even when the page cannot be read (an embed-only host, a login wall). */
+      if (caption.title && urls.length === 1) {
+        try {
+          const isFile = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(new URL(url).pathname);
+          const video = await createEntry(env, {
+            title: caption.title,
+            creator: caption.creator,
+            tag: caption.tag,
+            thumbnail_url: "",
+            video_url: isFile ? url : "",
+            embed_url: isFile ? "" : url,
+            orientation: "horizontal",
+            featured: false,
+            pinned: false
+          });
+          totals.published += 1;
+          lines.push(`Published ✅ ${video.title} (#${video.id}) — from your caption`);
+        } catch (error) {
+          lines.push(`⚠️ ${(error && error.message) || "could not save the video"}`);
+        }
+      } else if (caption.title) {
+        lines.push("Tip: send one link per message to use a Title | Creator | Tag caption.");
+      }
+      continue;
+    }
+
+    const items = Array.isArray(result.items) ? result.items : [];
+    if (result.truncated) capped = true;
+    if (!items.length) {
+      totals.failed += 1;
+      lines.push(`⚠️ ${shortUrl(url)} — no video found on that page`);
+      continue;
+    }
+
+    /* One link, one item, explicit caption: the human title beats the scrape. */
+    if (caption.title && urls.length === 1 && items.length === 1) {
+      items[0].title = caption.title;
+      items[0].creator = caption.creator;
+      items[0].tags = [caption.tag || tagFor(items[0])];
+    }
+
+    for (const item of items) {
+      if (budget <= 0) {
+        capped = true;
+        break;
+      }
+      budget -= 1;
+      const outcome = await publishScrapedItem(env, item, { referer: result.finalUrl || url });
+
+      if (outcome.video) {
+        totals.published += 1;
+        const how = outcome.video.embed_url ? "embed" : "file";
+        const notes = outcome.notes && outcome.notes.length ? ` — ${outcome.notes.join("; ")}` : "";
+        lines.push(`Published ✅ ${outcome.video.title} (#${outcome.video.id}, ${how})${notes}`);
+      } else if (outcome.skipped) {
+        totals.skipped += 1;
+        lines.push(`⏭️ ${item.title} — ${outcome.skipped}`);
+      } else {
+        totals.failed += 1;
+        lines.push(`⚠️ ${item.title} — ${outcome.error || "could not be saved"}`);
+      }
+    }
+  }
+
+  if (capped) {
+    lines.push(`…stopped after ${MAX_PUBLISH_PER_MESSAGE} videos — that is the per-message limit.`);
+  }
+
+  const summary = lines.length ? lines.join("\n") : "Nothing was published.";
+
+  if (notify) {
+    await reply(env, chatId, summary);
+  } else if (totals.failed && !totals.published) {
+    /* Quiet mode is for channel posts: the channel stays clean, the owner gets
+       told why nothing appeared. */
+    await notifyOwners(env, `⚠️ A link posted in Telegram was not published:\n${summary}`);
+  }
+
+  return totals;
 }
 
 async function handlePhoto(env, message, chatId, text) {
@@ -420,6 +751,16 @@ async function handleCommand(env, message, chatId, text) {
 
   if (command === "/start" || command === "/help") {
     await reply(env, chatId, HELP);
+    return;
+  }
+
+  if (command === "/scrape") {
+    const url = args.join(" ").trim();
+    if (!url) {
+      await reply(env, chatId, "Usage: /scrape <page-url>");
+      return;
+    }
+    await handleLink(env, message, chatId, url);
     return;
   }
 
@@ -504,11 +845,11 @@ function videoMedia(message) {
 }
 
 export async function handleTelegram({ request, env, params }) {
-  if (!(env.TELEGRAM_WEBHOOK_SECRET || "").trim()) {
+  if (!webhookSecret(env)) {
     return fail("Telegram webhook is not configured: set TELEGRAM_WEBHOOK_SECRET.", 503);
   }
   if (!secretMatches(request, env, params)) return fail("Unauthorized", 401);
-  if (!env.TELEGRAM_BOT_TOKEN) {
+  if (!botToken(env)) {
     return fail("Telegram bot is not configured: set TELEGRAM_BOT_TOKEN.", 503);
   }
 
@@ -526,14 +867,34 @@ export async function handleTelegram({ request, env, params }) {
     if (!isConfiguredChannel(env, channelPost.chat)) return json({ ok: true });
 
     const media = videoMedia(channelPost);
-    if (!media) return json({ ok: true });
+    const channelText = String(channelPost.caption || channelPost.text || "").trim();
 
     await ensureSchema(env);
+
+    if (!media) {
+      /* A link posted in the channel is a publish job: scrape it silently so
+         the channel stays free of bot chatter, and DM the owner only when
+         something could not be published. */
+      if (extractUrls(channelText).length) {
+        try {
+          await handleLink(env, channelPost, channelPost.chat.id, channelText, { notify: false });
+        } catch (error) {
+          await notifyOwners(
+            env,
+            `⚠️ A link posted in the channel could not be published: ${
+              (error && error.message) || "unknown error"
+            }`
+          );
+        }
+      }
+      return json({ ok: true });
+    }
+
     try {
       await publishVideo(env, {
         chat: channelPost.chat,
         message: channelPost,
-        text: String(channelPost.caption || "").trim(),
+        text: channelText,
         fromChannel: true
       });
     } catch (error) {
@@ -575,7 +936,7 @@ export async function handleTelegram({ request, env, params }) {
       if (result) await reply(env, chatId, result);
     } else if (Array.isArray(message.photo) && message.photo.length) {
       await handlePhoto(env, message, chatId, text);
-    } else if (extractUrl(text)) {
+    } else if (extractUrls(text).length) {
       await handleLink(env, message, chatId, text);
     } else {
       await reply(env, chatId, HELP);
