@@ -8,11 +8,22 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).parent
 ASSETS = ROOT / "assets"
 
-SERVED_FILES = {
-    "/": (ROOT / "index.html", "text/html; charset=utf-8"),
-    "/index.html": (ROOT / "index.html", "text/html; charset=utf-8"),
-    "/videos.js": (ROOT / "videos.js", "text/javascript; charset=utf-8"),
+PAGES = {
+    "/": "index.html",
+    "/index.html": "index.html",
+    "/terms.html": "terms.html",
+    "/terms": "terms.html",
+    "/privacy.html": "privacy.html",
+    "/privacy": "privacy.html",
+    "/compliance.html": "compliance.html",
+    "/compliance": "compliance.html",
+    "/2257": "compliance.html",
 }
+
+SERVED_FILES = {
+    path: (ROOT / name, "text/html; charset=utf-8") for path, name in PAGES.items()
+}
+SERVED_FILES["/videos.js"] = (ROOT / "videos.js", "text/javascript; charset=utf-8")
 
 ASSET_TYPES = {
     ".png": "image/png",
@@ -21,6 +32,8 @@ ASSET_TYPES = {
     ".webp": "image/webp",
     ".svg": "image/svg+xml",
     ".ico": "image/x-icon",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
 }
 
 

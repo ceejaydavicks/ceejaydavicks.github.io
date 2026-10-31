@@ -126,21 +126,78 @@ Everything is configured at the top of the script block in `index.html`:
 - `SITE_NAME` — visible logo/footer text plus the SEO title and meta tags.
 - `TELEGRAM_URL` — every Telegram button. Left empty, the buttons are visible but
   inactive; paste `https://t.me/yourchannel` to activate them.
-- `SMARTLINK_URL` — optional Adsterra Smartlink used by the sponsored spots.
+- `AD_CONFIG` — every advertisement on the page (see below).
 - `socialLinks` — the Follow section links.
 
 ## Advertising
 
-Ad slots keep their original IDs so existing snippets drop in unchanged:
+There are at most three ad placements, all driven by one `AD_CONFIG` object at
+the top of the script in `index.html`:
 
-- `#adsterra-rectangle` — 300×250 under "Up next".
-- `#adsterra-leaderboard` — 728×90 above the curated rows (desktop only).
-- `#adsterra-native` — native banner above the Follow section.
-- `[data-smartlink]` — hero offer, sponsored strip, sponsored grid cards and the
-  footer link.
+```js
+const AD_CONFIG = {
+  banner:    { label: "Advertisement", code: "" },              // (a)
+  native:    { label: "Advertisement", every: 8, code: "" },     // (b)
+  smartlink: { label: "Sponsored", url: "", code: "" }           // (c)
+};
+```
 
-Paste each snippet inside its `<aside>` in `index.html` and delete the two
-placeholder label spans. Analytics can be pasted into the marked comment in
-`<head>`.
+- **(a) `banner`** — one responsive banner between the Vertical Shorts and
+  Trending Now sections: 300×250 on phones, 728×90 from 768px up. It is the only
+  banner on the page; there are no ads above the fold or inside the featured
+  player.
+- **(b) `native`** — one native card inside the Mixed Feed, placed after the
+  `every`-th video (default 8). A feed shorter than that gets its single native
+  card at the end, so the placement still appears; the card is never repeated, so
+  only one ad unit is ever on the page.
+- **(c) `smartlink`** — one "Sponsored" card closing the feed. Set `url` for the
+  built-in text card, or `code` for a banner-style card.
+
+Rules that are enforced in code:
+
+- **Empty means gone.** A slot with no `code` (or, for the smartlink, no `url`)
+  is removed from the layout entirely — no placeholder box and no reserved
+  space. Only active slots get the small `Advertisement` / `Sponsored` label.
+- **Lazy.** Ad snippets are parsed but their scripts are only executed once the
+  slot comes within ~300px of the viewport, so nothing loads on first paint.
+- **No layout shift.** Active slots reserve the banner's height (250px on
+  phones, 90px on desktop) and the ad card's height before the ad fills in.
+- **No popups, popunders or auto-redirects.** Only the snippets you paste are
+  rendered; nothing opens a window on its own.
+- Use asynchronous snippets. A snippet that calls `document.write` cannot work
+  after load.
+
+Analytics can be pasted into the marked comment in `<head>`.
+
+## Age gate (18+)
+
+`assets/age-gate.js` is loaded before any page content and shows a full-screen
+dark overlay on a first visit: the logo, the required adult-content notice, an
+**I am 18 or older - Enter** button and an **Exit** link to
+`https://www.google.com`.
+
+- The confirmation is remembered for **30 days** in `localStorage`
+  (`ageVerifiedUntil`), with an `age_ok=1` cookie as a fallback for browsers
+  that block storage.
+- While it is open the page cannot be scrolled or interacted with (`inert` +
+  `aria-hidden` + hidden content), focus is moved into the dialog and trapped
+  there, and **Escape does not dismiss it**.
+- It is responsive and keyboard/screen-reader friendly.
+- Every page also carries `<meta name="rating" content="adult">` and the RTA
+  label `<meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">`.
+
+## Legal pages
+
+- `terms.html` — Terms of Service.
+- `privacy.html` — Privacy Policy (age cookie, theme preference, advertising,
+  hosting).
+- `compliance.html` — 18 U.S.C. § 2257 / compliance statement, content standards
+  and the RTA labelling note.
+
+All three share `assets/legal.css`, link to each other and to the site, and are
+linked from the footer of `index.html`. They are **placeholder copy** with
+bracketed fields (contact email, records custodian, address) to fill in; they
+also load the same age gate. `server.py` serves them at `/terms`, `/privacy` and
+`/compliance` as well.
 
 Google Fonts and hosted videos require an internet connection.

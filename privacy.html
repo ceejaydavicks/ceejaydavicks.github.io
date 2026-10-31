@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0B0F">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="index,follow">
+  <meta name="rating" content="adult">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+
+  <title>Privacy Policy · BootyMansion</title>
+  <meta name="description" content="How BootyMansion handles data: age verification, preferences, cookies and advertising.">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/favicon-192.png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") theme = saved;
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      } catch (error) {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/legal.css">
+</head>
+<body>
+  <script src="./assets/age-gate.js"></script>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./index.html" aria-label="BootyMansion home">
+        <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
+      </a>
+      <nav class="header-nav" aria-label="Site">
+        <a href="./index.html">Home</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./privacy.html" aria-current="page">Privacy</a>
+        <a href="./compliance.html">2257 / Compliance</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <p class="eyebrow">Legal</p>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: 31 October 2026</p>
+
+    <div class="card">
+      <p class="placeholder-note">Placeholder copy. List your real processors, advertising partners and contact details before launch, and have it reviewed locally.</p>
+
+      <h2>1. What this site stores on your device</h2>
+      <p>We do not run accounts, logins or payments, so we do not collect names, emails or payment details. The site stores two things locally in your browser:</p>
+      <ul>
+        <li><strong>Age confirmation</strong> — that you confirmed you are 18 or older. Kept for 30 days in <code>localStorage</code> (key <code>ageVerifiedUntil</code>), with a cookie (<code>age_ok</code>) as a fallback.</li>
+        <li><strong>Theme preference</strong> — whether you chose dark or light mode (<code>localStorage</code> key <code>theme</code>).</li>
+      </ul>
+
+      <h2>2. Cookies</h2>
+      <p>The only first-party cookie is the age-verification cookie described above. It is set with <code>SameSite=Lax</code> and expires after 30 days. You can clear it at any time from your browser settings; the age gate will then appear again on your next visit.</p>
+
+      <h2>3. Advertising</h2>
+      <p>Advertisements are clearly labelled and served by third-party advertising networks once you scroll near them. Those networks may set their own cookies or identifiers and are governed by their own privacy policies. We do not run pop-ups, pop-unders or automatic redirects.</p>
+
+      <h2>4. Video hosting</h2>
+      <p>Videos may be streamed from a third-party host. When a video loads, your browser contacts that host directly, which can see your IP address and user agent.</p>
+
+      <h2>5. Analytics</h2>
+      <p>No analytics or tracking scripts are installed. If analytics are added later, this section will be updated to name the provider and describe what it collects.</p>
+
+      <h2>6. Your choices</h2>
+      <ul>
+        <li>Clear the age cookie or local storage to reset your choices.</li>
+        <li>Block third-party cookies or use a content blocker to limit advertising identifiers.</li>
+        <li>Use a private window if you do not want the theme preference remembered.</li>
+      </ul>
+
+      <h2>7. Children</h2>
+      <p>This site is strictly for adults. We do not knowingly collect information from anyone under 18. If you believe a minor has accessed the site, contact us so we can respond.</p>
+
+      <h2>8. Contact</h2>
+      <p>Privacy questions or removal requests: <strong>[your contact email]</strong>.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>© <span id="year">2026</span> BootyMansion. 18+ only.</p>
+      <nav class="footer-links" aria-label="Legal">
+        <a href="./index.html">Home</a>
+        <a href="./terms.html">Terms</a>
+        <a href="./privacy.html" aria-current="page">Privacy</a>
+        <a href="./compliance.html">18 U.S.C. 2257 / Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#0B0B0F">
   <meta name="color-scheme" content="dark light">
   <meta name="robots" content="index,follow">
+  <!-- Adult-content rating signals (required on every page). -->
+  <meta name="rating" content="adult">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
 
   <!-- Brand assets (transparent PNG). -->
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
@@ -108,7 +111,6 @@
       --chip-active-text: #0B0B0F;
       --ad-label: #9D9DA6;
       --ad-bg: linear-gradient(150deg, rgba(21, 21, 27, 0.7), rgba(12, 12, 16, 0.85));
-      --promo-bg: linear-gradient(100deg, rgba(251, 113, 133, 0.12), rgba(25, 20, 28, 0.7) 55%, rgba(15, 14, 18, 0.9));
       --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(251, 113, 133, 0.16), transparent 46%),
         linear-gradient(150deg, rgba(28, 22, 30, 0.98), rgba(14, 13, 17, 0.98));
       --cta-bg: linear-gradient(135deg, #16131A, #0F0F14);
@@ -121,7 +123,6 @@
       --selection: rgba(253, 164, 175, 0.3);
       --avatar-bg: linear-gradient(140deg, rgba(253, 164, 175, 0.32), rgba(251, 113, 133, 0.08));
       --footer-quiet: #82828C;
-      --footer-offer: #8F8F99;
       --ring-track: rgba(253, 164, 175, 0.14);
       --glow: rgba(251, 113, 133, 0.14);
 
@@ -175,7 +176,6 @@
       --chip-active-text: #FFFFFF;
       --ad-label: #6B6B75;
       --ad-bg: linear-gradient(150deg, #F7F7F9, #EFEFF2);
-      --promo-bg: linear-gradient(100deg, rgba(225, 29, 72, 0.07), rgba(255, 255, 255, 0.85) 52%, #FFFFFF);
       --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(225, 29, 72, 0.1), transparent 46%),
         linear-gradient(150deg, #FFFFFF, #FFF7F8);
       --cta-bg: linear-gradient(135deg, #FFF4F6, #FFFFFF);
@@ -188,7 +188,6 @@
       --selection: rgba(225, 29, 72, 0.18);
       --avatar-bg: linear-gradient(140deg, rgba(225, 29, 72, 0.14), rgba(225, 29, 72, 0.04));
       --footer-quiet: #6B6B75;
-      --footer-offer: #52525B;
       --ring-track: rgba(225, 29, 72, 0.16);
       --glow: rgba(225, 29, 72, 0.1);
     }
@@ -796,21 +795,6 @@
 
     .hero-stats b { color: var(--text); font-weight: 500; }
 
-    .hero-offer {
-      align-self: flex-start;
-      margin-top: 1.1rem;
-      padding: 0.55rem 1rem;
-      border: 1px solid var(--rose-line);
-      border-radius: 999px;
-      background: var(--rose-soft);
-      color: var(--rose-200);
-      font-size: 12.5px;
-      font-weight: 500;
-      transition: background 160ms ease, border-color 160ms ease;
-    }
-
-    .hero-offer:hover { background: var(--rose-fill); border-color: var(--rose); }
-
     .upnext { margin-top: 1.6rem; }
 
     .upnext__head {
@@ -883,19 +867,29 @@
 
     .upnext__empty a { color: var(--rose-200); text-decoration: underline; text-underline-offset: 3px; }
 
-    /* ============ 6. AD SLOTS ============ */
+    /* ============ 6. AD SLOTS (config-driven, max 3) ============ */
+    /* Every slot is built from AD_CONFIG in the script below:
+         (a) banner between Shorts and Trending,
+         (b) native card inside the feed,
+         (c) one Smartlink "Sponsored" card.
+       A slot with no ad code is removed completely — no empty box is left
+       behind. Active slots keep a small label and a reserved height so the
+       ad never shifts the page. */
     .ad-slot {
-      display: grid;
-      place-content: center;
-      gap: 0.3rem;
-      border: 1px dashed var(--line-strong);
-      border-radius: 14px;
+      max-width: 728px;
+      margin: 2.5rem auto 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       background: var(--ad-bg);
-      color: var(--quiet);
-      text-align: center;
     }
 
-    .ad-slot__label {
+    .ad-slot[hidden] { display: none !important; }
+
+    .ad-slot__label,
+    .ad-card__label {
+      display: block;
+      padding: 0.55rem 0.85rem 0;
       color: var(--ad-label);
       font-size: 10px;
       font-weight: 600;
@@ -903,77 +897,36 @@
       text-transform: uppercase;
     }
 
-    .ad-slot__size { font-size: 11px; }
-
-    .ad-slot--rectangle {
-      width: min(300px, 100%);
+    .ad-slot__frame {
+      display: grid;
+      place-items: center;
       min-height: 250px;
+      padding: 0.5rem;
     }
 
-    .ad-slot--leaderboard {
-      width: min(728px, 100%);
-      min-height: 90px;
-      margin: 0 auto 1.75rem;
+    .ad-slot__frame > * { max-width: 100%; }
+
+    @media (min-width: 768px) {
+      .ad-slot__frame { min-height: 90px; }
     }
 
-    .ad-slot--native {
-      width: 100%;
-      min-height: 104px;
-    }
-
-    .native-ad-wrap { margin: 3.5rem auto 0; }
-
-    .ad-band { margin-top: 2rem; }
-
-    .ad-break { display: flex; justify-content: center; margin-top: 1.5rem; }
-
-    @media (max-width: 767px) { .ad-band { display: none; } }
-
-    /* ============ 7. PROMO BANNER (SMARTLINK) ============ */
-    .promo {
-      margin-top: 1.5rem;
+    /* Native card: sits in the feed like a video card. */
+    .ad-card {
       overflow: hidden;
       border: 1px solid var(--rose-line);
       border-radius: var(--radius);
-      background: var(--promo-bg);
+      background: var(--sponsored-bg);
     }
 
-    .promo__link {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.9rem 1.5rem;
-      padding: 1.1rem 1.25rem;
-      transition: background 160ms ease;
+    .ad-card__frame {
+      display: grid;
+      place-items: center;
+      min-height: 200px;
+      padding: 0.75rem;
     }
 
-    .promo__link:hover { background: var(--rose-soft); }
+    .ad-card__frame > * { max-width: 100%; }
 
-    .promo__copy { display: grid; gap: 0.12rem; }
-
-    .promo__label {
-      color: var(--rose);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.17em;
-      text-transform: uppercase;
-    }
-
-    .promo__title { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
-    .promo__note { color: var(--muted); font-size: 12.5px; }
-
-    .promo__action {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      color: var(--rose-200);
-      font-size: 12.5px;
-      font-weight: 600;
-    }
-
-    .promo__action .icon { transition: transform 160ms ease; }
-    .promo__link:hover .promo__action .icon { transform: translateX(3px); }
 
     /* ============ 8. CHIPS ============ */
     .chips {
@@ -1604,8 +1557,21 @@
     }
 
     .footer-bottom p { margin: 0; }
-    .footer-offer { color: var(--footer-offer); text-decoration: underline; text-underline-offset: 3px; transition: color 160ms ease; }
-    .footer-offer:hover { color: var(--rose); }
+
+    .footer-legal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.25rem;
+    }
+
+    .footer-legal a {
+      color: var(--footer-quiet);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 160ms ease;
+    }
+
+    .footer-legal a:hover { color: var(--rose); }
 
     /* ============ 15. TOAST / UTIL ============ */
     .toast {
@@ -1628,8 +1594,6 @@
     }
 
     .toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
-
-    .is-unconfigured { opacity: 0.75; cursor: not-allowed; }
 
     /* ============ 16. THEME TOGGLE ============ */
     .theme-toggle {
@@ -1821,6 +1785,14 @@
       .preloader__ring::after { animation: none; }
     }
 
+    /* ============ 19. AGE GATE LOCK ============ */
+    /* assets/age-gate.js adds these classes before the page paints. While
+       locked, nothing behind the overlay is visible or scrollable. */
+    html.age-locked,
+    html.age-locked body { overflow: hidden; }
+
+    html.age-locked body > :not(.age-gate) { visibility: hidden !important; }
+
     /* ============ 18. MOTION / A11Y ============ */
     @media (hover: none) {
       .poster__play {
@@ -1845,6 +1817,10 @@
   </style>
 </head>
 <body>
+  <!-- AGE GATE: runs before any content is parsed, so a locked page never
+       flashes. Screen-reader/keyboard/scroll handling lives in the script. -->
+  <script src="./assets/age-gate.js"></script>
+
   <!-- Preloader: the logo inside a rose spinner. Transparent PNG, no plate. -->
   <div class="preloader" id="preloader" aria-hidden="true">
     <div class="preloader__stage">
@@ -1989,9 +1965,6 @@
         <div class="creator" id="hero-creator" hidden></div>
         <div class="hero-stats" id="hero-stats"></div>
 
-        <!-- Smartlink CTA (monetization) -->
-        <a class="hero-offer" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">Exclusive featured offer →</a>
-
         <div class="upnext">
           <div class="upnext__head">
             <h2>Up next</h2>
@@ -2003,41 +1976,8 @@
       </aside>
     </section>
 
-    <!-- Sponsored promo strip (Smartlink) -->
-    <section class="promo" aria-label="Sponsored exclusive offer">
-      <a class="promo__link" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
-        <span class="promo__copy">
-          <span class="promo__label">Sponsored · Exclusive</span>
-          <span class="promo__title">A little something extra.</span>
-          <span class="promo__note">Explore the featured offer from <span data-site-name>BootyMansion</span>.</span>
-        </span>
-        <span class="promo__action">View offer
-          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-        </span>
-      </a>
-    </section>
-
-    <!-- ADSTERRA 300x250: paste your snippet inside this aside, then delete the two label spans. -->
-    <div class="ad-break">
-      <aside id="adsterra-rectangle" class="ad-slot ad-slot--rectangle" aria-label="Advertisement slot, 300 by 250">
-        <!-- PASTE ADSTERRA CODE HERE -->
-        <span class="ad-slot__label">Advertisement</span>
-        <span class="ad-slot__size">300 × 250 · Rectangle</span>
-      </aside>
-    </div>
-
     <!-- Category chips -->
     <div class="chips" id="chips" role="group" aria-label="Filter videos by category" hidden></div>
-
-    <!-- ADSTERRA 728x90: lives outside the curated rows so it always serves.
-         Paste your snippet inside this aside, then delete the two label spans. -->
-    <div class="ad-band">
-      <aside id="adsterra-leaderboard" class="ad-slot ad-slot--leaderboard" aria-label="Advertisement slot, 728 by 90 leaderboard">
-        <!-- PASTE ADSTERRA CODE HERE -->
-        <span class="ad-slot__label">Advertisement</span>
-        <span class="ad-slot__size">728 × 90 · Leaderboard</span>
-      </aside>
-    </div>
 
     <!-- Search / filter results -->
     <section class="results" id="results" aria-labelledby="results-title" hidden>
@@ -2062,6 +2002,10 @@
       </div>
       <div class="grid-shorts" id="shorts-grid"></div>
     </section>
+
+    <!-- AD SLOT (a): responsive banner — 300x250 on phones, 728x90 on desktop.
+         Built from AD_CONFIG.banner in the script; removed entirely when empty. -->
+    <div class="ad-slot" id="ad-banner" hidden></div>
 
     <!-- Trending Now -->
     <section class="section" id="trending" aria-labelledby="trending-title" hidden>
@@ -2108,15 +2052,6 @@
       </div>
     </section>
 
-    <!-- ADSTERRA native banner: paste your snippet inside this aside, then delete the two label spans. -->
-    <div class="native-ad-wrap">
-      <aside id="adsterra-native" class="ad-slot ad-slot--native" aria-label="Advertisement slot, native banner">
-        <!-- PASTE ADSTERRA CODE HERE -->
-        <span class="ad-slot__label">Advertisement</span>
-        <span class="ad-slot__size">Native banner placement</span>
-      </aside>
-    </div>
-
     <!-- Follow / social links -->
     <section class="follow" id="follow" aria-labelledby="follow-title">
       <div>
@@ -2149,7 +2084,11 @@
 
       <div class="footer-bottom">
         <p>© <span id="current-year">2026</span> <span data-site-name>BootyMansion</span>. All rights reserved.</p>
-        <a class="footer-offer" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">Sponsored offer · Exclusive</a>
+        <nav class="footer-legal" aria-label="Legal">
+          <a href="./terms.html">Terms</a>
+          <a href="./privacy.html">Privacy</a>
+          <a href="./compliance.html">18 U.S.C. 2257 / Compliance</a>
+        </nav>
       </div>
     </div>
   </footer>
@@ -2169,8 +2108,30 @@
     // but stays inactive (and says so on hover) instead of linking nowhere.
     const TELEGRAM_URL = "";
 
-    // ADSTERRA SMARTLINK: paste your full Smartlink URL between the quotes.
-    const SMARTLINK_URL = "PASTE_ADSTERRA_SMARTLINK_HERE";
+    // ADVERTISING — one config object drives every ad slot on the page.
+    // Paste the ad snippet (Adsterra or any network) as a string. A slot with an
+    // empty `code` is removed completely: no placeholder box, no reserved space.
+    //   banner    – responsive banner between Shorts and Trending (300x250 on
+    //               phones, 728x90 on desktop).
+    //   native    – one native card inside the feed, after every `every` videos.
+    //   smartlink – the single "Sponsored" card in the feed; set `url` for a
+    //               text card or `code` for an image/banner card.
+    const AD_CONFIG = {
+      banner: {
+        label: "Advertisement",
+        code: ""
+      },
+      native: {
+        label: "Advertisement",
+        every: 8,
+        code: ""
+      },
+      smartlink: {
+        label: "Sponsored",
+        url: "",
+        code: ""
+      }
+    };
 
     // Social links: replace each placeholder with your real profile URL.
     const socialLinks = [
@@ -2547,13 +2508,84 @@
       return card;
     }
 
-    function createSponsoredCard() {
+    /* ================================================================
+       ADVERTISEMENTS — every slot is built from AD_CONFIG
+       ================================================================ */
+    const adCode = (value) => (typeof value === "string" ? value.trim() : "");
+    const adLabel = (slot) => (slot && slot.label) || "Advertisement";
+
+    const adUrl = (value) => {
+      try {
+        const parsed = new URL(String(value || "").trim());
+        return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+      } catch (error) {
+        return "";
+      }
+    };
+
+    // Scripts inserted with innerHTML never execute. Re-create them once the
+    // slot is close to the viewport, which is what keeps ad code lazy.
+    function runAdScripts(frame) {
+      frame.querySelectorAll("script").forEach((stale) => {
+        const script = document.createElement("script");
+        for (const attribute of stale.attributes) script.setAttribute(attribute.name, attribute.value);
+        script.textContent = stale.textContent;
+        stale.replaceWith(script);
+      });
+    }
+
+    const adObserver = "IntersectionObserver" in window
+      ? new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            adObserver.unobserve(entry.target);
+            runAdScripts(entry.target);
+          });
+        }, { rootMargin: "300px 0px" })
+      : null;
+
+    function startAd(frame) {
+      if (!frame) return;
+      if (adObserver) adObserver.observe(frame);
+      else runAdScripts(frame);
+    }
+
+    function createAdCard(slot, code) {
+      const card = document.createElement("article");
+      card.className = "ad-card";
+
+      const label = document.createElement("span");
+      label.className = "ad-card__label";
+      label.textContent = adLabel(slot);
+
+      const frame = document.createElement("div");
+      frame.className = "ad-card__frame";
+      frame.innerHTML = code;
+
+      card.append(label, frame);
+      startAd(frame);
+      return card;
+    }
+
+    function createNativeAdCard() {
+      const slot = AD_CONFIG.native || {};
+      const code = adCode(slot.code);
+      return code ? createAdCard(slot, code) : null;
+    }
+
+    function createSmartlinkCard() {
+      const slot = AD_CONFIG.smartlink || {};
+      const code = adCode(slot.code);
+      const href = adUrl(slot.url);
+      if (!code && !href) return null;
+      if (code) return createAdCard(slot, code);
+
       const card = document.createElement("article");
       card.className = "sponsored-card";
       card.innerHTML = `
-        <a class="sponsored-card__link" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
+        <a class="sponsored-card__link" href="${esc(href)}" target="_blank" rel="noopener sponsored">
           <span>
-            <span class="sponsored-label">Sponsored · Exclusive</span>
+            <span class="sponsored-label">${esc(adLabel(slot))} · Exclusive</span>
             <span class="sponsored-card__title">A private offer, selected for you.</span>
             <span class="sponsored-card__description">Discover the featured promotion. This clearly marked sponsored placement is separate from the video library.</span>
           </span>
@@ -2562,6 +2594,32 @@
           </span>
         </a>`;
       return card;
+    }
+
+    // (a) Banner between Shorts and Trending. Hidden when no code is configured.
+    function mountBannerAd() {
+      const container = $("#ad-banner");
+      if (!container) return;
+      const slot = AD_CONFIG.banner || {};
+      const code = adCode(slot.code);
+
+      if (!code) {
+        container.hidden = true;
+        container.replaceChildren();
+        return;
+      }
+
+      const label = document.createElement("span");
+      label.className = "ad-slot__label";
+      label.textContent = adLabel(slot);
+
+      const frame = document.createElement("div");
+      frame.className = "ad-slot__frame";
+      frame.innerHTML = code;
+
+      container.replaceChildren(label, frame);
+      container.hidden = false;
+      startAd(frame);
     }
 
     /* ================================================================
@@ -2580,7 +2638,9 @@
     }
 
     function estimatedCardHeight(card, columnWidth, mobile) {
-      if (card.classList.contains("sponsored-card")) return mobile ? 168 : 196;
+      if (card.classList.contains("sponsored-card") || card.classList.contains("ad-card")) {
+        return mobile ? 200 : 240;
+      }
       const poster = card.querySelector(".poster");
       const known = parseFloat(poster && poster.style.getPropertyValue("--ar"));
       // On small screens every thumbnail is cropped to 3:4, so use that ratio here too.
@@ -2650,9 +2710,11 @@
 
     window.addEventListener("resize", scheduleMasonryReflow);
 
-    function fillGrid(grid, items, { variant = "landscape", sponsoredEvery = 6 } = {}) {
+    function fillGrid(grid, items, { variant = "landscape", native = false } = {}) {
       const masonry = grid.classList.contains("grid-feed");
       const cards = [];
+      const every = Math.max(1, Number(AD_CONFIG.native && AD_CONFIG.native.every) || 8);
+      let nativeCard = null;
 
       items.forEach((video, index) => {
         let card;
@@ -2661,10 +2723,24 @@
         else card = createLandscapeCard(video);
         cards.push(card);
 
-        if (sponsoredEvery && (index + 1) % sponsoredEvery === 0) {
-          cards.push(createSponsoredCard());
+        // (b) One native unit, every `every` videos.
+        if (native && !nativeCard && (index + 1) % every === 0) {
+          nativeCard = createNativeAdCard();
+          if (nativeCard) cards.push(nativeCard);
         }
       });
+
+      // A feed shorter than `every` still gets its single native unit, at the end.
+      if (native && !nativeCard && cards.length) {
+        nativeCard = createNativeAdCard();
+        if (nativeCard) cards.push(nativeCard);
+      }
+
+      // (c) The one Smartlink "Sponsored" card closes the feed.
+      if (native) {
+        const smartlinkCard = createSmartlinkCard();
+        if (smartlinkCard) cards.push(smartlinkCard);
+      }
 
       grid._masonryCards = cards;
 
@@ -2674,8 +2750,6 @@
         grid.replaceChildren();
         grid.append(...cards);
       }
-
-      applySmartlinks();
     }
 
     /* ================================================================
@@ -2980,7 +3054,7 @@
         empty.textContent = "Nothing matched that search. Try a different word or clear the filter.";
         grid.append(empty);
       } else {
-        fillGrid(grid, items, { sponsoredEvery: 6 });
+        fillGrid(grid, items);
       }
 
       ["shorts", "trending", "feed"].forEach((id) => {
@@ -3003,21 +3077,20 @@
         $("#shorts-note").textContent =
           LAYOUT.shortsMode === "vertical" ? "Bite-sized, beautifully framed" : "Quick picks from the library";
         fillGrid($("#shorts-grid"), LAYOUT.shorts, {
-          variant: LAYOUT.shortsMode === "vertical" ? "vertical" : "landscape",
-          sponsoredEvery: 6
+          variant: LAYOUT.shortsMode === "vertical" ? "vertical" : "landscape"
         });
       }
       shorts.hidden = !sectionAvailability.shorts;
 
       if (LAYOUT.trending.length) {
         $("#trending-note").textContent = `${LAYOUT.trending.length} release${plural(LAYOUT.trending.length)} in rotation`;
-        fillGrid($("#trending-grid"), LAYOUT.trending, { sponsoredEvery: 6 });
+        fillGrid($("#trending-grid"), LAYOUT.trending);
       }
       trending.hidden = !sectionAvailability.trending;
 
       if (LAYOUT.feed.length) {
         $("#feed-note").textContent = "Fresh uploads, in every format";
-        fillGrid($("#feed-grid"), LAYOUT.feed, { sponsoredEvery: 6 });
+        fillGrid($("#feed-grid"), LAYOUT.feed, { native: true });
       }
       feed.hidden = !sectionAvailability.feed;
       scheduleMasonryReflow();
@@ -3105,33 +3178,6 @@
           link.classList.add("is-unconfigured");
           link.setAttribute("aria-disabled", "true");
           link.title = "Add your Telegram link to TELEGRAM_URL in index.html to activate this button.";
-        }
-      });
-    }
-
-    let smartlinkConfigured = "";
-    try {
-      const parsed = new URL(SMARTLINK_URL);
-      if (parsed.protocol === "https:" || parsed.protocol === "http:") smartlinkConfigured = parsed.href;
-    } catch (error) {
-      // Placeholder stays inactive until a real Adsterra Smartlink is added.
-    }
-
-    function applySmartlinks() {
-      document.querySelectorAll("[data-smartlink]").forEach((link) => {
-        link.target = "_blank";
-        link.rel = "noopener sponsored";
-
-        if (smartlinkConfigured) {
-          link.href = smartlinkConfigured;
-          link.classList.remove("is-unconfigured");
-          link.removeAttribute("aria-disabled");
-          link.removeAttribute("title");
-        } else {
-          link.href = "#smartlink";
-          link.classList.add("is-unconfigured");
-          link.setAttribute("aria-disabled", "true");
-          link.title = "Add your Adsterra URL to SMARTLINK_URL in the script to activate this offer.";
         }
       });
     }
@@ -3267,12 +3313,6 @@
             event.preventDefault();
             toast("Telegram link coming soon");
           }
-          return;
-        }
-
-        const smartlink = target.closest("[data-smartlink]");
-        if (smartlink) {
-          if (!smartlinkConfigured) event.preventDefault();
           return;
         }
 
@@ -3472,9 +3512,9 @@
     renderUpNext();
     renderChips();
     renderSections();
+    mountBannerAd();
     renderSocialLinks();
     applyTelegramLinks();
-    applySmartlinks();
     setupMenu();
     setupSearch();
     setupEvents();
