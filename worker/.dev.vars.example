@@ -1,0 +1,15 @@
+# Local development values for `wrangler dev` (copy to .dev.vars — gitignored).
+# Production uses `wrangler secret put`, never this file.
+
+BOT_TOKEN="123456789:AAExampleTokenFromBotFather"
+WEBHOOK_SECRET="local-dev-secret"
+ADMIN_TOKEN="local-admin-token"
+
+# Optional ownership lock. Without it, the first /start claims the bot.
+# ALLOWED_USER_IDS="123456789"
+
+# Optional
+# SITE_URL="https://your-site.pages.dev"
+# ALLOWED_CHANNEL_IDS="-1001234567890"
+# FEED_MEMO_MS="0"
+# AUTO_REBUILD="off"
