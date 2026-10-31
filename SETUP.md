@@ -83,6 +83,7 @@ type **Secret** (not "Text"), then **Save**:
 | `ADMIN_TELEGRAM_IDS` | Your Telegram numeric user id (see Part 6). Comma-separate several. | For the bot |
 | `TELEGRAM_BOT_TOKEN` | The token @BotFather gives you. | For the bot |
 | `TELEGRAM_WEBHOOK_SECRET` | A random string, letters and numbers only. | For the bot |
+| `TELEGRAM_CHANNEL` | Your **public** channel as `@username` (Part 7b). Without it the bot can only publish videos up to 20 MB. | For the bot |
 
 Tip for a random string on a phone: open a password generator, or just mash the
 keyboard for ~40 characters. Never reuse your admin password as the webhook
@@ -138,23 +139,37 @@ Settings changes apply to the **next** deployment:
 **Wrong password five times in fifteen minutes from the same IP → 15 minute
 lockout.** Wait it out, or clear the row in the `login_attempts` table.
 
-### Adding a video — the two ways
+### Adding a video — three ways
 
 **A. Paste a link.** Tap **+ Add video**, put the link in **Embed link** (a player
 page, e.g. `https://.../embed/abc`) or in **Video URL** (a real file, `.mp4` or a
-Videy share link). Fill the title, tap **Save**.
+Videy share link). Fill the title, tap **Save**. A Telegram post link pasted as
+`t.me/yourchannel/123` is converted to an embed automatically.
 
-**B. Thumbnail + video URL.** Same form: tap **Upload** next to *Thumbnail* to
+**B. Upload the file from your phone.** **+ Add video** → **Upload video** (next
+to *Video URL*) → pick an MP4, WebM or MOV **up to 95 MB**. The file streams into
+your R2 bucket and plays from your own domain, with seeking support. While it
+uploads the panel reads the file's metadata and fills in the **duration** and
+**orientation** for you, and grabs a frame from the video to use as the
+**thumbnail** (delete it or replace it if you prefer another image).
+
+**C. Thumbnail + video URL.** Same form: tap **Upload** next to *Thumbnail* to
 send a JPG/PNG/WebP/GIF (max 5 MB) to R2, **or** paste an image link. Put the
 playable file in **Video URL**. Tap **Save**.
 
 Use **either** a video URL **or** an embed link — not both.
 
+**Why 95 MB?** Cloudflare rejects any request body over 100 MB (Free and Pro
+plans), so 95 MB keeps a safe margin. For anything bigger, use the Telegram
+channel (Part 7b): the file goes to Telegram's servers, never through your
+Worker, and the site plays it with Telegram's own player.
+
 - **Feature** makes a video the big hero player (only one at a time).
 - **Pin** keeps a video at the top of the lists.
 - The search box filters by title, creator, tag and id.
 - **Delete** removes the row. Files already in R2 are left alone, so delete those
-  in the R2 tab if you want the space back.
+  in the R2 tab if you want the space back. If the video came from your Telegram
+  channel, its channel post is deleted too — one delete, everywhere gone.
 - A row with no video URL *and* no embed link is a **Draft**: it stays in the
   admin list but never appears on the public site.
 
@@ -185,12 +200,37 @@ Use **either** a video URL **or** an embed link — not both.
    help - Show upload instructions
    ```
 
-### 7b. Find your numeric user id
+### 7b. Create your public channel (this is what removes the 20 MB limit)
+
+Telegram only lets a **bot** download 20 MB, but your own account can post files
+up to 2 GB (4 GB with Premium). So the videos live in a channel and the site
+embeds them — any size, no storage cost, nothing for you to download.
+
+1. Telegram → ☰ → **New Channel** → name it (e.g. *BootyMansion Clips*) →
+   **Public** → pick a username, e.g. `boootymansion_clips`.
+2. Open the channel → **Administrators** → **Add Admin** → your bot → allow
+   **Post Messages** *and* **Delete Messages** (the second one lets `/delete`
+   clean up the channel too).
+3. Post one video with the caption `Title | Creator | Tag` to test later.
+4. In **Settings → Variables and Secrets** add
+   `TELEGRAM_CHANNEL` = `@boootymansion_clips`
+   (a bare `boootymansion_clips` or `https://t.me/boootymansion_clips` also works).
+
+Optional: `TELEGRAM_CHANNEL_ID` = the numeric id (`-100…`) if you want to pin the
+exact channel. Keep `TELEGRAM_CHANNEL` as the `@username` anyway — the embed link
+needs the public name.
+
+> The channel must stay **public**: a private channel cannot be embedded, so the
+> player would not load for visitors.
+
+### 7c. Find your numeric user id
 
 Message **@userinfobot** (or **@RawDataBot**) and copy the `id` number it replies
-with — a long number, not a @username.
+with — a long number, not a @username. Once the bot is running you can also just
+send it **`/id`**, which replies with your user id, the chat id and the channel it
+is configured with.
 
-### 7c. Fill in the three bot secrets
+### 7d. Fill in the bot secrets
 
 In **Settings → Variables and Secrets**:
 
@@ -198,17 +238,22 @@ In **Settings → Variables and Secrets**:
 - `ADMIN_TELEGRAM_IDS` = your numeric id (comma-separated for more people)
 - `TELEGRAM_WEBHOOK_SECRET` = a random letters-and-numbers string, e.g.
   `k7Qm2Zx9TpR4`
+- `TELEGRAM_CHANNEL` = `@yourchannel` (from 7b)
 
 Save, then **retry the deployment** (Part 5).
 
-### 7d. Point Telegram at your site
+### 7e. Point Telegram at your site
 
 Open this URL in your phone browser, replacing `TOKEN` and `SECRET`
 (`SECRET` is your `TELEGRAM_WEBHOOK_SECRET`, written twice):
 
 ```
-https://api.telegram.org/botTOKEN/setWebhook?url=https://YOUR-SITE.pages.dev/api/telegram/SECRET&secret_token=SECRET
+https://api.telegram.org/botTOKEN/setWebhook?url=https://YOUR-SITE.pages.dev/api/telegram/SECRET&secret_token=SECRET&allowed_updates=["message","channel_post","edited_message"]
 ```
+
+The `allowed_updates` part matters: without `channel_post` Telegram never tells
+your site about new channel posts, and videos posted in the channel silently do
+nothing.
 
 You should see `{"ok":true,"result":true,"description":"Webhook was set"}`.
 
@@ -218,20 +263,31 @@ Check it any time with `https://api.telegram.org/botTOKEN/getWebhookInfo`.
 > `X-Telegram-Bot-Api-Secret-Token` header, and it is also in the URL path. Both
 > must match, so random scanners posting to `/api/telegram` get a 401.
 
-### 7e. Use it
+### 7f. Use it
 
-- **Link + caption:** send
-  `My video title | Creator name | 4K https://example.com/embed/abc`
-  → the video is published, and the bot replies `Published ✅ My video title (#12)`.
-- **Photo + caption:** the same `Title | Creator | Tag` line attached to a photo →
-  the photo is saved to R2 and becomes a **draft** thumbnail entry; add the video
-  link in `/admin` to publish it.
-- **Video file under 20 MB:** the file is stored in R2 and published with its
-  thumbnail. Bigger files get a clear "please send a smaller file or a link"
-  reply.
-- **Commands:** `/list` (newest 15), `/delete 12`, `/feature 12`, `/help`.
+**Post a video in the channel** (from your phone, any size up to Telegram's
+2 GB / 4 GB limit), caption it `Title | Creator | Tag` → the bot publishes it
+instantly as a Telegram embed and stores the poster frame as its thumbnail. No
+reply clutter: it only speaks up if something went wrong.
+
+**Or send the video to the bot in a DM**, any size: the bot copies it into the
+channel (`copyMessage`, a server-side copy — nothing is downloaded) and publishes
+it the same way, replying `Published ✅ Poolside (#12)`.
+
+- **Link + caption:** `My video title | Creator name | 4K https://example.com/embed/abc`
+  → published and answered with `Published ✅ … (#12)`.
+- **Photo + caption:** the photo is saved to R2 and becomes a **draft** thumbnail
+  entry; add the video link in `/admin` to publish it.
+- **Video under 20 MB with no channel configured:** stored in R2 and published
+  directly (the old behaviour, still supported).
+- **Commands:** `/list` (newest 15), `/delete 12` (also deletes the channel post),
+  `/feature 12`, `/id`, `/help`.
 - Messages from any other Telegram account are ignored and answered with
-  `⛔ This bot only accepts uploads from the site admin.`
+  `⛔ This bot only accepts uploads from the site admin.` Posts in any other
+  channel are ignored silently.
+
+Every row remembers which Telegram message it came from, so a webhook Telegram
+retries cannot publish the same video twice.
 
 ---
 
@@ -271,6 +327,10 @@ answers with a note explaining that.
 | Videos you add never appear on the site | The row has no video URL and no embed link (draft), or the browser cached the list for 30 s — refresh. |
 | "R2 bucket is not configured (binding MEDIA)" | Same as above, for the R2 binding. |
 | Upload says "Use a JPG, PNG, WebP, GIF or AVIF image" | The file is a HEIC screenshot. Convert it to JPG first. |
+| A video posted in the channel never appears | Three usual causes: the bot is not a channel **admin** (Part 7b step 2); `TELEGRAM_CHANNEL` does not match the channel's `@username`; the webhook was set without `channel_post` in `allowed_updates` (Part 7e). Send `/id` to the bot to see what it thinks the channel is. |
+| The Telegram embed shows an "Open in Telegram" card instead of a player | The channel is private, or the post is not a video. Telegram only embeds **public** channels. |
+| **Upload video** fails with "over 95 MB" | Cloudflare refuses request bodies above 100 MB. Send that video to the Telegram bot instead — the channel path has no practical limit. |
+| A video plays but stutters or will not seek on iPhone | `/api/media/…` serves `Accept-Ranges` and answers `206 Partial Content`, so this should be fixed; if you still see it, check that the file is an MP4 with `faststart` (moov atom at the front) or re-upload it. |
 | Telegram says `{"ok":false,...}` | The webhook URL was truncated, or the token/secret is wrong. Call `setWebhook` again with exactly the values from Part 7. |
 | Bot replies `⚠️ ...` | The message inside the warning is the real error (bad URL, missing title, oversized file). |
 | Login says "Too many attempts" | Five wrong passwords in 15 minutes. Wait 15 minutes. |

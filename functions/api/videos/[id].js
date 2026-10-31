@@ -3,7 +3,8 @@
    DELETE /api/videos/:id – delete (admin)                                          */
 
 import { isAdminRequest } from "../../_lib/auth.js";
-import { deleteVideo, ensureSchema, getVideo, updateVideo } from "../../_lib/db.js";
+import { deleteVideo, ensureSchema, getVideo, getVideoSourceRefs, updateVideo } from "../../_lib/db.js";
+import { deleteTelegramPost } from "../../_lib/telegram.js";
 import { fail, methodNotAllowed } from "../../_lib/http.js";
 import { rowToInput, validateVideoInput } from "../../_lib/validate.js";
 
@@ -72,8 +73,16 @@ export async function onRequestDelete({ request, env, params }) {
   const existing = await getVideo(env, id);
   if (!existing) return fail("Video not found", 404);
 
+  // A video published from the Telegram channel also leaves its channel post
+  // behind otherwise: deleting in the panel means deleting everywhere.
+  const refs = await getVideoSourceRefs(env, id);
   await deleteVideo(env, id);
-  return Response.json({ ok: true, id }, { headers: { "cache-control": "no-store" } });
+  const channelPostRemoved = await deleteTelegramPost(env, refs);
+
+  return Response.json(
+    { ok: true, id, channelPostRemoved },
+    { headers: { "cache-control": "no-store" } }
+  );
 }
 
 export function onRequestGet() {
