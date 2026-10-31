@@ -236,7 +236,11 @@ function randomKey() {
 }
 
 async function storeInR2(env, key, bytes, contentType) {
-  if (!env.MEDIA) throw new Error("R2 bucket is not configured (binding MEDIA).");
+  if (!env.MEDIA) {
+    throw new Error(
+      "Saving a file needs R2 (binding MEDIA), which is optional. Post the video in your public channel instead, or paste a link."
+    );
+  }
   await env.MEDIA.put(key, bytes, {
     httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" }
   });
@@ -371,7 +375,7 @@ async function publishVideo(env, { chat, message, text, fromChannel = false }) {
   const lines = [`Published ✅ ${video.title} (#${video.id})`];
   if (note) lines.push(note);
   if (!thumbnailUrl && !env.MEDIA) {
-    lines.push("No thumbnail: add the MEDIA (R2) binding to store Telegram's poster frames.");
+    lines.push("No thumbnail: R2 (optional) is not bound, so Telegram's poster frame was skipped.");
   }
   return lines.join("\n");
 }
@@ -389,9 +393,13 @@ function mirrorMaxBytes(env) {
   return Math.round(limit * 1024 * 1024);
 }
 
+/* Copying into R2 is OPT-IN. R2 is a paid product (it needs a billing profile
+   even inside its free allowance), so the default is to link the video where it
+   already lives and store nothing: no MEDIA binding, no cost, nothing to set up.
+   Set SCRAPE_MIRROR=on to copy files and posters into R2 instead. */
 function mirrorEnabled(env) {
   if (!env.MEDIA) return false;
-  return !/^(?:0|off|false|no)$/i.test(String(env.SCRAPE_MIRROR || "").trim());
+  return /^(?:1|on|true|yes)$/i.test(String(env.SCRAPE_MIRROR || "").trim());
 }
 
 function mbLabel(bytes) {
@@ -476,10 +484,9 @@ async function storeRemote(env, url, { referer, folder, maxBytes, kind }) {
   return { url: `/api/media/${key}`, bytes: fetched.length };
 }
 
-/* Thumbnails are small, so they are mirrored even when video mirroring is off —
-   an external poster is the first thing a hotlink-blocking host breaks. */
+/* Posters are used exactly as the page declares them unless copying is on. */
 async function mirrorThumbnail(env, url, referer) {
-  if (!url || !env.MEDIA) return url || "";
+  if (!url || !mirrorEnabled(env)) return url || "";
   const stored = await storeRemote(env, url, {
     referer,
     folder: "thumbs",
@@ -489,9 +496,10 @@ async function mirrorThumbnail(env, url, referer) {
   return stored.url || url;
 }
 
-/* -> { url } on success, { error, oversized } when the file stays remote. */
+/* -> { url } on success, { error, oversized } when the copy was attempted and
+   failed, { skipped: true } when copying is simply off (not an error). */
 async function mirrorVideo(env, url, referer) {
-  if (!mirrorEnabled(env)) return { error: "R2 mirroring is off" };
+  if (!mirrorEnabled(env)) return { skipped: true };
   return storeRemote(env, url, {
     referer,
     folder: "videos",
@@ -533,13 +541,15 @@ async function publishScrapedItem(env, item, { referer }) {
   let embedUrl = "";
 
   if (item.sourceKind === "file") {
+    /* Linked from the source by default; copied only when SCRAPE_MIRROR=on and
+       R2 is bound. A failed copy still publishes the working original URL. */
     const mirrored = await mirrorVideo(env, item.sourceUrl, referer);
     videoUrl = mirrored.url || item.sourceUrl;
     if (mirrored.error) {
       notes.push(
         mirrored.oversized
-          ? `kept the original file (${mbLabel(mirrored.length)}) — over the copy limit`
-          : `kept the original file (${mirrored.error})`
+          ? `linked from the source (${mbLabel(mirrored.length)} is over the copy limit)`
+          : `linked from the source (${mirrored.error})`
       );
     }
   } else {

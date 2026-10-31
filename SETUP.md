@@ -1,4 +1,4 @@
-# Admin setup — Cloudflare Pages, D1, R2 and the Telegram bot
+# Admin setup — Cloudflare Pages, D1 and the Telegram bot (R2 optional)
 
 This is the phone-friendly setup guide. Everything below can be done in a phone
 browser; no terminal is required for the normal path.
@@ -11,12 +11,13 @@ a private admin page and a database":
 | `admin/index.html` (served at `/admin`) | Private control panel: add / edit / delete videos, upload thumbnails, set featured + pinned, edit settings. `noindex`, not linked anywhere. |
 | `functions/` | Cloudflare Pages **Functions** — the server code behind `/api/*`. This is where the password check, database and uploads live. |
 | **D1** (binding `DB`) | Stores the video list, the site settings and login-throttle counters. |
-| **R2** (binding `MEDIA`) | Stores uploaded thumbnails and Telegram video files. |
+| **R2** (binding `MEDIA`) — **optional** | Only for files you upload from `/admin` (or send to the bot as a download). The bot's automatic paths never need it: scraped videos and posters are linked where they already live. R2 is a paid product (a billing profile is required even inside its free allowance), so the whole guide works without it. |
 | Telegram bot | Send a link, a photo, or a small video from your phone and it appears on the site. |
 
-Nothing here needs a credit card for normal use: D1, R2 and Pages all have a
-free tier that is far above a small site's usage. **There are no payments,
-subscriptions or checkout anywhere in this project.**
+**D1 and Pages are free for a site this size, and the Telegram bot needs nothing
+else.** R2 needs a billing profile even inside its free allowance, so it is
+treated here as optional and is skipped in Part 3 unless you want file uploads.
+**There are no payments, subscriptions or checkout anywhere in this project.**
 
 ---
 
@@ -59,7 +60,14 @@ You do **not** need to run any SQL. The Functions create the `videos`,
 
 ---
 
-## Part 3 — Create the bucket (R2) and bind it as `MEDIA`
+## Part 3 (optional) — The R2 bucket (`MEDIA`)
+
+> **Skip this part if you do not want R2.** Without the `MEDIA` binding the
+> automatic paths keep working — scraped videos are played from the source site,
+> channel videos are Telegram embeds, and thumbnails use the page's own image.
+> You only lose *file uploads*: the `/admin` upload buttons and downloading a
+> ≤ 20 MB video sent to the bot. Everything else is unaffected, and
+> `/api/health` simply reports `mediaBinding: false`.
 
 1. Dashboard → **R2 → Overview → Create bucket**.
 2. Name it `bootymansion-media` and create it. Keep it **private** — the site
@@ -84,8 +92,8 @@ type **Secret** (not "Text"), then **Save**:
 | `TELEGRAM_BOT_TOKEN` | The token @BotFather gives you. | For the bot |
 | `TELEGRAM_WEBHOOK_SECRET` | A random string, letters and numbers only. | For the bot |
 | `TELEGRAM_CHANNEL` | Your **public** channel as `@username` (Part 7b). Without it the bot can only publish videos up to 20 MB. | For the bot |
-| `SCRAPE_MIRROR_MAX_MB` | Largest scraped file copied into R2, in MB (default `90`). Bigger files are linked, not copied. | Optional |
-| `SCRAPE_MIRROR` | `off` stops scraped files being copied into R2 at all (thumbnails are still copied). | Optional |
+| `SCRAPE_MIRROR` | `on` copies scraped files **and** their posters into R2 instead of linking them (needs the `MEDIA` binding). **Off by default — the bot needs no R2.** | Optional |
+| `SCRAPE_MIRROR_MAX_MB` | Only used when `SCRAPE_MIRROR=on`: largest scraped file copied into R2, in MB (default `90`). Bigger files are linked, not copied. | Optional |
 | `SCRAPE_ALLOW_PAGE` | `on` also publishes a scraped page whose player could not be read, as an iframe of the page. Off by default. | Optional |
 
 Tip for a random string on a phone: open a password generator, or just mash the
@@ -313,16 +321,19 @@ it the same way, replying `Published ✅ Poolside (#12)`.
   to 12 per message — Cloudflare limits outbound requests per invocation, so the
   bot stops there and tells you. You get one line per video,
   `Published ✅ Title (#12, file)`.
-  - **Files are copied to your site.** A scraped `.mp4`/`.webm` up to
-    `SCRAPE_MIRROR_MAX_MB` (default 90 MB) is downloaded into R2 and served from
-    `/api/media/videos/…`, so the source site cannot hotlink-block or delete it.
-    Bigger files are played from the original URL and the reply says so.
-  - **Thumbnails** are always copied into R2 (up to 3 MB) for the same reason.
+  - **Nothing is stored by default.** The video plays from the source site's own
+    URL and the poster uses the page's own image — **no R2, no storage cost, no
+    extra setup**. The trade-offs: a host that blocks hotlinking (or later deletes
+    the file) can break playback, and you cannot control how long it survives.
+  - **Want the file on your own domain instead?** Bind R2 (`MEDIA`) and set
+    `SCRAPE_MIRROR` = `on`: each scraped file up to `SCRAPE_MIRROR_MAX_MB`
+    (default 90 MB) and its poster is copied into `/api/media/…`, so the source
+    can no longer break it. Bigger files are linked and the reply says so.
   - **Links in the channel** are scraped the same way and published **silently**
     — the channel stays free of bot chatter, and you get a DM only if something
     fails.
-  - **A direct video file link** (`…/clip.mp4`) needs no page: it is copied and
-    published under the file name.
+  - **A direct video file link** (`…/clip.mp4`) needs no page: it is published
+    under the file name, linked (or copied when mirroring is on).
   - **Duplicates are skipped**, keyed on the page the row came from
     (`source_url`), so pasting the same link twice answers
     `⏭️ Already on the site as #12` instead of adding a second row.
