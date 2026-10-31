@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# Standalone Cloudflare Worker configuration for worker/worker.js
+#
+# This is NOT the Pages project config. The site keeps using the root
+# `wrangler.toml` + dashboard bindings (D1 `DB`); this file deploys the
+# AfterDark template as its own Worker with its own KV namespace.
+#
+#   cd worker
+#   npx wrangler kv namespace create VIDEOS        # copy the id below
+#   npx wrangler secret put BOT_TOKEN              # the SECOND bot's token
+#   npx wrangler secret put WEBHOOK_SECRET
+#   npx wrangler deploy
+#
+# Secrets (never in this file): BOT_TOKEN, WEBHOOK_SECRET, ADMIN_TOKEN,
+#   GITHUB_TOKEN, CLOUDFLARE_BUILD_HOOK.
+# ---------------------------------------------------------------------------
+
+name = "bootymansion-catalogue"   # rename if you like
+main = "worker.js"
+compatibility_date = "2025-09-01"
+
+# Public *.workers.dev URL. Turn off if you attach a custom domain instead.
+workers_dev = true
+
+# REQUIRED — the worker stores video records in KV, not in D1.
+[[kv_namespaces]]
+binding = "VIDEOS"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+# Optional — Workers AI, used only for the caption/hashtag agent. Without it the
+# worker publishes with its deterministic fallback caption. Uncomment to enable.
+# [ai]
+# binding = "AI"
+
+# Optional plain-text variables. Anything secret belongs in `wrangler secret put`.
+# [vars]
+# ALLOWED_USER_IDS = "123456789"
+# ALLOWED_CHANNEL_IDS = "-1001234567890"
+# SITE_URL = "https://your-site.pages.dev"
+# AUTO_REBUILD = "off"
+# GITHUB_REPO = "owner/repo"
+# GITHUB_WORKFLOW = "deploy.yml"
+# GITHUB_BRANCH = "main"
