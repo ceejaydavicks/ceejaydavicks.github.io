@@ -13,7 +13,8 @@ python3 server.py
 
 The server listens on `0.0.0.0:5000`, serves `/` and `/index.html`, and disables
 caching so refreshing Preview picks up page edits. It serves the video list at
-`/videos.js`; other workspace files are not publicly served.
+`/videos.js` and the brand images in `/assets/`; other workspace files are not
+publicly served.
 
 Add videos to the exported `videos` list in `videos.js` using `{ title, url }`;
 `thumb` is optional. For Videy links, the site extracts the ID and plays the

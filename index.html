@@ -6,6 +6,12 @@
   <meta name="theme-color" content="#0B0B0F">
   <meta name="robots" content="index,follow">
 
+  <!-- Brand assets (transparent PNG). -->
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/favicon-192.png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="preload" as="image" href="./assets/logo-lockup@3x.png" fetchpriority="high">
+
   <!-- SITE NAME: visible branding, SEO title and meta copy all follow SITE_NAME in the script below. -->
   <title>BootyMansion | Curated Video Entertainment</title>
   <meta name="description" content="BootyMansion is a sleek home for curated video entertainment, featured releases, and exclusive picks.">
@@ -163,34 +169,27 @@
       display: flex;
       flex: 0 0 auto;
       align-items: center;
-      gap: 0.6rem;
       color: var(--text);
     }
 
-    .brand-mark {
-      display: grid;
-      width: 32px;
-      height: 32px;
-      place-items: center;
-      border-radius: 11px;
-      background: linear-gradient(140deg, var(--rose) 0%, var(--rose-400) 100%);
-      box-shadow: 0 10px 24px rgba(251, 113, 133, 0.22);
+    /* Transparent PNG lockup: no plate, no background, width follows the ratio. */
+    .brand-logo {
+      width: auto;
+      height: 36px;
+      max-width: 100%;
     }
 
-    .brand-mark .icon {
-      width: 14px;
-      height: 14px;
-      color: #0B0B0F;
-      transform: translateX(1px);
+    @media (max-width: 768px) {
+      .brand-logo { height: 30px; }
     }
 
-    .brand-word {
-      font-size: 17px;
-      font-weight: 600;
-      letter-spacing: -0.03em;
+    @media (max-width: 420px) {
+      .brand-logo { height: 26px; }
     }
 
-    .brand-dot { color: var(--rose); font-size: 17px; font-weight: 600; margin-left: -0.45rem; }
+    @media (max-width: 360px) {
+      .brand-logo { height: 22px; }
+    }
 
     .primary-nav {
       display: none;
@@ -199,7 +198,7 @@
       font-size: 13.5px;
     }
 
-    @media (min-width: 1080px) { .primary-nav { display: flex; } }
+    @media (min-width: 1120px) { .primary-nav { display: flex; } }
 
     .primary-nav a {
       color: var(--muted);
@@ -250,7 +249,7 @@
     .search--desktop { display: none; }
 
     @media (min-width: 1024px) {
-      .search--desktop { display: flex; width: 240px; }
+      .search--desktop { display: flex; width: 220px; }
     }
 
     @media (min-width: 1200px) {
@@ -297,7 +296,7 @@
 
     .menu-toggle { display: grid; }
 
-    @media (min-width: 1080px) { .menu-toggle { display: none; } }
+    @media (min-width: 1120px) { .menu-toggle { display: none; } }
 
     .search-mobile {
       padding: 0 0 0.8rem;
@@ -309,16 +308,14 @@
 
     @media (max-width: 420px) {
       .nav-shell { gap: 0.5rem; }
-      .brand { gap: 0.5rem; white-space: nowrap; }
-      .brand-mark { width: 30px; height: 30px; border-radius: 10px; }
-      .brand-word, .brand-dot { font-size: 15.5px; }
+      .brand { white-space: nowrap; }
       .nav-actions { gap: 0.15rem; }
       .icon-btn { width: 36px; height: 36px; }
       .btn-rose { height: 36px; padding: 0 0.7rem; }
     }
 
     /* Mobile nav panel */
-    @media (max-width: 1079px) {
+    @media (max-width: 1119px) {
       .primary-nav {
         position: absolute;
         z-index: 45;
@@ -1407,7 +1404,89 @@
 
     .is-unconfigured { opacity: 0.75; cursor: not-allowed; }
 
-    /* ============ 16. MOTION / A11Y ============ */
+    /* ============ 16. PRELOADER ============ */
+    .preloader {
+      position: fixed;
+      z-index: 90;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      opacity: 1;
+      visibility: visible;
+      /* Fades itself out at 3s even if JavaScript never runs. */
+      animation: preloader-auto-out 0.45s ease 3s forwards;
+    }
+
+    .preloader.is-done {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .preloader__stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: clamp(200px, 56vw, 268px);
+      aspect-ratio: 1;
+    }
+
+    .preloader__stage::before {
+      position: absolute;
+      inset: 16%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251, 113, 133, 0.16), transparent 70%);
+      filter: blur(18px);
+      content: "";
+    }
+
+    .preloader__ring {
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(253, 164, 175, 0.14);
+      border-radius: 50%;
+      box-shadow: 0 0 44px rgba(251, 113, 133, 0.14);
+    }
+
+    /* Smooth rose sweep on top of the static track (falls back to the track). */
+    .preloader__ring::after {
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0 8%,
+        rgba(253, 164, 175, 0.08) 26%,
+        var(--rose) 94%,
+        transparent 100%
+      );
+      content: "";
+      mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+      animation: preloader-spin 1.05s linear infinite;
+    }
+
+    .preloader__logo {
+      position: relative;
+      width: 86%;
+      height: auto;
+    }
+
+    @keyframes preloader-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes preloader-auto-out {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .preloader__ring::after { animation: none; }
+    }
+
+    /* ============ 17. MOTION / A11Y ============ */
     @media (hover: none) {
       .poster__play {
         width: 46px;
@@ -1431,6 +1510,39 @@
   </style>
 </head>
 <body>
+  <!-- Preloader: the logo inside a rose spinner. Transparent PNG, no plate. -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader__stage">
+      <span class="preloader__ring"></span>
+      <img class="preloader__logo" src="./assets/logo-lockup@3x.png" alt="" width="707" height="108" fetchpriority="high" decoding="async">
+    </div>
+  </div>
+  <script>
+    // Dismissed on load (min 400ms so it never flashes), with a hard 1.6s cap.
+    (function () {
+      var preloader = document.getElementById("preloader");
+      if (!preloader) return;
+      var started = Date.now();
+      var dismissed = false;
+
+      function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        var wait = Math.max(0, 400 - (Date.now() - started));
+        window.setTimeout(function () {
+          preloader.classList.add("is-done");
+          window.setTimeout(function () {
+            if (preloader.parentNode) preloader.parentNode.removeChild(preloader);
+          }, 460);
+        }, wait);
+      }
+
+      if (document.readyState === "complete") dismiss();
+      else window.addEventListener("load", dismiss, { once: true });
+      window.setTimeout(dismiss, 1600);
+    })();
+  </script>
+
   <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
@@ -1438,10 +1550,7 @@
   <header class="site-header">
     <div class="shell nav-shell">
       <a class="brand" href="#top" aria-label="BootyMansion home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg class="icon icon--fill" viewBox="0 0 24 24"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"></path></svg>
-        </span>
-        <span class="brand-word" data-site-name>BootyMansion</span><span class="brand-dot" aria-hidden="true">.</span>
+        <img class="brand-logo" src="./assets/logo-lockup@3x.png" alt="BootyMansion" width="707" height="108" fetchpriority="high" decoding="async">
       </a>
 
       <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
@@ -1676,10 +1785,7 @@
     <div class="shell footer-inner">
       <div class="footer-top">
         <a class="brand" href="#top" aria-label="Back to top">
-          <span class="brand-mark" aria-hidden="true">
-            <svg class="icon icon--fill" viewBox="0 0 24 24"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"></path></svg>
-          </span>
-          <span class="brand-word" data-site-name>BootyMansion</span><span class="brand-dot" aria-hidden="true">.</span>
+          <img class="brand-logo" src="./assets/logo-lockup@3x.png" alt="BootyMansion" width="707" height="108" loading="lazy" decoding="async">
         </a>
 
         <nav class="footer-links" aria-label="Footer navigation">
@@ -2653,7 +2759,7 @@
       });
 
       window.addEventListener("resize", () => {
-        if (window.innerWidth >= 1080) closeMenu();
+        if (window.innerWidth >= 1120) closeMenu();
       });
     }
 

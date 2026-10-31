@@ -14,9 +14,10 @@ Preview. The workflow runs:
 python3 server.py
 ```
 
-The server listens on `0.0.0.0:5000`, serves `/` and `/index.html`, and disables
-caching so refreshing Preview picks up page edits. It serves the video list at
-`/videos.js`; other workspace files are not publicly served.
+The server listens on `0.0.0.0:5000`, serves `/` and `/index.html`, serves the
+video list at `/videos.js`, and serves the brand images under `/assets/`. It
+disables caching so refreshing Preview picks up page edits; other workspace files
+are not publicly served.
 
 ## Adding videos
 
@@ -45,6 +46,17 @@ as-is. If no thumbnail is provided, the site requests video metadata to display 
 frame at 0.5 seconds and to label the real duration. The main video file loads
 only when a visitor taps a thumbnail. If playback fails, the player offers the
 original video page link.
+
+## Brand assets
+
+- `assets/logo-lockup@3x.png` — mark + wordmark, transparent, used in the nav,
+  footer and preloader (36px tall on desktop, 30px on mobile, width automatic).
+- `assets/favicon-32.png` / `favicon-64.png` / `favicon-192.png` — tab icon.
+- `assets/apple-touch-icon.png` — iOS home-screen icon.
+
+Every file keeps its transparent background; the page draws no plate behind it.
+To rebrand, replace these files (keep the names) or point the `img` tags in
+`index.html` at new ones.
 
 ## Branding and links
 
