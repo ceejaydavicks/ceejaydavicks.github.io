@@ -233,7 +233,7 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `functions/_lib/db.js` | D1 access; creates the tables and default settings on first use. |
 | `functions/_lib/validate.js` | Input sanitising — strips `<`, `>` and control characters, requires `http(s)` URLs. |
 | `functions/_lib/telegram.js` | The bot: link / photo / video uploads, `/list`, `/delete`, `/feature`. |
-| `functions/api/*` | The HTTP routes listed above. |
+| `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |
 | `functions/_middleware.js` | Security headers on every response. |
 | `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
 | `wrangler.toml` | Binding names and local-development notes. |

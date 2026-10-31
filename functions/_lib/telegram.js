@@ -36,8 +36,13 @@ function secretMatches(request, env, params) {
   if (!expected) return false;
 
   const header = (request.headers.get("x-telegram-bot-api-secret-token") || "").trim();
-  const segments = Array.isArray(params && params.path) ? params.path : [];
-  const pathSecret = segments.join("/");
+
+  // /api/telegram/<SECRET> arrives as the single-segment route param `secret`.
+  // `path` (an array) is still accepted so the check works with either shape.
+  let segments = [];
+  if (Array.isArray(params && params.path)) segments = params.path;
+  else if (params && typeof params.secret === "string") segments = [params.secret];
+  const pathSecret = segments.filter((segment) => typeof segment === "string").join("/");
 
   return header === expected || pathSecret === expected;
 }

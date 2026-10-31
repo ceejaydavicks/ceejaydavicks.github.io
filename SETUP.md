@@ -207,8 +207,11 @@ Check it any time with `https://api.telegram.org/botTOKEN/getWebhookInfo`.
 You need Node.js once:
 
 ```sh
-npx wrangler pages dev . --d1 DB --r2 MEDIA
+npx wrangler pages dev --d1 DB --r2 MEDIA
 ```
+
+(The static output directory comes from `pages_build_output_dir` in
+`wrangler.toml`, so no directory argument is needed.)
 
 Put the secrets in a `.dev.vars` file in the project root (it is already in
 `.gitignore`, so it is never committed):
@@ -236,6 +239,7 @@ answers with a note explaining that.
 | Telegram says `{"ok":false,...}` | The webhook URL was truncated, or the token/secret is wrong. Call `setWebhook` again with exactly the values from Part 7. |
 | Bot replies `⚠️ ...` | The message inside the warning is the real error (bad URL, missing title, oversized file). |
 | Login says "Too many attempts" | Five wrong passwords in 15 minutes. Wait 15 minutes. |
+| Build fails with `Invalid Pages function route parameter` | A Functions filename used Next.js rest syntax. Cloudflare Pages route parameters must be a **single path segment** with a name made of letters, digits or `_` — e.g. `[id].js`, `[folder]/[file].js`, `[secret].js`. `[...key].js` is rejected; the only catch-all Pages accepts is the double-bracket `[[path]].js`. |
 
 ---
 

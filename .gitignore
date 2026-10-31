@@ -5,6 +5,8 @@
 # Wrangler / tooling
 .wrangler/
 node_modules/
+__pycache__/
+*.pyc
 
 # OS noise
 .DS_Store

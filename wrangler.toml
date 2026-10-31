@@ -25,8 +25,10 @@
 name = "ceejaydavicks-github-io"
 compatibility_date = "2025-09-01"
 
-# Only needed for `npx wrangler pages deploy` (not for GitHub builds).
-# pages_build_output_dir = "."
+# The static site lives in the repository root, so this is its output directory.
+# It matches the Pages dashboard setting ("Build output directory: /") and lets
+# `npx wrangler pages dev` / `npx wrangler pages deploy` run without extra flags.
+pages_build_output_dir = "."
 
 # ---------------------------------------------------------------------------
 # Local / CLI bindings — uncomment and fill in.
