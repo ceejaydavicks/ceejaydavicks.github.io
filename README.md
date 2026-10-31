@@ -121,9 +121,9 @@ entry shortens the page (rows hide themselves when they run out of real videos).
 The original Videy upload sits at the end of the list; move it to the top if you
 want it featured again.
 
-How the list is used: the first entry is the featured video, the next three fill
-"Up next", then the Vertical Shorts row, Trending Now and the Mixed Feed are
-filled in order. Rows with no videos left are hidden automatically instead of
+How the list is used: the first entry is the featured video, "Up next" takes
+the four newest other releases (by `posted` age), then the Vertical Shorts row,
+Trending Now and the Mixed Feed are filled in order. Rows with no videos left are hidden automatically instead of
 showing placeholder content, and every card in the page is generated from this
 file — so new uploads appear without touching the HTML. `category` values become
 the filter chips, and the nav search matches titles, creators, descriptions and
@@ -158,12 +158,39 @@ Cards keep the shared poster behaviour: hover lift/zoom, lazy-loaded thumbnails
 fallback.
 
 Every section is built from real rows and hidden when it has none: with a big
-library the featured player takes the first release, Up next the next three,
-"Recommended for you" the following eight and the feed six more. On a small
-library Up next stops at one card so the grid still gets something, and Shorts
-are filtered out of all of it (see below). Delete the samples and the empty rows
-disappear rather than leaving gaps. The "View all" library view shows the same
-masonry as soon as there are two or more videos.
+library the featured player takes the first release, "Up next" the four newest
+other releases, "Recommended for you" the following eight and the feed six more.
+Up next is never left empty while the library holds a single other video —
+Shorts included, because most of this catalogue is under a minute (see below).
+Delete the samples and the empty rows disappear rather than leaving gaps. The
+"View all" library view shows the same masonry as soon as there are two or more
+videos.
+
+## Featured block and Up next
+
+The featured block is one row on desktop: the **player** takes about 45% of the
+width, the **info panel** about 28% and the **Up next** rail about 27%. All three
+are exactly as tall as the player (capped at 420px), so nothing is stretched and
+the block never opens a hole between itself and the chips below it.
+
+- The player keeps the clip's own shape. A vertical 9:16 release stays 9:16 and
+  the space around it is filled with a blurred, darkened copy of its poster —
+  never black bars. The blurred fill is the `.video-frame__blur` layer.
+- **Save / Share / Open / Telegram** sit in one row inside the info panel
+  instead of in a column of their own, so the player is never split.
+- On phones and tablets the block stacks: player first, then the title and the
+  buttons, then the Up next rail with its four items, then the category chips and
+  the Shorts row. "See all" still opens the full library, but the first videos
+  are always visible without it.
+- Up next lists the **four newest** releases other than the one on stage, sorted
+  by `created_at` (falling back to the "3 days ago" label, then to the catalogue
+  order). Tapping an item makes it the featured video and the rail moves on.
+- Each item shows a 16:9 poster (about 128x72) with the length on it, the
+  title, the creator with views and age, and a **Short** badge when the clip is
+  under a minute.
+- When the info column is too narrow for the full layout it tightens itself up
+  (smaller title, icon-only action buttons) through a container query, so the
+  buttons are never pushed out of the block.
 
 ## Shorts (under a minute)
 
@@ -186,7 +213,8 @@ upload is classified the moment it lands.
 - Shorts carry a "Short" badge, fill the horizontal shelf between the hero and
   "Recommended for you" (with the scroll arrow on desktop), answer the "Shorts"
   chip in search and drive the mobile **Shorts** tab. They are removed from the
-  hero, Up next, "Recommended for you" and the feed so nothing repeats.
+  hero, "Recommended for you" and the feed so nothing repeats — but they do
+  appear in "Up next", which lists the newest releases of any length.
 - A Short only leads the hero when the library holds no regular video at all —
   the wide player expects a full-length release. In that case it is dropped from
   the shelf so the same clip never shows twice.

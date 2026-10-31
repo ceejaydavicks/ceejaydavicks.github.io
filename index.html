@@ -137,7 +137,6 @@
         linear-gradient(150deg, #1B1418, #09090E 78%);
       --poster-grid: rgba(255, 255, 255, 0.035);
       --media-bg: #0D0D12;
-      --hero-fade: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
       --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.12), transparent 62%);
       --selection: rgba(244, 63, 94, 0.3);
       --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.32), rgba(225, 29, 72, 0.12));
@@ -219,7 +218,6 @@
         linear-gradient(150deg, #F2F2F7, #E7E7EE 78%);
       --poster-grid: rgba(20, 20, 26, 0.05);
       --media-bg: #EDEDF2;
-      --hero-fade: linear-gradient(90deg, rgba(247, 247, 250, 0.94), rgba(247, 247, 250, 0.42) 55%, rgba(247, 247, 250, 0.94));
       --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.08), transparent 62%);
       --selection: rgba(244, 63, 94, 0.18);
       --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.2), rgba(225, 29, 72, 0.06));
@@ -563,9 +561,9 @@
       box-shadow: 0 0 12px rgba(251, 113, 133, 0.75);
     }
 
-    .section { margin-top: 4rem; }
+    .section { margin-top: 2.25rem; }
 
-    @media (min-width: 640px) { .section { margin-top: 5rem; } }
+    @media (min-width: 640px) { .section { margin-top: 2.5rem; } }
 
     .section-head {
       display: flex;
@@ -610,68 +608,28 @@
     .link-btn:hover { color: var(--rose); }
 
     /* ============ 5. HERO ============ */
+    /* Featured block: player | info | Up next side by side on desktop,
+       stacked below that. Every block and the next section share one
+       spacing rhythm, so the page never opens a hole between them. */
     .hero {
       display: grid;
       align-items: start;
-      gap: 2rem;
+      gap: 1.5rem;
       padding-top: 1.5rem;
+      margin-bottom: 2.25rem;
     }
 
     @media (min-width: 640px) { .hero { padding-top: 2.5rem; } }
 
-    @media (min-width: 1024px) {
-      .hero { grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; }
-    }
-
-    @media (min-width: 1280px) {
-      .hero { gap: 2.75rem; }
-    }
-
     .hero-stage {
       position: relative;
-      overflow: hidden;
-      padding: 1rem;
-      border: 1px solid var(--line-soft);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      isolation: isolate;
-    }
-
-    @media (min-width: 640px) { .hero-stage { padding: 1.5rem; } }
-    @media (min-width: 1280px) { .hero-stage { padding: 1.75rem; } }
-
-    .hero-backdrop {
-      position: absolute;
-      z-index: -1;
-      inset: -20%;
-      overflow: hidden;
-      opacity: 0.35;
-      filter: blur(64px);
-    }
-
-    .hero-backdrop img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.2);
-    }
-
-    .hero-backdrop::after {
-      position: absolute;
-      inset: 0;
-      background: var(--hero-fade);
-      content: "";
+      min-width: 0;
     }
 
     .hero-stage__inner {
       display: flex;
       flex-direction: column;
       gap: 1rem;
-    }
-
-    @media (min-width: 1280px) {
-      .hero-stage__inner { flex-direction: row; align-items: stretch; gap: 1.25rem; }
     }
 
     .hero-player { min-width: 0; flex: 1 1 auto; }
@@ -687,20 +645,34 @@
       isolation: isolate;
     }
 
-    .video-frame > video {
+    /* The blurred, darkened poster that sits behind the video: a vertical
+       clip keeps its true 9:16 shape and the sides are filled with this
+       copy instead of black bars. */
+    .video-frame__blur {
       position: absolute;
+      z-index: 0;
       inset: 0;
       width: 100%;
       height: 100%;
-      background: var(--player-bg);
+      object-fit: cover;
+      filter: blur(28px) brightness(0.42) saturate(1.15);
+      transform: scale(1.08);
+      pointer-events: none;
+    }
+
+    .video-frame > video {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
       object-fit: contain;
     }
 
-    @media (min-width: 1280px) {
-      .video-frame--player { height: 100%; aspect-ratio: auto; min-height: 420px; }
-    }
-
     .player-empty {
+      position: relative;
+      z-index: 2;
       display: grid;
       height: 100%;
       place-content: center;
@@ -717,6 +689,7 @@
 
     .video-frame iframe {
       position: absolute;
+      z-index: 2;
       inset: 0;
       width: 100%;
       height: 100%;
@@ -739,42 +712,42 @@
     .empty-library p { margin: 0; max-width: 46ch; color: #A1A1AA; font-size: 13.5px; }
     .empty-library .btn { margin-top: 0.5rem; }
 
+    /* Save / Share / Open / Telegram live in one row inside the info panel,
+       so the player is never split by a separate button column. */
     .hero-rail {
       display: flex;
-      flex: 0 0 auto;
+      flex-wrap: wrap;
       gap: 0.5rem;
-      justify-content: center;
-    }
-
-    @media (min-width: 1280px) {
-      .hero-rail { flex-direction: column; justify-content: center; gap: 0.9rem; }
+      margin-top: 0.9rem;
     }
 
     .rail-btn {
-      display: flex;
-      flex-direction: column;
+      display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
-      min-width: 54px;
-      padding: 0.4rem;
-      color: var(--quiet);
-      font-size: 10.5px;
-      transition: color 160ms ease;
+      gap: 0.4rem;
+      min-width: 0;
+      padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--tint);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
     }
 
-    .rail-btn:hover { color: var(--text); }
+    .rail-btn:hover { color: var(--text); border-color: var(--line-strong); background: var(--tint-strong); }
 
     .rail-btn__icon {
       display: grid;
-      width: 40px;
-      height: 40px;
+      width: 24px;
+      height: 24px;
       place-items: center;
       border: 1px solid var(--line-strong);
       border-radius: 999px;
-      background: var(--tint);
+      background: transparent;
       color: var(--text);
-      backdrop-filter: blur(8px);
-      transition: background 160ms ease;
+      transition: background 160ms ease, border-color 160ms ease;
     }
 
     .rail-btn:hover .rail-btn__icon { background: var(--tint-strong); }
@@ -799,7 +772,7 @@
     }
 
     .hero-sub {
-      margin: 0.7rem 0 0;
+      margin: 0.55rem 0 0;
       color: var(--muted);
       font-size: 14.5px;
       line-height: 1.6;
@@ -810,7 +783,7 @@
       display: flex;
       align-items: center;
       gap: 0.7rem;
-      margin-top: 1.35rem;
+      margin-top: 1rem;
     }
 
     .avatar {
@@ -864,9 +837,9 @@
     .hero-stats {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.4rem 1.4rem;
-      margin-top: 1.35rem;
-      padding: 0.9rem 0;
+      gap: 0.35rem 1.2rem;
+      margin-top: 1rem;
+      padding: 0.6rem 0;
       border-top: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
       color: var(--muted);
@@ -882,7 +855,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      margin-bottom: 0.9rem;
+      margin-bottom: 0.85rem;
     }
 
     .upnext__head h2 {
@@ -892,40 +865,63 @@
       color: var(--text);
     }
 
-    .upnext__list { display: grid; gap: 0.65rem; }
+    /* The track is allowed to shrink so a long title never pushes the
+       list out of its column. */
+    .upnext__list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.6rem;
+    }
 
     .upnext__item {
       display: flex;
-      gap: 0.85rem;
-      padding: 0.45rem;
-      margin: -0.45rem;
-      border-radius: 16px;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+      padding: 0.3rem;
+      border-radius: 14px;
       transition: background 160ms ease;
     }
 
     .upnext__item:hover { background: var(--tint); }
 
+    /* A 128 x 72 poster with the length sitting on it. */
     .upnext__thumb {
       position: relative;
-      width: 118px;
+      width: clamp(104px, 8.6vw, 124px);
       flex: 0 0 auto;
       overflow: hidden;
       aspect-ratio: 16 / 9;
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--surface-2);
     }
 
     .upnext__thumb.poster {
-      border-radius: 12px;
+      border-radius: 10px;
       box-shadow: none;
     }
 
-    .upnext__body { min-width: 0; padding-top: 0.15rem; }
+    .upnext__thumb .poster__dur {
+      top: auto;
+      right: 0.35rem;
+      bottom: 0.35rem;
+      font-size: 9.5px;
+    }
+
+    .upnext__body { min-width: 0; flex: 1 1 auto; }
+
+    .upnext__title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
+    }
 
     .upnext__title {
+      min-width: 0;
       overflow: hidden;
       color: var(--text);
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 500;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -934,7 +930,31 @@
 
     .upnext__item:hover .upnext__title { color: var(--rose-200); }
 
-    .upnext__meta { margin: 0.2rem 0 0; color: var(--quiet); font-size: 12px; }
+    .upnext__short {
+      position: absolute;
+      z-index: 3;
+      top: 0.35rem;
+      left: 0.35rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 6px;
+      background: var(--accent-gradient-ink);
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
+    }
+
+    .upnext__meta {
+      display: block;
+      margin: 0.2rem 0 0;
+      overflow: hidden;
+      color: var(--quiet);
+      font-size: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .upnext__empty {
       padding: 1rem;
@@ -1053,7 +1073,23 @@
 
     .poster--wide { aspect-ratio: 16 / 9; }
     .poster--vertical { aspect-ratio: 9 / 16; border-radius: 18px; }
-    .poster--player { position: absolute; inset: 0; border-radius: 0; box-shadow: none; }
+    /* The player poster sits on top of the blurred backdrop and keeps the
+       clip's own shape, so the space around it shows that blurred copy
+       instead of black bars. */
+    .poster--player {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .poster--player .poster__media {
+      object-fit: contain;
+      background: transparent;
+    }
+
 
     .poster__btn {
       position: absolute;
@@ -1784,7 +1820,7 @@
     }
 
     /* Light-mode touch-ups that are not simple colour tokens */
-    [data-theme="light"] .hero-backdrop { opacity: 0.16; }
+    [data-theme="light"] .video-frame__blur { filter: blur(26px) brightness(0.62) saturate(1.05); }
     [data-theme="light"] .poster { box-shadow: var(--card-shadow); }
     [data-theme="light"] .site-header { border-bottom-color: var(--line); }
 
@@ -1983,49 +2019,99 @@
     .search:focus-within { border-color: var(--rose-line); background: var(--input-bg-focus); }
 
     /* ---- hero: player | info | up next ----------------------------- */
+    /* The player is the only card in the block: the info panel and the
+       Up next rail sit straight on the page, like the reference design. */
     .hero-stage {
-      padding: 0.5rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--player-bg);
-      box-shadow: var(--frame-shadow);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     .hero-stage__inner { gap: 0.5rem; }
 
     .hero-meta {
-      padding: 1.5rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      box-shadow: var(--card-shadow);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      container-type: inline-size;
+      container-name: heroinfo;
     }
 
     .hero-upnext {
       min-width: 0;
-      padding: 1.15rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      box-shadow: var(--card-shadow);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     .hero-upnext .upnext { margin-top: 0; }
 
-    /* three columns from 1024px: player | info | up next */
+    /* Three columns from 1024px: player 45% | info 28% | Up next 27%.
+       Every column is exactly as tall as the player, so nothing is
+       stretched and the block reads as one row. */
     @media (min-width: 1024px) {
       .hero {
-        grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.95fr) minmax(210px, 0.75fr);
+        grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.12fr) minmax(0, 1.08fr);
         align-items: stretch;
-        gap: 1.1rem;
+        gap: 1.5rem;
       }
-      .hero-meta, .hero-upnext { align-self: stretch; }
+
+      .hero-stage,
+      .hero-meta,
+      .hero-upnext {
+        align-self: stretch;
+        max-height: 420px;
+      }
+
+      /* The player fills the row height and keeps its own ratio inside:
+         the space around a vertical clip is the blurred poster, never a
+         black bar. */
+      .hero-stage { display: flex; }
+      .hero-stage__inner { flex: 1 1 auto; }
+      .hero-player { display: flex; }
+      .video-frame--player {
+        width: 100%;
+        height: 100%;
+        max-height: 420px;
+        aspect-ratio: auto;
+        margin: auto 0;
+      }
+
+      .hero-meta {
+        overflow: hidden auto;
+        scrollbar-width: thin;
+      }
     }
 
-    @media (min-width: 1280px) {
-      .hero {
-        grid-template-columns: minmax(0, 1.5fr) minmax(290px, 0.95fr) minmax(250px, 0.8fr);
-        gap: 1.35rem;
+    /* When the info column is narrow the panel tightens up: a smaller
+       title, tighter stats and icon-only action buttons, so nothing is
+       ever pushed out of the featured block. The labels stay in the DOM
+       for screen readers. */
+    @media (min-width: 1024px) {
+      @container heroinfo (max-width: 380px) {
+        .hero-title { font-size: clamp(1.4rem, 10.5cqi, 2rem); }
+
+        .hero-stats { gap: 0.3rem 0.85rem; font-size: 11.5px; }
+
+        .hero-actions .btn-ghost { padding: 0 1rem; }
+
+        .hero-actions .btn-ghost > span,
+        .hero-rail .rail-btn > span:last-child {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip-path: inset(50%);
+          white-space: nowrap;
+        }
+
+        .hero-rail .rail-btn { padding: 0.35rem; }
       }
     }
 
@@ -2033,7 +2119,7 @@
       display: inline-flex;
       align-self: flex-start;
       gap: 0.4rem;
-      margin-bottom: 0.9rem;
+      margin-bottom: 0.7rem;
       padding: 0.3rem 0.7rem;
       border-radius: 999px;
       background: var(--accent-gradient-ink);
@@ -2054,7 +2140,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.6rem;
-      margin-top: 1.4rem;
+      margin-top: 1.1rem;
     }
 
     .btn-primary {
@@ -2178,7 +2264,7 @@
     }
 
     .upnext__item { border-radius: 14px; }
-    .upnext__thumb { border-radius: 12px; }
+    .upnext__thumb { border-radius: 10px; }
 
     /* ---- 18+ / Telegram banner ------------------------------------ */
     .telegram-cta {
@@ -2377,38 +2463,11 @@
     <!-- Featured video + Up next -->
     <section class="hero" id="top" aria-labelledby="featured-title">
       <div class="hero-stage">
-        <div class="hero-backdrop" aria-hidden="true"><img id="hero-backdrop-img" alt="" decoding="async"></div>
         <div class="hero-stage__inner">
           <div class="hero-player">
             <div class="video-frame video-frame--player" id="featured-player" aria-live="polite">
               <noscript><p class="player-empty"><strong>Enable JavaScript</strong>to load the featured video.</p></noscript>
             </div>
-          </div>
-          <div class="hero-rail" aria-label="Video actions">
-            <button class="rail-btn" type="button" data-act="save" aria-pressed="false">
-              <span class="rail-btn__icon" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
-              </span>
-              <span>Save</span>
-            </button>
-            <button class="rail-btn" type="button" data-act="share">
-              <span class="rail-btn__icon" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"></path></svg>
-              </span>
-              <span>Share</span>
-            </button>
-            <a class="rail-btn" id="rail-open" data-act="open" href="#" target="_blank" rel="noopener noreferrer">
-              <span class="rail-btn__icon" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6"></path><path d="M20 4 11 13"></path><path d="M18 14v5.5H4.5V6H10"></path></svg>
-              </span>
-              <span>Open</span>
-            </a>
-            <a class="rail-btn" data-telegram href="#telegram">
-              <span class="rail-btn__icon" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-              </span>
-              <span>Telegram</span>
-            </a>
           </div>
         </div>
       </div>
@@ -2429,6 +2488,33 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
             <span>Add to Watchlist</span>
           </button>
+        </div>
+
+        <div class="hero-rail" aria-label="Video actions">
+          <button class="rail-btn" type="button" data-act="save" aria-pressed="false">
+            <span class="rail-btn__icon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
+            </span>
+            <span>Save</span>
+          </button>
+          <button class="rail-btn" type="button" data-act="share">
+            <span class="rail-btn__icon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"></path></svg>
+            </span>
+            <span>Share</span>
+          </button>
+          <a class="rail-btn" id="rail-open" data-act="open" href="#" target="_blank" rel="noopener noreferrer">
+            <span class="rail-btn__icon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6"></path><path d="M20 4 11 13"></path><path d="M18 14v5.5H4.5V6H10"></path></svg>
+            </span>
+            <span>Open</span>
+          </a>
+          <a class="rail-btn" data-telegram href="#telegram">
+            <span class="rail-btn__icon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            </span>
+            <span>Telegram</span>
+          </a>
         </div>
       </aside>
 
@@ -2894,7 +2980,8 @@
         orientation: row.orientation,
         featured: row.featured === true || row.featured === 1,
         pinned: row.pinned === true || row.pinned === 1,
-        posted: postedLabel(row.created_at)
+        posted: postedLabel(row.created_at),
+        createdAt: clean(row.created_at)
       };
     }
 
@@ -3006,20 +3093,70 @@
       Number(video.durationSeconds) > 0 &&
       Number(video.durationSeconds) < SHORT_LIMIT_SECONDS;
 
+    /* ================================================================
+       HOW RECENT IS A VIDEO
+       ----------------------------------------------------------------
+       The catalogue hands us a timestamp per row (created_at), and the
+       display text ("3 days ago") as a fallback for rows that only
+       carry a date. Both are turned into a number so the Up next rail
+       can sort by age without inventing anything.
+       ================================================================ */
+    function videoPublishedAt(video) {
+      const raw = String(video.createdAt || "").trim();
+      if (raw) {
+        const stamp = Date.parse(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
+        if (!Number.isNaN(stamp)) return stamp;
+      }
+
+      const label = String(video.posted || "").trim().toLowerCase();
+      if (!label) return 0;
+
+      const now = Date.now();
+      if (label === "today") return now;
+      if (label === "yesterday") return now - 86400000;
+
+      const match = /^(\d+)\s*(d|day|days|w|week|weeks|m|mo|month|months)\s*ago$/.exec(label);
+      if (match) {
+        const amount = Number(match[1]);
+        const unit = match[2].charAt(0);
+        if (unit === "d") return now - amount * 86400000;
+        if (unit === "w") return now - amount * 604800000;
+        return now - amount * 2592000000;
+      }
+
+      const stamp = Date.parse(label);
+      return Number.isNaN(stamp) ? 0 : stamp;
+    }
+
     const categories = [...new Set(VIDEOS.map((video) => video.category).filter(Boolean))];
     const hasShorts = VIDEOS.some(isShort);
 
     /* ================================================================
+       UP NEXT — the newest releases other than the one on stage
+       ----------------------------------------------------------------
+       Shorts are welcome here: most of this catalogue is under a minute,
+       so a rail that only knew about long releases would sit empty.
+       The list is sorted by age (created_at, or the "3 days ago" label)
+       and falls back to the catalogue order for rows without a date.
+       ================================================================ */
+    const UP_NEXT_COUNT = 4;
+
+    const BY_RECENCY = VIDEOS
+      .map((video, index) => ({ video, index, at: videoPublishedAt(video) }))
+      .sort((a, b) => (b.at - a.at) || (a.index - b.index))
+      .map((entry) => entry.video);
+
+    /* ================================================================
        LAYOUT — real videos, distributed once, no invented content
        ================================================================ */
-    const LAYOUT = { featured: VIDEOS[0] || null, upNext: [], shorts: [], trending: [], feed: [], shortsMode: "vertical" };
+    const LAYOUT = { featured: VIDEOS[0] || null, shorts: [], trending: [], feed: [], shortsMode: "vertical" };
 
     (function buildLayout() {
       if (!VIDEOS.length) return;
 
       /* Shorts are their own shelf: the length decides, so they are filtered
-         out of the featured slot, Up next and every regular section instead of
-         being repeated there. */
+         out of the featured slot and every regular section instead of being
+         repeated there. */
       const shorts = VIDEOS.filter(isShort);
       const regulars = VIDEOS.filter((video) => !isShort(video));
 
@@ -3045,12 +3182,7 @@
       pool.length = 0;
       pool.push(...pinned, ...rest);
 
-      // Keep the "Up next" rail from swallowing a small catalogue: leave at
-      // least one release for the main grid whenever there is one to spare.
-      const upNextCount = pool.length >= 5 ? 3 : Math.max(0, pool.length - 1);
-      LAYOUT.upNext = pool.slice(0, upNextCount);
-
-      const remaining = pool.slice(upNextCount);
+      const remaining = pool;
       const trendingCount = remaining.length > 8
         ? 8
         : Math.min(remaining.length, Math.max(4, Math.ceil(remaining.length / 2)));
@@ -3555,25 +3687,12 @@
 
       refreshHeroStats();
 
-      const backdrop = $("#hero-backdrop-img");
-      if (backdrop && video.thumb) {
-        backdrop.src = video.thumb;
-        backdrop.alt = "";
-        backdrop.loading = "eager";
-      }
-
       if (railOpen) {
         railOpen.href = video.url;
         railOpen.removeAttribute("aria-disabled");
       }
 
-      const saveButton = $('[data-act="save"]');
-      if (saveButton) {
-        const saved = isSaved(video.id);
-        saveButton.classList.toggle("is-on", saved);
-        saveButton.setAttribute("aria-pressed", String(saved));
-        saveButton.querySelector("span:last-child").textContent = saved ? "Saved" : "Save";
-      }
+      syncSaveButtons(isSaved(video.id));
 
       applyTelegramLinks();
       document.title = `${video.title} · ${SITE_NAME}`;
@@ -3606,12 +3725,29 @@
       return fallback;
     }
 
+    /* The player keeps a blurred, darkened copy of the poster behind it, so a
+       vertical clip fills the frame without black bars around it. */
+    function playerBackdrop(video) {
+      if (!video || !video.thumb) return null;
+      const blur = document.createElement("img");
+      blur.className = "video-frame__blur";
+      blur.src = video.thumb;
+      blur.alt = "";
+      blur.decoding = "async";
+      blur.setAttribute("aria-hidden", "true");
+      return blur;
+    }
+
     function playVideo(video, { smooth = false } = {}) {
       const player = $("#featured-player");
       if (!video || !player) return;
 
       state.currentId = video.id;
       renderHeroMeta(video);
+      // The rail always shows what is not on stage, so it follows the pick.
+      renderUpNext();
+
+      const backdrop = playerBackdrop(video);
 
       if (video.embedUrl) {
         const frame = document.createElement("iframe");
@@ -3623,9 +3759,9 @@
         frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
         frame.setAttribute("allowfullscreen", "");
         frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#08080C";
-        player.replaceChildren(frame);
+        player.replaceChildren(...(backdrop ? [backdrop] : []), frame);
       } else if (!video.directUrl) {
-        player.replaceChildren(makeFallback(video));
+        player.replaceChildren(...(backdrop ? [backdrop] : []), makeFallback(video));
       } else {
         const media = document.createElement("video");
         media.controls = true;
@@ -3639,7 +3775,7 @@
           if (player.contains(media)) player.replaceChildren(makeFallback(video));
         }, { once: true });
 
-        player.replaceChildren(media);
+        player.replaceChildren(...(backdrop ? [backdrop] : []), media);
         media.src = video.directUrl;
         const started = media.play();
         // Older browsers return undefined here; autoplay may also be blocked.
@@ -3664,14 +3800,62 @@
         return;
       }
 
-      player.replaceChildren(createPoster(video, { variant: "player", featured: true, eager: true }));
+      const backdrop = playerBackdrop(video);
+      player.replaceChildren(
+        ...(backdrop ? [backdrop] : []),
+        createPoster(video, { variant: "player", featured: true, eager: true })
+      );
+    }
+
+    /* The four newest releases that are not the one on stage. The rail is
+       never allowed to look empty while the library holds a single other
+       video — "See all" opens the full list, but the first videos are
+       always visible without it. */
+    function upNextVideos() {
+      const onStage = state.currentId || (LAYOUT.featured ? LAYOUT.featured.id : null);
+      const picked = [];
+
+      for (const video of BY_RECENCY) {
+        if (video.id === onStage) continue;
+        picked.push(video);
+        if (picked.length >= UP_NEXT_COUNT) break;
+      }
+
+      return picked;
+    }
+
+    /* "3 days ago" becomes "3d ago" so the line fits next to the title. */
+    function compactAge(value) {
+      const raw = String(value || "").trim().toLowerCase();
+      if (!raw) return "";
+      if (raw === "today") return "today";
+      if (raw === "yesterday") return "1d ago";
+
+      const match = /^(\d+)\s*(d|day|days|w|week|weeks|m|mo|month|months)\s*ago$/.exec(raw);
+      if (!match) return raw;
+      if (match[2].charAt(0) === "d") return `${match[1]}d ago`;
+      if (match[2].charAt(0) === "w") return `${match[1]}w ago`;
+      return `${match[1]}mo ago`;
+    }
+
+    function upNextMetaText(video) {
+      return [
+        video.creator,
+        video.views ? `${video.views} views` : "",
+        compactAge(video.posted)
+      ]
+        .filter(Boolean)
+        .join(" · ") || "Tap to play";
     }
 
     function renderUpNext() {
       const list = $("#up-next-list");
+      if (!list) return;
       list.replaceChildren();
 
-      if (!LAYOUT.upNext.length) {
+      const videos = upNextVideos();
+
+      if (!videos.length) {
         const note = document.createElement("p");
         note.className = "upnext__empty";
         note.innerHTML = `More releases land here automatically. Follow the
@@ -3680,19 +3864,37 @@
         return;
       }
 
-      LAYOUT.upNext.forEach((video) => {
+      videos.forEach((video) => {
         const item = document.createElement("a");
         item.className = "upnext__item";
         item.href = video.url;
         item.dataset.play = video.id;
-        item.innerHTML = `
-          <span class="upnext__thumb" data-thumb="${video.id}"></span>
-          <span class="upnext__body">
-            <span class="upnext__title">${esc(video.title)}</span>
-            <span class="upnext__meta">${esc(cardMetaText(video) || "Tap to play")}</span>
-          </span>`;
+        item.setAttribute("aria-label", `Play ${video.title}`);
 
-        const thumb = item.querySelector(".upnext__thumb");
+        const thumb = document.createElement("span");
+        thumb.className = "upnext__thumb poster";
+        thumb.style.setProperty("--tone", tone(Number(String(video.id).replace(/\D/g, "")) || 0));
+
+        const body = document.createElement("span");
+        body.className = "upnext__body";
+
+        const titleRow = document.createElement("span");
+        titleRow.className = "upnext__title-row";
+
+        const title = document.createElement("span");
+        title.className = "upnext__title";
+        title.textContent = video.title;
+        title.title = video.title;
+        titleRow.append(title);
+
+        const meta = document.createElement("span");
+        meta.className = "upnext__meta";
+        meta.textContent = upNextMetaText(video);
+        meta.title = upNextMetaText(video);
+
+        body.append(titleRow, meta);
+        item.append(thumb, body);
+
         if (video.thumb) {
           const image = document.createElement("img");
           image.className = "poster__media";
@@ -3715,17 +3917,25 @@
           watchFrame(thumb, false);
         }
 
-        thumb.classList.add("poster");
-        thumb.style.setProperty("--tone", tone(Number(video.id.slice(1)) || 0));
         const art = document.createElement("span");
         art.className = "poster__art";
         art.setAttribute("aria-hidden", "true");
         thumb.prepend(art);
 
-        item.addEventListener("click", (event) => {
-          event.preventDefault();
-          playVideo(video, { smooth: true });
-        });
+        // The length sits on the thumbnail, so the list reads at a glance,
+        // and a clip under a minute is marked with a Short badge.
+        const dur = document.createElement("span");
+        dur.className = "poster__dur upnext__dur";
+        dur.textContent = video.duration || "";
+        if (!video.duration) dur.hidden = true;
+        thumb.append(dur);
+
+        if (isShort(video)) {
+          const badge = document.createElement("span");
+          badge.className = "upnext__short";
+          badge.textContent = "Short";
+          thumb.append(badge);
+        }
 
         list.append(item);
       });
@@ -3911,6 +4121,20 @@
 
     const isSaved = (id) => savedSet().has(id);
 
+    /* Both save buttons (the rail pill and the watchlist button) show the
+       same state, so they are always updated together. */
+    function syncSaveButtons(saved) {
+      document.querySelectorAll('[data-act="save"]').forEach((button) => {
+        button.classList.toggle("is-on", saved);
+        button.setAttribute("aria-pressed", String(saved));
+        const label = button.querySelector("span:last-child");
+        if (!label) return;
+        label.textContent = button.classList.contains("btn-ghost")
+          ? (saved ? "In your watchlist" : "Add to Watchlist")
+          : (saved ? "Saved" : "Save");
+      });
+    }
+
     function toggleSave() {
       const video = byId(state.currentId);
       if (!video) return;
@@ -3926,15 +4150,7 @@
         // Private mode: saving is skipped silently.
       }
 
-      document.querySelectorAll('[data-act="save"]').forEach((button) => {
-        button.classList.toggle("is-on", nowSaved);
-        button.setAttribute("aria-pressed", String(nowSaved));
-        const label = button.querySelector("span:last-child");
-        if (!label) return;
-        label.textContent = button.classList.contains("btn-ghost")
-          ? (nowSaved ? "In your watchlist" : "Add to Watchlist")
-          : (nowSaved ? "Saved" : "Save");
-      });
+      syncSaveButtons(nowSaved);
       toast(nowSaved ? "Saved to this device" : "Removed from saved");
     }
 
