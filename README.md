@@ -47,6 +47,31 @@ frame at 0.5 seconds and to label the real duration. The main video file loads
 only when a visitor taps a thumbnail. If playback fails, the player offers the
 original video page link.
 
+## Video grid (Mixed Feed + Full library)
+
+The feed and the "View all" library use one masonry component (`.grid-feed`), so
+both look the same. Cards are never cropped on desktop: each thumbnail takes the
+video's own aspect ratio — vertical 9:16 clips stay tall, 16:9 clips stay wide —
+read from the thumbnail image or from the video metadata (falling back to the
+declared `format` until it loads). Each card then drops into whichever column is
+shortest, so there are no gaps. Desktop uses two columns with 20px gutters and
+20px corner radii; the duration sits on the thumbnail and the title and creator
+sit beneath the card.
+
+On phones (up to 767px) the same list becomes three columns with 9px gutters.
+Thumbnails are cropped to a uniform 3:4, the duration badge shrinks, and the
+title is truncated to one line (the creator line is hidden to keep the columns
+tight). The column count lives in `masonryColumnCount()` and the matching gaps in
+the `.grid-feed` media query.
+
+Cards keep the shared poster behaviour: hover lift/zoom, lazy-loaded thumbnails
+(only frames near the viewport are fetched), and the "open the original video"
+fallback.
+
+The feed only appears once the library is full enough to fill Up next and the
+rows above it (~15 videos); the "View all" library view shows the same masonry as
+soon as there are two or more videos.
+
 ## Brand assets
 
 - `assets/logo-lockup@3x.png` — mark + wordmark, transparent, used in the nav,

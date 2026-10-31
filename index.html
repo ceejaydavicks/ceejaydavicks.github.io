@@ -1314,20 +1314,103 @@
     @media (min-width: 640px) { .grid-trending { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (min-width: 1024px) { .grid-trending { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
+    /* Masonry feed: two balanced columns on desktop, three on mobile. */
     .grid-feed {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-      gap: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: var(--masonry-gap, 20px);
+      --masonry-gap: 20px;
     }
 
-    @media (min-width: 1024px) {
-      .grid-feed.is-mosaic {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        align-items: stretch;
+    .masonry__col {
+      display: flex;
+      min-width: 0;
+      flex: 1 1 0;
+      flex-direction: column;
+      gap: var(--masonry-gap, 20px);
+    }
+
+    .grid-feed .empty-card { flex: 1 1 100%; }
+
+    .masonry__col .sponsored-card { min-height: 0; }
+
+    @media (max-width: 767px) {
+      .grid-feed { --masonry-gap: 9px; }
+    }
+
+    /* Feed card: natural aspect ratio, duration on the thumbnail, title + creator below. */
+    .masonry-card { min-width: 0; }
+
+    .masonry-card .poster {
+      aspect-ratio: var(--ar, 16 / 9);
+      border-radius: 20px;
+    }
+
+    .masonry-card .poster__dur {
+      top: auto;
+      right: 0.6rem;
+      bottom: 0.6rem;
+    }
+
+    .masonry-card .card__body {
+      margin-top: 0.7rem;
+    }
+
+    .masonry-card .card__title { font-size: 13.5px; }
+
+    .masonry-card .card__title button {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .masonry-card .card__meta {
+      margin-top: 0.15rem;
+      font-size: 12px;
+    }
+
+    @media (max-width: 767px) {
+      .masonry-card .poster {
+        aspect-ratio: 3 / 4;
+        border-radius: 14px;
       }
-      .grid-feed.is-mosaic .item--tall { grid-row: span 2; }
-      .grid-feed.is-mosaic .item--tall .poster { height: 100%; aspect-ratio: auto; }
-      .grid-feed.is-mosaic .item--wide { grid-column: span 2; }
+
+      .masonry-card .poster__media { object-fit: cover; }
+
+      .masonry-card .poster__dur {
+        right: 0.3rem;
+        bottom: 0.3rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 5px;
+        font-size: 9.5px;
+      }
+
+      .masonry-card .poster__play {
+        width: 30px;
+        height: 30px;
+      }
+
+      .masonry-card .poster__play .icon {
+        width: 12px;
+        height: 12px;
+      }
+
+      .masonry-card .card__body { margin-top: 0.4rem; }
+
+      .masonry-card .card__title {
+        font-size: 11.5px;
+        line-height: 1.35;
+      }
+
+      .masonry-card .card__title button {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .masonry-card .card__meta { display: none; }
     }
 
     .empty-card {
@@ -2224,7 +2307,8 @@
         format,
         url: originalUrl || directUrl,
         directUrl,
-        durationKnown: clean(video.duration)
+        durationKnown: clean(video.duration),
+        ratio: 0
       };
     }
 
@@ -2321,7 +2405,10 @@
         image.loading = eager ? "eager" : "lazy";
         if (eager) image.fetchPriority = "high";
         image.src = video.thumb;
-        image.addEventListener("load", () => markReady(posterNode), { once: true });
+        image.addEventListener("load", () => {
+          applyNaturalRatio(posterNode, video, image.naturalWidth, image.naturalHeight);
+          markReady(posterNode);
+        }, { once: true });
         image.addEventListener("error", () => {
           image.remove();
           addFrameVideo(posterButton, video, eager);
@@ -2355,6 +2442,7 @@
       frame.addEventListener("loadeddata", ready, { once: true });
       frame.addEventListener("seeked", ready, { once: true });
       frame.addEventListener("loadedmetadata", () => {
+        applyNaturalRatio(posterNode, video, frame.videoWidth, frame.videoHeight);
         if (frame.duration > 0.6) frame.currentTime = 0.5;
         const known = formatDuration(frame.duration);
         if (known && !video.durationKnown) {
@@ -2384,6 +2472,9 @@
       const wrap = document.createElement("div");
       wrap.className = variant === "player" ? "poster poster--player" : `poster poster--${variant}`;
       wrap.style.setProperty("--tone", tone(Number(video.id.slice(1)) || 0));
+      // Natural aspect ratio for the masonry feed: known ratio once the media loads,
+      // otherwise a sensible default based on the declared format.
+      wrap.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
 
       const tag = video.tag || (variant === "vertical" && isShort(video) ? "Short" : "");
       const shownDuration = video.duration || "";
@@ -2432,6 +2523,23 @@
       return card;
     }
 
+    function createMasonryCard(video) {
+      const card = document.createElement("article");
+      card.className = "media-card masonry-card";
+      card.append(createPoster(video, { variant: "masonry" }));
+
+      const body = document.createElement("div");
+      body.className = "card__body";
+      body.innerHTML = [
+        '<div class="card__text">',
+        `<h3 class="card__title"><button type="button" data-play="${video.id}">${esc(video.title)}</button></h3>`,
+        `<p class="card__meta">${esc(video.creator || SITE_NAME)}</p>`,
+        "</div>"
+      ].join("");
+      card.append(body);
+      return card;
+    }
+
     function createVerticalCard(video) {
       const card = document.createElement("article");
       card.className = "media-card";
@@ -2456,29 +2564,116 @@
       return card;
     }
 
-    function fillGrid(grid, items, { variant = "landscape", sponsoredEvery = 6, mosaic = false } = {}) {
+    /* ================================================================
+       MASONRY FEED — items drop into whichever column is shortest
+       ================================================================ */
+    const masonryMobile = window.matchMedia("(max-width: 767px)");
+
+    // Two columns on desktop, three on phones; the CSS handles the matching gaps.
+    function masonryColumnCount() {
+      return masonryMobile.matches ? 3 : 2;
+    }
+
+    function masonryGap(grid) {
+      const value = parseFloat(getComputedStyle(grid).columnGap);
+      return Number.isFinite(value) ? value : 20;
+    }
+
+    function estimatedCardHeight(card, columnWidth, mobile) {
+      if (card.classList.contains("sponsored-card")) return mobile ? 168 : 196;
+      const poster = card.querySelector(".poster");
+      const known = parseFloat(poster && poster.style.getPropertyValue("--ar"));
+      // On small screens every thumbnail is cropped to 3:4, so use that ratio here too.
+      const ratio = mobile ? 3 / 4 : (Number.isFinite(known) && known > 0 ? known : 16 / 9);
+      return columnWidth / ratio + (mobile ? 24 : 66);
+    }
+
+    function distributeMasonry(grid) {
+      const cards = grid._masonryCards;
+      if (!grid.classList.contains("grid-feed") || !cards || !cards.length) return;
+
+      const cols = masonryColumnCount();
+      const gap = masonryGap(grid);
+      const mobile = masonryMobile.matches;
+      const width = grid.clientWidth;
+      const columnWidth = width ? Math.max(80, (width - gap * (cols - 1)) / cols) : (mobile ? 110 : 460);
+
       grid.replaceChildren();
-      if (mosaic) grid.classList.add("is-mosaic");
-      else grid.classList.remove("is-mosaic");
+
+      const columns = [];
+      const estimated = [];
+      for (let i = 0; i < cols; i += 1) {
+        const column = document.createElement("div");
+        column.className = "masonry__col";
+        grid.append(column);
+        columns.push(column);
+        estimated.push(0);
+      }
+
+      // Measure real heights while the grid is on screen; estimate when it is hidden.
+      const measurable = width > 0 && grid.offsetParent !== null;
+
+      cards.forEach((card) => {
+        let target = 0;
+        for (let i = 1; i < cols; i += 1) {
+          const current = measurable ? columns[target].offsetHeight : estimated[target];
+          const candidate = measurable ? columns[i].offsetHeight : estimated[i];
+          if (candidate < current) target = i;
+        }
+        columns[target].append(card);
+        estimated[target] += estimatedCardHeight(card, columnWidth, mobile) + gap;
+      });
+
+      grid.dataset.masonryCols = String(cols);
+    }
+
+    let masonryTimer = 0;
+
+    function scheduleMasonryReflow() {
+      window.clearTimeout(masonryTimer);
+      masonryTimer = window.setTimeout(() => {
+        document.querySelectorAll(".grid-feed").forEach(distributeMasonry);
+      }, 120);
+    }
+
+    // The video's own aspect ratio drives the card shape (desktop) — never cropped.
+    function applyNaturalRatio(posterNode, video, width, height) {
+      if (!posterNode || !width || !height) return;
+      const ratio = width / height;
+      if (!Number.isFinite(ratio) || ratio <= 0) return;
+
+      const rounded = Number(ratio.toFixed(4));
+      if (video) video.ratio = rounded;
+      posterNode.style.setProperty("--ar", String(rounded));
+      if (posterNode.closest(".grid-feed")) scheduleMasonryReflow();
+    }
+
+    window.addEventListener("resize", scheduleMasonryReflow);
+
+    function fillGrid(grid, items, { variant = "landscape", sponsoredEvery = 6 } = {}) {
+      const masonry = grid.classList.contains("grid-feed");
+      const cards = [];
 
       items.forEach((video, index) => {
-        const card = variant === "vertical" ? createVerticalCard(video) : createLandscapeCard(video);
-
-        if (mosaic) {
-          const useVertical = isShort(video) && grid.classList.contains("is-mosaic");
-          if (useVertical) {
-            if (index % 3 === 0) card.classList.add("item--tall");
-          } else if (index === 1 || index === 3) {
-            card.classList.add("item--wide");
-          }
-        }
-
-        grid.append(card);
+        let card;
+        if (variant === "vertical") card = createVerticalCard(video);
+        else if (masonry) card = createMasonryCard(video);
+        else card = createLandscapeCard(video);
+        cards.push(card);
 
         if (sponsoredEvery && (index + 1) % sponsoredEvery === 0) {
-          grid.append(createSponsoredCard());
+          cards.push(createSponsoredCard());
         }
       });
+
+      grid._masonryCards = cards;
+
+      if (masonry) {
+        distributeMasonry(grid);
+      } else {
+        grid.replaceChildren();
+        grid.append(...cards);
+      }
 
       applySmartlinks();
     }
@@ -2779,6 +2974,7 @@
       grid.replaceChildren();
 
       if (!items.length) {
+        grid._masonryCards = null;
         const empty = document.createElement("p");
         empty.className = "empty-card";
         empty.textContent = "Nothing matched that search. Try a different word or clear the filter.";
@@ -2793,6 +2989,7 @@
       });
 
       results.hidden = false;
+      scheduleMasonryReflow();
       if (scroll) results.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -2820,12 +3017,10 @@
 
       if (LAYOUT.feed.length) {
         $("#feed-note").textContent = "Fresh uploads, in every format";
-        fillGrid($("#feed-grid"), LAYOUT.feed, {
-          sponsoredEvery: 6,
-          mosaic: LAYOUT.feed.some(isShort) && LAYOUT.feed.length >= 5
-        });
+        fillGrid($("#feed-grid"), LAYOUT.feed, { sponsoredEvery: 6 });
       }
       feed.hidden = !sectionAvailability.feed;
+      scheduleMasonryReflow();
     }
 
     /* ================================================================
