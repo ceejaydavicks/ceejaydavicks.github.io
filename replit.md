@@ -22,5 +22,5 @@ is provided, the site requests video metadata to display a frame at 0.5 seconds.
 The main video file loads when a visitor taps a thumbnail. If playback fails,
 the player offers the original video page link.
 
-The existing social links and optional Adsterra Smartlink remain configurable in
-`index.html`. Google Fonts and hosted videos require an internet connection.
+The social links, Telegram link and optional Adsterra Smartlink remain
+configurable in `index.html`. Google Fonts and hosted videos require an internet connection.

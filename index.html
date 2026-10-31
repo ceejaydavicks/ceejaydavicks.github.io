@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#07060b">
+  <meta name="theme-color" content="#0B0B0F">
   <meta name="robots" content="index,follow">
 
-  <!-- SITE NAME: if you rename BootyMansion, update this title and the matching meta copy below. -->
+  <!-- SITE NAME: visible branding, SEO title and meta copy all follow SITE_NAME in the script below. -->
   <title>BootyMansion | Curated Video Entertainment</title>
   <meta name="description" content="BootyMansion is a sleek home for curated video entertainment, featured releases, and exclusive picks.">
   <meta name="author" content="BootyMansion">
@@ -18,89 +18,102 @@
   <meta name="twitter:title" content="BootyMansion | Curated Video Entertainment">
   <meta name="twitter:description" content="Discover featured releases and the latest video picks at BootyMansion.">
 
-  <!-- Optional remote font; the page falls back to system fonts if Google Fonts is unavailable. -->
+  <!-- One remote font request, swap-in so text never waits on it. Falls back to system fonts offline. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- ============================================================
+       ANALYTICS
+       Nothing is loaded here by default. Paste your analytics snippet
+       (GA4 / GTM / Plausible / Cloudflare) on the line below. Placing it
+       in <head> keeps page views accurate for the single-page layout.
+       ============================================================ -->
 
   <style>
+    /* ============ 1. TOKENS ============ */
     :root {
       color-scheme: dark;
-      --bg: #07060b;
-      --surface: #0d0b13;
-      --surface-raised: #12101a;
-      --surface-soft: #171321;
-      --text: #f4f1f8;
-      --silver: #d9d5e1;
-      --muted: #aaa4b4;
-      --quiet: #777181;
-      --line: rgba(221, 212, 237, 0.12);
-      --line-strong: rgba(221, 212, 237, 0.2);
-      --violet: #8e67e8;
-      --violet-bright: #b89aff;
-      --purple-deep: #492586;
-      --glow: rgba(135, 91, 235, 0.24);
-      --font: "Space Grotesk", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --content-width: 1160px;
-      --radius: 18px;
-      --radius-small: 12px;
+      --bg: #0B0B0F;
+      --surface: #111116;
+      --surface-2: #15151B;
+      --surface-3: #0F0F14;
+      --text: #F4F4F5;
+      --muted: #A1A1AA;
+      --quiet: #71717A;
+      --line: rgba(255, 255, 255, 0.06);
+      --line-soft: rgba(255, 255, 255, 0.04);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --rose: #FDA4AF;
+      --rose-200: #FECDD3;
+      --rose-400: #FB7185;
+      --rose-soft: rgba(253, 164, 175, 0.12);
+      --radius: 20px;
+      --radius-lg: 28px;
+      --radius-sm: 14px;
+      --max: 1440px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
+    /* ============ 2. BASE ============ */
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
 
     html {
       scroll-behavior: smooth;
       scroll-padding-top: 92px;
+      background: var(--bg);
     }
 
     body {
       min-width: 320px;
       margin: 0;
+      background: var(--bg);
       color: var(--text);
-      background:
-        radial-gradient(ellipse 68rem 36rem at 50% -20rem, rgba(92, 56, 156, 0.2), transparent 72%),
-        radial-gradient(ellipse 36rem 28rem at 105% 44%, rgba(66, 37, 112, 0.1), transparent 68%),
-        var(--bg);
       font-family: var(--font);
       font-size: 16px;
-      line-height: 1.6;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
 
-    body::before {
-      position: fixed;
-      z-index: -1;
-      inset: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.12) 0.55px, transparent 0.55px);
-      background-size: 5px 5px;
-      content: "";
-      opacity: 0.045;
-      pointer-events: none;
-    }
-
-    a {
-      color: inherit;
-    }
-
-    button,
-    a {
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    a:focus-visible,
-    button:focus-visible {
-      outline: 2px solid var(--violet-bright);
-      outline-offset: 4px;
-    }
+    img, video { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    input { font: inherit; }
+    :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 6px; }
+    ::selection { background: rgba(253, 164, 175, 0.3); }
 
     .shell {
-      width: min(var(--content-width), calc(100% - 2.4rem));
+      width: min(var(--max), 100% - 2rem);
       margin-inline: auto;
+    }
+
+    @media (min-width: 1024px) {
+      .shell { width: min(var(--max), 100% - 5rem); }
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon--fill { fill: currentColor; stroke: none; }
+
+    .ambient {
+      position: fixed;
+      z-index: -1;
+      inset: 0 0 auto;
+      height: 620px;
+      background: radial-gradient(ellipse at top, rgba(253, 164, 175, 0.06), transparent 60%);
+      pointer-events: none;
     }
 
     .skip-link {
@@ -108,26 +121,24 @@
       z-index: 100;
       top: 0.75rem;
       left: 0.75rem;
-      transform: translateY(-160%);
       padding: 0.7rem 1rem;
       border: 1px solid var(--line-strong);
       border-radius: 10px;
+      background: var(--surface-2);
       color: var(--text);
-      background: var(--surface-raised);
-      text-decoration: none;
+      transform: translateY(-160%);
       transition: transform 160ms ease;
     }
 
-    .skip-link:focus {
-      transform: translateY(0);
-    }
+    .skip-link:focus { transform: translateY(0); }
 
+    /* ============ 3. HEADER / NAV ============ */
     .site-header {
       position: sticky;
-      z-index: 30;
+      z-index: 40;
       top: 0;
-      border-bottom: 1px solid rgba(221, 212, 237, 0.08);
-      background: rgba(7, 6, 11, 0.83);
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(11, 11, 15, 0.82);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
@@ -135,158 +146,217 @@
     .nav-shell {
       position: relative;
       display: flex;
-      min-height: 76px;
+      min-height: 64px;
       align-items: center;
-      justify-content: space-between;
-      gap: 1.5rem;
+      gap: 0.9rem;
+    }
+
+    @media (min-width: 768px) {
+      .nav-shell { min-height: 72px; gap: 1.25rem; }
+    }
+
+    @media (min-width: 1024px) {
+      .nav-shell { gap: 2.5rem; }
     }
 
     .brand {
-      display: inline-flex;
+      display: flex;
       flex: 0 0 auto;
       align-items: center;
-      gap: 0.72rem;
+      gap: 0.6rem;
       color: var(--text);
-      font-size: 1.05rem;
-      font-weight: 700;
-      letter-spacing: -0.055em;
-      text-decoration: none;
     }
 
     .brand-mark {
       display: grid;
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       place-items: center;
-      border: 1px solid rgba(184, 154, 255, 0.43);
       border-radius: 11px;
-      background: linear-gradient(145deg, rgba(142, 103, 232, 0.25), rgba(43, 29, 67, 0.26));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 22px rgba(119, 77, 200, 0.13);
+      background: linear-gradient(140deg, var(--rose) 0%, var(--rose-400) 100%);
+      box-shadow: 0 10px 24px rgba(251, 113, 133, 0.22);
     }
 
-    .brand-mark svg {
-      width: 21px;
-      height: 21px;
-      fill: none;
-      stroke: var(--violet-bright);
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.35;
+    .brand-mark .icon {
+      width: 14px;
+      height: 14px;
+      color: #0B0B0F;
+      transform: translateX(1px);
     }
 
     .brand-word {
-      color: var(--text);
-      background: linear-gradient(100deg, #f4f1f8 8%, #d9d0ed 54%, #b89aff 100%);
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
     }
 
-    .brand-word span {
-      color: var(--violet-bright);
-    }
+    .brand-dot { color: var(--rose); font-size: 17px; font-weight: 600; margin-left: -0.45rem; }
 
     .primary-nav {
-      display: flex;
+      display: none;
       align-items: center;
-      gap: clamp(1.5rem, 3.3vw, 2.75rem);
+      gap: 1.75rem;
+      font-size: 13.5px;
     }
+
+    @media (min-width: 1080px) { .primary-nav { display: flex; } }
 
     .primary-nav a {
       color: var(--muted);
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-decoration: none;
       transition: color 160ms ease;
     }
 
     .primary-nav a:hover,
-    .primary-nav a:focus-visible {
-      color: var(--text);
-    }
+    .primary-nav a.is-active { color: #fff; }
 
-    .primary-nav .nav-follow {
-      padding: 0.55rem 0.95rem;
-      border: 1px solid rgba(184, 154, 255, 0.3);
-      border-radius: 999px;
-      color: var(--silver);
-      background: rgba(110, 73, 180, 0.1);
-    }
-
-    .primary-nav .nav-follow:hover {
-      border-color: rgba(184, 154, 255, 0.58);
-      color: white;
-      background: rgba(110, 73, 180, 0.2);
-    }
-
-    .menu-toggle {
-      display: none;
-      width: 42px;
-      height: 42px;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      color: var(--text);
-      background: var(--surface-raised);
-      cursor: pointer;
-    }
-
-    .menu-toggle__bars,
-    .menu-toggle__bars::before,
-    .menu-toggle__bars::after {
-      position: relative;
-      display: block;
-      width: 17px;
-      height: 1.5px;
-      border-radius: 99px;
-      background: currentColor;
-      transition: transform 160ms ease, top 160ms ease, opacity 160ms ease;
-    }
-
-    .menu-toggle__bars::before,
-    .menu-toggle__bars::after {
-      position: absolute;
-      left: 0;
-      content: "";
-    }
-
-    .menu-toggle__bars::before {
-      top: -5px;
-    }
-
-    .menu-toggle__bars::after {
-      top: 5px;
-    }
-
-    .menu-toggle[aria-expanded="true"] .menu-toggle__bars {
-      background: transparent;
-    }
-
-    .menu-toggle[aria-expanded="true"] .menu-toggle__bars::before {
-      top: 0;
-      transform: rotate(45deg);
-    }
-
-    .menu-toggle[aria-expanded="true"] .menu-toggle__bars::after {
-      top: 0;
-      transform: rotate(-45deg);
-    }
-
-    .hero-intro {
-      max-width: 760px;
-      padding-top: clamp(3.7rem, 8vw, 6.3rem);
-      padding-bottom: 1rem;
-    }
-
-    .eyebrow {
+    .nav-actions {
       display: flex;
       align-items: center;
       gap: 0.55rem;
-      margin: 0 0 0.9rem;
-      color: var(--violet-bright);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.16em;
+      margin-left: auto;
+    }
+
+    .search {
+      display: flex;
+      height: 40px;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .search:focus-within {
+      border-color: rgba(253, 164, 175, 0.4);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .search__icon { display: grid; place-items: center; color: var(--quiet); }
+
+    .search input {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .search input::placeholder { color: var(--quiet); }
+    .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+    .search--desktop { display: none; }
+
+    @media (min-width: 1024px) {
+      .search--desktop { display: flex; width: 240px; }
+    }
+
+    @media (min-width: 1200px) {
+      .search--desktop { width: 300px; }
+    }
+
+    .icon-btn {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--muted);
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .icon-btn:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border-radius: 999px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+    }
+
+    .btn-rose {
+      height: 40px;
+      padding: 0 0.9rem;
+      background: var(--rose);
+      color: #0B0B0F;
+      font-size: 13px;
+      box-shadow: 0 12px 28px rgba(251, 113, 133, 0.2);
+    }
+
+    .btn-rose:hover { background: var(--rose-200); }
+
+    .telegram-label { display: none; }
+
+    @media (min-width: 560px) { .telegram-label { display: inline; } }
+
+    .menu-toggle { display: grid; }
+
+    @media (min-width: 1080px) { .menu-toggle { display: none; } }
+
+    .search-mobile {
+      padding: 0 0 0.8rem;
+    }
+
+    .search-mobile .search { display: flex; width: 100%; }
+
+    @media (min-width: 1024px) { .search-mobile, .search-toggle { display: none !important; } }
+
+    @media (max-width: 420px) {
+      .nav-shell { gap: 0.5rem; }
+      .brand { gap: 0.5rem; white-space: nowrap; }
+      .brand-mark { width: 30px; height: 30px; border-radius: 10px; }
+      .brand-word, .brand-dot { font-size: 15.5px; }
+      .nav-actions { gap: 0.15rem; }
+      .icon-btn { width: 36px; height: 36px; }
+      .btn-rose { height: 36px; padding: 0 0.7rem; }
+    }
+
+    /* Mobile nav panel */
+    @media (max-width: 1079px) {
+      .primary-nav {
+        position: absolute;
+        z-index: 45;
+        top: calc(100% + 0.35rem);
+        right: 0;
+        left: 0;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.15rem;
+        padding: 0.5rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 16px;
+        background: rgba(15, 15, 20, 0.98);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .primary-nav.is-open { display: flex; }
+
+      .primary-nav a {
+        padding: 0.8rem 0.9rem;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+
+      .primary-nav a:hover { background: rgba(255, 255, 255, 0.04); }
+    }
+
+    /* ============ 4. SHARED BITS ============ */
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 0.55rem;
+      color: var(--rose);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
       line-height: 1.4;
       text-transform: uppercase;
     }
@@ -295,690 +365,410 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--violet-bright);
-      box-shadow: 0 0 13px rgba(184, 154, 255, 0.85);
+      background: var(--rose);
+      box-shadow: 0 0 12px rgba(253, 164, 175, 0.8);
     }
 
-    .hero-intro h1 {
-      max-width: 820px;
-      margin: 0;
-      font-size: clamp(2.7rem, 7vw, 5.25rem);
-      font-weight: 600;
-      letter-spacing: -0.075em;
-      line-height: 0.99;
-    }
+    .section { margin-top: 4rem; }
 
-    .hero-intro h1 em {
-      color: var(--violet-bright);
-      font-style: normal;
-      background: linear-gradient(95deg, #ded4ff 2%, #a98bff 49%, #7a54d2 100%);
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+    @media (min-width: 640px) { .section { margin-top: 5rem; } }
 
-    .hero-intro__copy {
-      max-width: 560px;
-      margin: 1.3rem 0 0;
-      color: var(--muted);
-      font-size: clamp(0.98rem, 1.6vw, 1.1rem);
-    }
-
-    .featured-section {
-      margin-top: clamp(2rem, 4vw, 3rem);
-      padding: clamp(1rem, 2.8vw, 1.7rem);
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background:
-        radial-gradient(ellipse at 88% 0%, rgba(103, 67, 169, 0.11), transparent 42%),
-        linear-gradient(145deg, rgba(21, 18, 29, 0.95), rgba(11, 9, 15, 0.96));
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.035);
-    }
-
-    .featured-heading,
-    .section-heading {
+    .section-head {
       display: flex;
+      flex-wrap: wrap;
       align-items: flex-end;
       justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-head__title {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: #fff;
+    }
+
+    .section-head__title .icon { color: var(--rose); }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .section-head p {
+      margin: 0.25rem 0 0;
+      color: var(--quiet);
+      font-size: 13px;
+    }
+
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--muted);
+      font-size: 12.5px;
+      transition: color 160ms ease;
+    }
+
+    .link-btn:hover { color: var(--rose); }
+
+    /* ============ 5. HERO ============ */
+    .hero {
+      display: grid;
+      align-items: start;
+      gap: 2rem;
+      padding-top: 1.5rem;
+    }
+
+    @media (min-width: 640px) { .hero { padding-top: 2.5rem; } }
+
+    @media (min-width: 1024px) {
+      .hero { grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; }
+    }
+
+    @media (min-width: 1280px) {
+      .hero { gap: 2.75rem; }
+    }
+
+    .hero-stage {
+      position: relative;
+      overflow: hidden;
+      padding: 1rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+
+    @media (min-width: 640px) { .hero-stage { padding: 1.5rem; } }
+    @media (min-width: 1280px) { .hero-stage { padding: 1.75rem; } }
+
+    .hero-backdrop {
+      position: absolute;
+      z-index: -1;
+      inset: -20%;
+      overflow: hidden;
+      opacity: 0.35;
+      filter: blur(64px);
+    }
+
+    .hero-backdrop img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.2);
+    }
+
+    .hero-backdrop::after {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 11, 15, 0.92), rgba(11, 11, 15, 0.35) 55%, rgba(11, 11, 15, 0.92));
+      content: "";
+    }
+
+    .hero-stage__inner {
+      display: flex;
+      flex-direction: column;
       gap: 1rem;
     }
 
-    .featured-heading {
-      padding: 0.05rem 0.15rem 1rem;
+    @media (min-width: 1280px) {
+      .hero-stage__inner { flex-direction: row; align-items: stretch; gap: 1.25rem; }
     }
 
-    .featured-heading .eyebrow,
-    .section-heading .eyebrow {
-      margin-bottom: 0.4rem;
-    }
-
-    .featured-heading h2,
-    .section-heading h2 {
-      margin: 0;
-      font-size: clamp(1.4rem, 2.8vw, 1.85rem);
-      font-weight: 600;
-      letter-spacing: -0.045em;
-      line-height: 1.15;
-    }
-
-    .featured-index {
-      flex: 0 0 auto;
-      padding-bottom: 0.15rem;
-      color: var(--quiet);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-    }
+    .hero-player { min-width: 0; flex: 1 1 auto; }
 
     .video-frame {
       position: relative;
       width: 100%;
       overflow: hidden;
       aspect-ratio: 16 / 9;
-      border: 1px solid rgba(221, 212, 237, 0.12);
-      border-radius: 14px;
-      background: #09080d;
+      border-radius: 20px;
+      background: #08080B;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
       isolation: isolate;
     }
 
     .video-frame > video {
       position: absolute;
       inset: 0;
-      display: block;
       width: 100%;
       height: 100%;
-      border: 0;
-      background: #09080d;
-    }
-
-    .video-frame--player > video {
+      background: #08080B;
       object-fit: contain;
     }
 
-    .featured-details {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 1.5rem;
-      padding: 1.3rem 0.15rem 0.1rem;
+    @media (min-width: 1280px) {
+      .video-frame--player { height: 100%; aspect-ratio: auto; min-height: 420px; }
     }
 
-    .featured-copy {
-      max-width: 720px;
-    }
-
-    .featured-copy h3 {
-      margin: 0;
-      font-size: clamp(1.2rem, 2.7vw, 1.65rem);
-      font-weight: 600;
-      letter-spacing: -0.045em;
-      line-height: 1.25;
-    }
-
-    .featured-copy p {
-      max-width: 650px;
-      margin: 0.45rem 0 0;
+    .player-empty {
+      display: grid;
+      height: 100%;
+      place-content: center;
+      gap: 0.4rem;
+      padding: 1.5rem;
       color: var(--muted);
-      font-size: 0.93rem;
+      font-size: 13.5px;
+      text-align: center;
     }
 
-    .offer-button {
-      display: inline-flex;
-      flex: 0 0 auto;
-      min-height: 46px;
-      align-items: center;
-      justify-content: center;
-      gap: 0.65rem;
-      padding: 0.7rem 1rem;
-      border: 1px solid rgba(184, 154, 255, 0.52);
-      border-radius: 999px;
-      color: #f5f0ff;
-      background: linear-gradient(110deg, rgba(110, 73, 180, 0.36), rgba(70, 43, 116, 0.25));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 24px rgba(106, 65, 181, 0.1);
-      font-size: 0.82rem;
-      font-weight: 600;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-    }
+    .player-empty strong { color: #fff; font-weight: 500; }
+    .player-empty span { color: var(--quiet); font-size: 12.5px; }
 
-    .offer-button:hover {
-      transform: translateY(-1px);
-      border-color: var(--violet-bright);
-      background: linear-gradient(110deg, rgba(124, 83, 202, 0.5), rgba(82, 50, 137, 0.34));
-      box-shadow: 0 0 26px rgba(131, 86, 216, 0.24);
-    }
-
-    .offer-button svg,
-    .banner-arrow,
-    .sponsored-arrow {
-      width: 16px;
-      height: 16px;
-      flex: 0 0 auto;
-      fill: none;
-      stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.7;
-    }
-
-    .smartlink-unconfigured {
-      cursor: not-allowed;
-      opacity: 0.72;
-    }
-
-    .promo-banner {
-      margin-top: 1.35rem;
-      overflow: hidden;
-      border: 1px solid rgba(153, 117, 221, 0.29);
-      border-radius: 14px;
-      background:
-        linear-gradient(100deg, rgba(81, 48, 137, 0.24), rgba(31, 23, 43, 0.75) 56%, rgba(16, 13, 22, 0.92)),
-        var(--surface);
-    }
-
-    .promo-banner__link {
+    .hero-rail {
       display: flex;
-      min-height: 86px;
+      flex: 0 0 auto;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    @media (min-width: 1280px) {
+      .hero-rail { flex-direction: column; justify-content: center; gap: 0.9rem; }
+    }
+
+    .rail-btn {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 1.25rem;
-      padding: 1.1rem clamp(1rem, 3vw, 1.6rem);
-      color: var(--text);
-      text-decoration: none;
+      gap: 0.3rem;
+      min-width: 54px;
+      padding: 0.4rem;
+      color: var(--quiet);
+      font-size: 10.5px;
+      transition: color 160ms ease;
+    }
+
+    .rail-btn:hover { color: #fff; }
+
+    .rail-btn__icon {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      backdrop-filter: blur(8px);
       transition: background 160ms ease;
     }
 
-    .promo-banner__link:hover {
-      background: rgba(126, 83, 206, 0.1);
-    }
+    .rail-btn:hover .rail-btn__icon { background: rgba(255, 255, 255, 0.1); }
+    .rail-btn.is-on { color: var(--rose); }
+    .rail-btn.is-on .rail-btn__icon { border-color: rgba(253, 164, 175, 0.5); color: var(--rose); }
 
-    .promo-banner__copy {
-      display: grid;
-      gap: 0.15rem;
-    }
-
-    .sponsored-label {
-      color: var(--violet-bright);
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.17em;
-      line-height: 1.3;
-      text-transform: uppercase;
-    }
-
-    .promo-banner__title {
-      font-size: clamp(0.96rem, 2vw, 1.12rem);
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .promo-banner__note {
-      color: var(--muted);
-      font-size: 0.82rem;
-    }
-
-    .promo-banner__action {
-      display: inline-flex;
-      flex: 0 0 auto;
-      align-items: center;
-      gap: 0.55rem;
-      color: var(--silver);
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .promo-banner__link:hover .banner-arrow {
-      transform: translateX(3px);
-    }
-
-    .banner-arrow {
-      transition: transform 160ms ease;
-    }
-
-    .ad-break {
+    .hero-meta {
       display: flex;
-      justify-content: center;
-      margin: 2.25rem auto clamp(3.5rem, 7vw, 5rem);
+      min-width: 0;
+      flex-direction: column;
     }
 
+    .hero-title {
+      margin: 0.35rem 0 0;
+      font-size: clamp(1.9rem, 4.6vw, 2.75rem);
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .hero-sub {
+      margin: 0.7rem 0 0;
+      color: var(--muted);
+      font-size: 14.5px;
+      line-height: 1.6;
+      max-width: 42ch;
+    }
+
+    .creator {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 1.35rem;
+    }
+
+    .avatar {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 999px;
+      background: linear-gradient(140deg, rgba(253, 164, 175, 0.32), rgba(251, 113, 133, 0.08));
+      color: var(--rose-200);
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(253, 164, 175, 0.3);
+    }
+
+    .creator .avatar { width: 40px; height: 40px; font-size: 15px; }
+
+    .creator__name {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .creator__name .icon { color: var(--rose); width: 15px; height: 15px; }
+
+    .creator__note { color: var(--quiet); font-size: 12px; }
+
+    .hero-follow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: auto;
+      padding: 0.45rem 0.85rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: #fff;
+      font-size: 12.5px;
+      transition: border-color 160ms ease, color 160ms ease;
+    }
+
+    .hero-follow:hover { border-color: rgba(253, 164, 175, 0.5); color: var(--rose-200); }
+
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.4rem;
+      margin-top: 1.35rem;
+      padding: 0.9rem 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .hero-stats b { color: #fff; font-weight: 500; }
+
+    .hero-offer {
+      align-self: flex-start;
+      margin-top: 1.1rem;
+      padding: 0.55rem 1rem;
+      border: 1px solid rgba(253, 164, 175, 0.28);
+      border-radius: 999px;
+      background: rgba(253, 164, 175, 0.07);
+      color: var(--rose-200);
+      font-size: 12.5px;
+      font-weight: 500;
+      transition: background 160ms ease, border-color 160ms ease;
+    }
+
+    .hero-offer:hover { background: rgba(253, 164, 175, 0.14); border-color: rgba(253, 164, 175, 0.5); }
+
+    .upnext { margin-top: 1.6rem; }
+
+    .upnext__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .upnext__head h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .upnext__list { display: grid; gap: 0.65rem; }
+
+    .upnext__item {
+      display: flex;
+      gap: 0.85rem;
+      padding: 0.45rem;
+      margin: -0.45rem;
+      border-radius: 16px;
+      transition: background 160ms ease;
+    }
+
+    .upnext__item:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .upnext__thumb {
+      position: relative;
+      width: 118px;
+      flex: 0 0 auto;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      background: var(--surface-2);
+    }
+
+    .upnext__thumb.poster {
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    .upnext__body { min-width: 0; padding-top: 0.15rem; }
+
+    .upnext__title {
+      overflow: hidden;
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 160ms ease;
+    }
+
+    .upnext__item:hover .upnext__title { color: var(--rose-200); }
+
+    .upnext__meta { margin: 0.2rem 0 0; color: var(--quiet); font-size: 12px; }
+
+    .upnext__empty {
+      padding: 1rem;
+      border: 1px dashed var(--line-strong);
+      border-radius: 16px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+
+    .upnext__empty a { color: var(--rose-200); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ============ 6. AD SLOTS ============ */
     .ad-slot {
       display: grid;
       place-content: center;
-      gap: 0.35rem;
-      border: 1px dashed rgba(221, 212, 237, 0.19);
-      border-radius: 12px;
+      gap: 0.3rem;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: linear-gradient(150deg, rgba(21, 21, 27, 0.7), rgba(12, 12, 16, 0.85));
       color: var(--quiet);
-      background: linear-gradient(145deg, rgba(20, 17, 27, 0.7), rgba(12, 10, 16, 0.84));
       text-align: center;
     }
 
     .ad-slot__label {
-      color: #aaa2b2;
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    .ad-slot__size {
-      color: var(--quiet);
-      font-size: 0.72rem;
-    }
-
-    .ad-slot--rectangle {
-      width: min(300px, 100%);
-      min-height: 250px;
-      aspect-ratio: 6 / 5;
-    }
-
-    .videos-section {
-      scroll-margin-top: 100px;
-    }
-
-    .section-heading {
-      align-items: flex-end;
-      margin-bottom: 1.25rem;
-    }
-
-    .section-heading h2 span {
-      color: var(--violet-bright);
-    }
-
-    .section-note {
-      max-width: 260px;
-      margin: 0 0 0.08rem;
-      color: var(--muted);
-      font-size: 0.85rem;
-      text-align: right;
-    }
-
-    .ad-slot--leaderboard {
-      width: min(728px, 100%);
-      min-height: 90px;
-      margin: 0 auto 1.5rem;
-    }
-
-    .video-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1rem;
-      align-items: stretch;
-    }
-
-    .video-card {
-      min-width: 0;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 15px;
-      background: linear-gradient(150deg, rgba(19, 16, 26, 0.98), rgba(12, 10, 16, 0.98));
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.13);
-      transition: border-color 170ms ease, transform 170ms ease, box-shadow 170ms ease;
-    }
-
-    .video-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(184, 154, 255, 0.35);
-      box-shadow: 0 21px 44px rgba(0, 0, 0, 0.24), 0 0 24px rgba(105, 69, 175, 0.08);
-    }
-
-    .video-frame--card {
-      border: 0;
-      border-bottom: 1px solid rgba(221, 212, 237, 0.09);
-      border-radius: 0;
-    }
-
-    .video-poster {
-      position: absolute;
-      inset: 0;
-      display: block;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      padding: 0;
-      border: 0;
-      color: var(--text);
-      background:
-        radial-gradient(ellipse at 76% 19%, rgba(var(--poster-tone), 0.31), transparent 41%),
-        linear-gradient(137deg, rgba(var(--poster-tone), 0.12), transparent 46%),
-        linear-gradient(150deg, #191421, #09080e 78%);
-      cursor: pointer;
-      text-align: left;
-    }
-
-    .video-poster::after {
-      position: absolute;
-      z-index: 0;
-      inset: 36% 0 0;
-      background: linear-gradient(transparent, rgba(7, 6, 11, 0.82));
-      content: "";
-      pointer-events: none;
-    }
-
-    .video-thumbnail-media {
-      position: absolute;
-      z-index: 0;
-      inset: 0;
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-    }
-
-    .video-poster.has-media .poster-art {
-      display: none;
-    }
-
-    .video-fallback {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      align-content: center;
-      justify-items: center;
-      gap: 0.75rem;
-      padding: 1.5rem;
-      color: var(--silver);
-      background:
-        radial-gradient(ellipse at 76% 19%, rgba(142, 103, 232, 0.2), transparent 41%),
-        linear-gradient(150deg, #191421, #09080e 78%);
-      text-align: center;
-    }
-
-    .video-fallback p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    .video-fallback a {
-      color: var(--violet-bright);
-      font-weight: 600;
-      text-underline-offset: 0.2em;
-    }
-
-    .poster-art {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      opacity: 0.78;
-      pointer-events: none;
-    }
-
-    .poster-art::before {
-      position: absolute;
-      inset: -30%;
-      border: 1px solid rgba(222, 208, 255, 0.2);
-      border-radius: 48%;
-      box-shadow:
-        0 0 0 17px rgba(190, 164, 248, 0.025),
-        0 0 0 34px rgba(190, 164, 248, 0.03),
-        0 0 0 51px rgba(190, 164, 248, 0.025),
-        0 0 75px rgba(var(--poster-tone), 0.2);
-      content: "";
-      transform: rotate(-22deg) scaleX(0.86);
-    }
-
-    .poster-art::after {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(222, 208, 255, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(222, 208, 255, 0.06) 1px, transparent 1px);
-      background-size: 42px 42px;
-      content: "";
-      mask-image: linear-gradient(135deg, black, transparent 78%);
-    }
-
-    .poster-meta,
-    .poster-title,
-    .poster-hint,
-    .poster-play {
-      position: absolute;
-      z-index: 1;
-    }
-
-    .poster-meta {
-      top: 1rem;
-      left: 1rem;
-      color: rgba(239, 231, 255, 0.72);
-      font-size: 0.65rem;
+      color: #9d9da6;
+      font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.16em;
       text-transform: uppercase;
     }
 
-    .poster-title {
-      bottom: 1rem;
-      left: 1rem;
-      max-width: 70%;
-      color: rgba(244, 241, 248, 0.92);
-      font-size: clamp(0.85rem, 1.5vw, 1rem);
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      line-height: 1.25;
-      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.7);
+    .ad-slot__size { font-size: 11px; }
+
+    .ad-slot--rectangle {
+      width: min(300px, 100%);
+      min-height: 250px;
     }
 
-    .poster-hint {
-      right: 1rem;
-      bottom: 1.15rem;
-      color: rgba(218, 211, 229, 0.62);
-      font-size: 0.65rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .poster-play {
-      top: 50%;
-      left: 50%;
-      display: grid;
-      width: 54px;
-      height: 54px;
-      place-items: center;
-      border: 1px solid rgba(230, 221, 246, 0.47);
-      border-radius: 50%;
-      color: white;
-      background: rgba(14, 11, 20, 0.56);
-      box-shadow: 0 0 0 7px rgba(236, 225, 255, 0.055), 0 8px 26px rgba(0, 0, 0, 0.28);
-      backdrop-filter: blur(7px);
-      transition: transform 170ms ease, background 170ms ease, box-shadow 170ms ease;
-      transform: translate(-50%, -50%);
-    }
-
-    .poster-play svg {
-      width: 19px;
-      height: 19px;
-      margin-left: 3px;
-      fill: currentColor;
-    }
-
-    .video-poster:hover .poster-play,
-    .video-poster:focus-visible .poster-play {
-      background: rgba(107, 70, 180, 0.68);
-      box-shadow: 0 0 0 8px rgba(172, 137, 255, 0.11), 0 0 28px rgba(153, 112, 239, 0.4);
-      transform: translate(-50%, -50%) scale(1.06);
-    }
-
-    .video-card__body {
-      padding: 1rem 1.05rem 1.15rem;
-    }
-
-    .video-card__body h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      line-height: 1.35;
-    }
-
-    .video-card__body p {
-      margin: 0.42rem 0 0;
-      color: var(--muted);
-      font-size: 0.82rem;
-      line-height: 1.55;
-    }
-
-    .sponsored-card {
-      position: relative;
-      display: flex;
-      min-height: 100%;
-      overflow: hidden;
-      border: 1px solid rgba(153, 117, 221, 0.3);
-      border-radius: 15px;
-      background:
-        radial-gradient(ellipse at 94% 4%, rgba(121, 79, 195, 0.2), transparent 43%),
-        linear-gradient(150deg, rgba(26, 20, 37, 0.98), rgba(13, 10, 18, 0.98));
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.13);
-      transition: border-color 170ms ease, transform 170ms ease, box-shadow 170ms ease;
-    }
-
-    .sponsored-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(184, 154, 255, 0.56);
-      box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22), 0 0 26px rgba(105, 69, 175, 0.13);
-    }
-
-    .sponsored-card__link {
-      display: flex;
-      width: 100%;
-      min-height: 100%;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1.2rem;
-      padding: 1.3rem;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .sponsored-card__body {
-      display: grid;
-      gap: 0.6rem;
-    }
-
-    .sponsored-card__title {
-      max-width: 250px;
-      margin: 0;
-      font-size: clamp(1.25rem, 2vw, 1.55rem);
-      font-weight: 600;
-      letter-spacing: -0.055em;
-      line-height: 1.13;
-    }
-
-    .sponsored-card__description {
-      max-width: 275px;
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.83rem;
-    }
-
-    .sponsored-card__bottom {
-      display: flex;
-      width: 100%;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .sponsored-card__cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      color: #e9e0ff;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .sponsored-arrow {
-      transition: transform 160ms ease;
-    }
-
-    .sponsored-card__link:hover .sponsored-arrow {
-      transform: translateX(3px);
-    }
-
-    .follow-section {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 2rem;
-      margin-top: clamp(4.5rem, 9vw, 7rem);
-      padding: clamp(1.35rem, 4vw, 2.35rem);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background:
-        radial-gradient(ellipse at 100% 0%, rgba(92, 58, 150, 0.12), transparent 45%),
-        linear-gradient(145deg, rgba(18, 15, 24, 0.88), rgba(10, 9, 14, 0.88));
-      scroll-margin-top: 100px;
-    }
-
-    .follow-copy {
-      max-width: 360px;
-    }
-
-    .follow-copy .eyebrow {
-      margin-bottom: 0.5rem;
-    }
-
-    .follow-copy h2 {
-      margin: 0;
-      font-size: clamp(1.45rem, 3vw, 2rem);
-      font-weight: 600;
-      letter-spacing: -0.05em;
-      line-height: 1.15;
-    }
-
-    .follow-copy p:last-child {
-      margin: 0.55rem 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .social-links {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 0.55rem;
-    }
-
-    .social-link {
-      display: inline-flex;
-      min-height: 43px;
-      align-items: center;
-      justify-content: center;
-      gap: 0.55rem;
-      padding: 0.55rem 0.78rem;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--silver);
-      background: rgba(255, 255, 255, 0.018);
-      font-size: 0.78rem;
-      font-weight: 500;
-      text-decoration: none;
-      transition: color 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-    }
-
-    .social-link svg {
-      display: block;
-      width: 16px;
-      height: 16px;
-      flex: 0 0 auto;
-      fill: currentColor;
-      stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .social-link:hover {
-      transform: translateY(-2px);
-      border-color: rgba(184, 154, 255, 0.58);
-      color: #f6f1ff;
-      background: rgba(128, 84, 205, 0.13);
-      box-shadow: 0 0 20px rgba(132, 87, 218, 0.22);
-    }
-
-    .native-ad-wrap {
-      margin: clamp(3.5rem, 7vw, 5.5rem) auto 2.2rem;
+    .ad-slot--leaderboard {
+      width: min(728px, 100%);
+      min-height: 90px;
+      margin: 0 auto 1.75rem;
     }
 
     .ad-slot--native {
@@ -986,280 +776,792 @@
       min-height: 104px;
     }
 
-    .site-footer {
-      border-top: 1px solid rgba(221, 212, 237, 0.1);
-      background: rgba(6, 5, 9, 0.32);
+    .native-ad-wrap { margin: 3.5rem auto 0; }
+
+    .ad-band { margin-top: 2rem; }
+
+    .ad-break { display: flex; justify-content: center; margin-top: 1.5rem; }
+
+    @media (max-width: 767px) { .ad-band { display: none; } }
+
+    /* ============ 7. PROMO BANNER (SMARTLINK) ============ */
+    .promo {
+      margin-top: 1.5rem;
+      overflow: hidden;
+      border: 1px solid rgba(253, 164, 175, 0.2);
+      border-radius: var(--radius);
+      background: linear-gradient(100deg, rgba(251, 113, 133, 0.12), rgba(25, 20, 28, 0.7) 55%, rgba(15, 14, 18, 0.9));
     }
 
-    .footer-inner {
+    .promo__link {
       display: flex;
-      min-height: 82px;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 1.2rem;
-      color: var(--quiet);
-      font-size: 0.78rem;
+      gap: 0.9rem 1.5rem;
+      padding: 1.1rem 1.25rem;
+      transition: background 160ms ease;
     }
 
-    .footer-inner p {
-      margin: 0;
+    .promo__link:hover { background: rgba(253, 164, 175, 0.05); }
+
+    .promo__copy { display: grid; gap: 0.12rem; }
+
+    .promo__label {
+      color: var(--rose);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
     }
 
-    .footer-brand {
-      color: var(--silver);
+    .promo__title { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+    .promo__note { color: var(--muted); font-size: 12.5px; }
+
+    .promo__action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--rose-200);
+      font-size: 12.5px;
       font-weight: 600;
     }
 
-    .footer-offer {
+    .promo__action .icon { transition: transform 160ms ease; }
+    .promo__link:hover .promo__action .icon { transform: translateX(3px); }
+
+    /* ============ 8. CHIPS ============ */
+    .chips {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 2.5rem;
+      padding-bottom: 0.35rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
       color: var(--muted);
-      text-decoration-color: rgba(184, 154, 255, 0.45);
-      text-underline-offset: 3px;
+      font-size: 12.5px;
+      transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .chip:hover { color: #fff; border-color: var(--line-strong); }
+
+    .chip.is-active {
+      border-color: transparent;
+      background: #fff;
+      color: #0B0B0F;
+      font-weight: 500;
+    }
+
+    /* ============ 9. POSTERS / CARDS ============ */
+    .poster {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .poster--wide { aspect-ratio: 16 / 9; }
+    .poster--vertical { aspect-ratio: 9 / 16; border-radius: 18px; }
+    .poster--player { position: absolute; inset: 0; border-radius: 0; box-shadow: none; }
+
+    .poster__btn {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      color: #fff;
+      text-align: left;
+    }
+
+    .poster__art {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 253, 164, 175), 0.24), transparent 62%),
+        linear-gradient(150deg, #1a1520, #09090e 78%);
+      transition: opacity 400ms ease;
+    }
+
+    .poster__art::after {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      content: "";
+      mask-image: linear-gradient(140deg, #000, transparent 72%);
+      -webkit-mask-image: linear-gradient(140deg, #000, transparent 72%);
+    }
+
+    .poster__media {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 420ms ease, transform 700ms ease;
+      pointer-events: none;
+      background: #0d0d12;
+    }
+
+    .poster.has-media .poster__art { opacity: 0; }
+    .poster.has-media .poster__media { opacity: 1; }
+
+    .poster:hover .poster__media { transform: scale(1.04); }
+
+    .poster__shade {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0.05) 46%, rgba(0, 0, 0, 0.2));
+      pointer-events: none;
+    }
+
+    .poster--player .poster__shade {
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.45));
+    }
+
+    .poster__badge {
+      position: absolute;
+      z-index: 3;
+      top: 0.85rem;
+      left: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+    }
+
+    .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--rose-400);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    .poster__tag {
+      position: absolute;
+      z-index: 3;
+      top: 0.75rem;
+      left: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      background: var(--rose);
+      color: #0B0B0F;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .poster__badge + .poster__tag { left: auto; right: 0.75rem; }
+
+    .poster__dur {
+      position: absolute;
+      z-index: 3;
+      top: 0.75rem;
+      right: 0.75rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.68);
+      color: #fff;
+      font-size: 10.5px;
+      font-variant-numeric: tabular-nums;
+      backdrop-filter: blur(6px);
+    }
+
+    .poster--wide .poster__dur,
+    .poster--player .poster__dur {
+      top: auto;
+      bottom: 0.75rem;
+    }
+
+    .poster__play {
+      position: absolute;
+      z-index: 4;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+      backdrop-filter: blur(10px);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+
+    .poster__play .icon { width: 18px; height: 18px; transform: translateX(1px); }
+
+    .poster--player .poster__play,
+    .poster:hover .poster__play,
+    .poster__btn:focus-visible .poster__play {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .poster--player .poster__play { width: 64px; height: 64px; }
+
+    .poster__caption {
+      position: absolute;
+      z-index: 3;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: grid;
+      gap: 0.15rem;
+      padding: 0.85rem;
+    }
+
+    .poster__title {
+      display: -webkit-box;
+      overflow: hidden;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .poster__meta { color: rgba(228, 228, 231, 0.72); font-size: 11px; }
+
+    /* Landscape card body */
+    .media-card { min-width: 0; }
+
+    .media-card .poster { transition: box-shadow 200ms ease; }
+
+    .media-card:hover .poster { box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(253, 164, 175, 0.18); }
+    .media-card:hover .card__title { color: var(--rose-200); }
+
+    .card__body {
+      display: flex;
+      gap: 0.7rem;
+      margin-top: 0.8rem;
+    }
+
+    .card__text { min-width: 0; }
+
+    .card__title {
+      margin: 0;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
       transition: color 160ms ease;
     }
 
-    .footer-offer:hover {
-      color: var(--violet-bright);
+    .card__title button { padding: 0; text-align: left; }
+
+    .card__meta {
+      margin: 0.2rem 0 0;
+      color: var(--quiet);
+      font-size: 12px;
+      line-height: 1.5;
     }
 
-    .empty-message {
-      grid-column: 1 / -1;
-      margin: 1rem 0;
-      color: var(--muted);
-    }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
+    /* Sponsored card inside grids */
+    .sponsored-card {
+      display: flex;
+      min-height: 100%;
       overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
+      border: 1px solid rgba(253, 164, 175, 0.24);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(ellipse at 92% 6%, rgba(251, 113, 133, 0.16), transparent 46%),
+        linear-gradient(150deg, rgba(28, 22, 30, 0.98), rgba(14, 13, 17, 0.98));
     }
 
-    @media (min-width: 620px) {
-      .video-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1.15rem;
-      }
+    .sponsored-card__link {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.15rem;
+      color: var(--text);
     }
 
-    @media (min-width: 1000px) {
-      .video-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1.25rem;
-      }
+    .sponsored-label {
+      color: var(--rose);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
     }
 
-    @media (max-width: 760px) {
-      .nav-shell {
-        min-height: 68px;
-      }
+    .sponsored-card__title {
+      display: block;
+      margin-top: 0.45rem;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
 
-      .menu-toggle {
-        display: inline-flex;
-      }
+    .sponsored-card__description {
+      display: block;
+      margin-top: 0.4rem;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
 
-      .primary-nav {
-        position: absolute;
-        top: calc(100% + 0.55rem);
-        right: 0;
-        left: 0;
-        display: none;
+    .sponsored-card__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--rose-200);
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+
+    /* ============ 10. GRIDS ============ */
+    .grid-shorts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) { .grid-shorts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; } }
+    @media (min-width: 1024px) { .grid-shorts { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+    .grid-trending {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem 1.5rem;
+    }
+
+    @media (min-width: 640px) { .grid-trending { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 1024px) { .grid-trending { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+    .grid-feed {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .grid-feed.is-mosaic {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         align-items: stretch;
-        gap: 0.2rem;
-        padding: 0.55rem;
-        border: 1px solid var(--line-strong);
-        border-radius: 15px;
-        background: rgba(15, 12, 20, 0.98);
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
       }
-
-      .primary-nav.is-open {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .primary-nav a {
-        padding: 0.8rem 0.9rem;
-        border-radius: 9px;
-      }
-
-      .primary-nav a:hover {
-        background: rgba(255, 255, 255, 0.04);
-      }
-
-      .primary-nav .nav-follow {
-        margin-top: 0.15rem;
-        border-radius: 9px;
-      }
-
-      .featured-details {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .offer-button {
-        align-self: flex-start;
-      }
-
-      .follow-section {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 1.4rem;
-      }
-
-      .social-links {
-        justify-content: flex-start;
-      }
+      .grid-feed.is-mosaic .item--tall { grid-row: span 2; }
+      .grid-feed.is-mosaic .item--tall .poster { height: 100%; aspect-ratio: auto; }
+      .grid-feed.is-mosaic .item--wide { grid-column: span 2; }
     }
 
-    @media (max-width: 767px) {
-      .ad-slot--leaderboard {
-        display: none;
-      }
+    .empty-card {
+      grid-column: 1 / -1;
+      padding: 1.5rem;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
     }
 
-    @media (max-width: 540px) {
-      .shell {
-        width: min(var(--content-width), calc(100% - 1.4rem));
+    /* ============ 11. RESULTS ============ */
+    .results { margin-top: 2.5rem; }
+
+    .results__head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .results__head h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .results__count { color: var(--quiet); font-size: 13px; margin-left: 0.5rem; }
+
+    /* ============ 12. TELEGRAM CTA ============ */
+    .telegram-cta {
+      position: relative;
+      margin-top: 5rem;
+      overflow: hidden;
+      padding: 2rem 1.5rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #16131A, #0F0F14);
+    }
+
+    @media (min-width: 640px) { .telegram-cta { padding: 3rem; } }
+
+    .telegram-cta::before {
+      position: absolute;
+      top: -5rem;
+      right: -5rem;
+      width: 18rem;
+      height: 18rem;
+      border-radius: 50%;
+      background: rgba(251, 113, 133, 0.12);
+      filter: blur(60px);
+      content: "";
+      pointer-events: none;
+    }
+
+    .telegram-cta__inner {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .telegram-cta__inner { flex-direction: row; align-items: center; }
+    }
+
+    .telegram-cta h2 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 1.75rem);
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.15;
+    }
+
+    .telegram-cta p {
+      max-width: 44ch;
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .btn-telegram {
+      height: 48px;
+      padding: 0 1.65rem;
+      background: var(--rose);
+      color: #0B0B0F;
+      font-size: 14px;
+      box-shadow: 0 14px 32px rgba(251, 113, 133, 0.22);
+    }
+
+    .btn-telegram:hover { background: var(--rose-200); }
+
+    /* ============ 13. FOLLOW / SOCIALS ============ */
+    .follow {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-top: 3.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    @media (min-width: 900px) {
+      .follow { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+
+    .follow h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .follow p { margin: 0.25rem 0 0; color: var(--quiet); font-size: 13px; }
+
+    .social-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+      font-size: 12px;
+      transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .social-link svg { width: 15px; height: 15px; fill: currentColor; }
+    .social-link:hover { border-color: rgba(253, 164, 175, 0.4); color: #fff; background: rgba(253, 164, 175, 0.07); }
+
+    /* ============ 14. FOOTER ============ */
+    .site-footer {
+      margin-top: 4rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer-inner {
+      padding: 2rem 0 2.5rem;
+    }
+
+    .footer-top {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 900px) {
+      .footer-top { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.75rem;
+      color: var(--quiet);
+      font-size: 12.5px;
+    }
+
+    .footer-links a { transition: color 160ms ease; }
+    .footer-links a:hover { color: #fff; }
+
+    .footer-badge {
+      padding: 0.2rem 0.7rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--quiet);
+      font-size: 11px;
+    }
+
+    .footer-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 1.75rem;
+      color: #5b5b64;
+      font-size: 11.5px;
+    }
+
+    .footer-bottom p { margin: 0; }
+    .footer-offer { color: #7d7d87; text-decoration: underline; text-underline-offset: 3px; transition: color 160ms ease; }
+    .footer-offer:hover { color: var(--rose); }
+
+    /* ============ 15. TOAST / UTIL ============ */
+    .toast {
+      position: fixed;
+      z-index: 60;
+      bottom: 1.25rem;
+      left: 50%;
+      padding: 0.65rem 1.1rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(21, 21, 27, 0.96);
+      color: var(--text);
+      font-size: 12.5px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      transform: translate(-50%, 140%);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
+
+    .is-unconfigured { opacity: 0.75; cursor: not-allowed; }
+
+    /* ============ 16. MOTION / A11Y ============ */
+    @media (hover: none) {
+      .poster__play {
+        width: 46px;
+        height: 46px;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
       }
 
-      .hero-intro {
-        padding-top: 3.2rem;
-      }
-
-      .featured-heading {
-        align-items: flex-start;
-      }
-
-      .featured-index {
-        padding-top: 0.32rem;
-      }
-
-      .section-heading {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.45rem;
-      }
-
-      .section-note {
-        max-width: 100%;
-        text-align: left;
-      }
-
-      .promo-banner__link {
-        align-items: flex-start;
-      }
-
-      .promo-banner__action {
-        align-self: center;
-      }
-
-      .promo-banner__note {
-        max-width: 230px;
-      }
-
-      .footer-inner {
-        min-height: 88px;
-        align-items: flex-start;
-        flex-direction: column;
-        justify-content: center;
-        gap: 0.3rem;
-        padding-block: 1rem;
-      }
-
-      .social-link {
-        min-height: 42px;
-        padding-inline: 0.72rem;
-      }
+      .poster--player .poster__play { width: 62px; height: 62px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
+      .poster:hover .poster__media { transform: none; }
     }
   </style>
 </head>
 <body>
+  <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
+  <!-- ================= HEADER ================= -->
   <header class="site-header">
     <div class="shell nav-shell">
-      <a class="brand" href="#home" aria-label="BootyMansion home">
+      <a class="brand" href="#top" aria-label="BootyMansion home">
         <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 2.8 19.3 7v10L12 21.2 4.7 17V7L12 2.8Z"></path>
-            <path d="M8.2 15.9V8.2L12 6l3.8 2.2v7.7M8.2 12h7.6"></path>
-          </svg>
+          <svg class="icon icon--fill" viewBox="0 0 24 24"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"></path></svg>
         </span>
-        <span class="brand-word" data-site-name>Booty<span>Mansion</span></span>
+        <span class="brand-word" data-site-name>BootyMansion</span><span class="brand-dot" aria-hidden="true">.</span>
       </a>
 
-      <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-nav">
-        <span class="menu-toggle__bars" aria-hidden="true"></span>
-      </button>
-
       <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
-        <a href="#home">Home</a>
-        <a href="#videos">Videos</a>
-        <a class="nav-follow" href="#follow">Follow</a>
+        <a href="#top" data-nav>Home</a>
+        <a href="#trending" data-nav>Trending</a>
+        <a href="#shorts" data-nav>Shorts</a>
+        <a href="#feed" data-nav>Feed</a>
+        <a href="#follow" data-nav>Follow</a>
       </nav>
+
+      <div class="nav-actions">
+        <label class="search search--desktop" for="search-input">
+          <span class="search__icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
+          </span>
+          <input id="search-input" type="search" placeholder="Search videos, creators…" autocomplete="off" spellcheck="false" aria-label="Search videos and creators">
+        </label>
+
+        <button class="icon-btn search-toggle" type="button" aria-label="Open search" aria-expanded="false" aria-controls="search-mobile">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
+        </button>
+
+        <a class="btn btn-rose" data-telegram href="#telegram">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+          <span class="telegram-label">Telegram</span>
+        </a>
+
+        <button class="icon-btn menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-nav">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="shell search-mobile" id="search-mobile" hidden>
+      <label class="search" for="search-input-mobile">
+        <span class="search__icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
+        </span>
+        <input id="search-input-mobile" type="search" placeholder="Search videos, creators…" autocomplete="off" spellcheck="false" aria-label="Search videos and creators">
+      </label>
     </div>
   </header>
 
+  <!-- ================= MAIN ================= -->
   <main id="main" class="shell">
-    <section id="home" class="hero-intro" aria-labelledby="page-heading">
-      <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> A world after hours</p>
-      <h1 id="page-heading">A more intriguing<br>kind of <em>after hours.</em></h1>
-      <p class="hero-intro__copy">Step inside for a considered collection of video, atmosphere, and late-night discoveries.</p>
+    <!-- Featured video + Up next -->
+    <section class="hero" id="top" aria-labelledby="featured-title">
+      <div class="hero-stage">
+        <div class="hero-backdrop" aria-hidden="true"><img id="hero-backdrop-img" alt="" decoding="async"></div>
+        <div class="hero-stage__inner">
+          <div class="hero-player">
+            <div class="video-frame video-frame--player" id="featured-player" aria-live="polite">
+              <noscript><p class="player-empty"><strong>Enable JavaScript</strong>to load the featured video.</p></noscript>
+            </div>
+          </div>
+          <div class="hero-rail" aria-label="Video actions">
+            <button class="rail-btn" type="button" data-act="save" aria-pressed="false">
+              <span class="rail-btn__icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
+              </span>
+              <span>Save</span>
+            </button>
+            <button class="rail-btn" type="button" data-act="share">
+              <span class="rail-btn__icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"></path></svg>
+              </span>
+              <span>Share</span>
+            </button>
+            <a class="rail-btn" id="rail-open" data-act="open" href="#" target="_blank" rel="noopener noreferrer">
+              <span class="rail-btn__icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6"></path><path d="M20 4 11 13"></path><path d="M18 14v5.5H4.5V6H10"></path></svg>
+              </span>
+              <span>Open</span>
+            </a>
+            <a class="rail-btn" data-telegram href="#telegram">
+              <span class="rail-btn__icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+              </span>
+              <span>Telegram</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-meta">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Featured today</p>
+        <h1 class="hero-title" id="featured-title">Loading the vault…</h1>
+        <p class="hero-sub" id="featured-sub" hidden></p>
+        <div class="creator" id="hero-creator" hidden></div>
+        <div class="hero-stats" id="hero-stats"></div>
+
+        <!-- Smartlink CTA (monetization) -->
+        <a class="hero-offer" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">Exclusive featured offer →</a>
+
+        <div class="upnext">
+          <div class="upnext__head">
+            <h2>Up next</h2>
+            <button class="link-btn" type="button" data-show-all>View all</button>
+          </div>
+          <div class="upnext__list" id="up-next-list"></div>
+        </div>
+
+      </aside>
     </section>
 
-    <section class="featured-section" aria-labelledby="featured-heading">
-      <div class="featured-heading">
-        <div>
-          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Signature selection</p>
-          <h2 id="featured-heading">Featured video</h2>
-        </div>
-        <span class="featured-index" id="featured-index" aria-label="Featured video number">01 / 07</span>
-      </div>
-
-      <div class="video-frame video-frame--player" id="featured-player" aria-label="Featured video player" aria-live="polite">
-        <noscript><p style="padding:1rem;color:#d9d5e1">Enable JavaScript to load the featured video.</p></noscript>
-      </div>
-
-      <div class="featured-details">
-        <div class="featured-copy">
-          <h3 id="featured-title">The Violet Hour</h3>
-        </div>
-        <a class="offer-button" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
-          <span>Exclusive · Featured Offer</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-        </a>
-      </div>
-    </section>
-
-    <section class="promo-banner" aria-label="Sponsored exclusive offer">
-      <a class="promo-banner__link" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
-        <span class="promo-banner__copy">
-          <span class="sponsored-label">Sponsored · Exclusive</span>
-          <span class="promo-banner__title">A little something extra.</span>
-          <span class="promo-banner__note">Explore the featured offer from <span data-site-name>BootyMansion</span>.</span>
+    <!-- Sponsored promo strip (Smartlink) -->
+    <section class="promo" aria-label="Sponsored exclusive offer">
+      <a class="promo__link" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
+        <span class="promo__copy">
+          <span class="promo__label">Sponsored · Exclusive</span>
+          <span class="promo__title">A little something extra.</span>
+          <span class="promo__note">Explore the featured offer from <span data-site-name>BootyMansion</span>.</span>
         </span>
-        <span class="promo-banner__action">View offer
-          <svg class="banner-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <span class="promo__action">View offer
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
         </span>
       </a>
     </section>
 
+    <!-- ADSTERRA 300x250: paste your snippet inside this aside, then delete the two label spans. -->
     <div class="ad-break">
       <aside id="adsterra-rectangle" class="ad-slot ad-slot--rectangle" aria-label="Advertisement slot, 300 by 250">
         <!-- PASTE ADSTERRA CODE HERE -->
@@ -1268,33 +1570,89 @@
       </aside>
     </div>
 
-    <section id="videos" class="videos-section" aria-labelledby="videos-heading">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Explore the library</p>
-          <h2 id="videos-heading">The video <span>vault.</span></h2>
-        </div>
-        <p class="section-note">Choose a thumbnail to play it above.</p>
-      </div>
+    <!-- Category chips -->
+    <div class="chips" id="chips" role="group" aria-label="Filter videos by category" hidden></div>
 
+    <!-- ADSTERRA 728x90: lives outside the curated rows so it always serves.
+         Paste your snippet inside this aside, then delete the two label spans. -->
+    <div class="ad-band">
       <aside id="adsterra-leaderboard" class="ad-slot ad-slot--leaderboard" aria-label="Advertisement slot, 728 by 90 leaderboard">
         <!-- PASTE ADSTERRA CODE HERE -->
         <span class="ad-slot__label">Advertisement</span>
         <span class="ad-slot__size">728 × 90 · Leaderboard</span>
       </aside>
+    </div>
 
-      <div class="video-grid" id="video-grid" aria-live="polite"></div>
-    </section>
-
-    <section id="follow" class="follow-section" aria-labelledby="follow-heading">
-      <div class="follow-copy">
-        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Stay in the loop</p>
-        <h2 id="follow-heading">Follow the story.</h2>
-        <p>New drops and updates, wherever you like to scroll.</p>
+    <!-- Search / filter results -->
+    <section class="results" id="results" aria-labelledby="results-title" hidden>
+      <div class="results__head">
+        <h2 id="results-title">Results<span class="results__count" id="results-count" aria-live="polite"></span></h2>
+        <button class="link-btn" type="button" data-clear>Clear filter ✕</button>
       </div>
-      <nav id="social-links" class="social-links" aria-label="BootyMansion social media links"></nav>
+      <div class="grid-feed" id="results-grid"></div>
     </section>
 
+    <!-- Vertical Shorts -->
+    <section class="section" id="shorts" aria-labelledby="shorts-title" hidden>
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
+            <h2 id="shorts-title">Vertical Shorts</h2>
+          </div>
+          <p id="shorts-note">Bite-sized, beautifully framed</p>
+        </div>
+        <button class="link-btn" type="button" data-show-all>View all →</button>
+      </div>
+      <div class="grid-shorts" id="shorts-grid"></div>
+    </section>
+
+    <!-- Trending Now -->
+    <section class="section" id="trending" aria-labelledby="trending-title" hidden>
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3c3.6 3 5.6 5.6 5.6 8.6a5.6 5.6 0 0 1-11.2 0C6.4 8.6 8.4 6 12 3Z"></path></svg>
+            <h2 id="trending-title">Trending Now</h2>
+          </div>
+          <p id="trending-note">Most watched this week</p>
+        </div>
+        <button class="link-btn" type="button" data-show-all>View all →</button>
+      </div>
+
+      <div class="grid-trending" id="trending-grid"></div>
+    </section>
+
+    <!-- Mixed Feed -->
+    <section class="section" id="feed" aria-labelledby="feed-title" hidden>
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 1.9"></path></svg>
+            <h2 id="feed-title">Mixed Feed</h2>
+          </div>
+          <p id="feed-note">Fresh uploads in every format</p>
+        </div>
+        <button class="link-btn" type="button" data-show-all>View all →</button>
+      </div>
+      <div class="grid-feed" id="feed-grid"></div>
+    </section>
+
+    <!-- Telegram call to action -->
+    <section class="telegram-cta" id="telegram" aria-labelledby="telegram-title">
+      <div class="telegram-cta__inner">
+        <div>
+          <h2 id="telegram-title">Never miss a premiere.</h2>
+          <p>Join our Telegram channel for early drops, exclusive previews and curated weekly picks.</p>
+        </div>
+        <a class="btn btn-telegram" data-telegram href="#telegram">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+          Join on Telegram
+        </a>
+      </div>
+    </section>
+
+    <!-- ADSTERRA native banner: paste your snippet inside this aside, then delete the two label spans. -->
     <div class="native-ad-wrap">
       <aside id="adsterra-native" class="ad-slot ad-slot--native" aria-label="Advertisement slot, native banner">
         <!-- PASTE ADSTERRA CODE HERE -->
@@ -1302,27 +1660,66 @@
         <span class="ad-slot__size">Native banner placement</span>
       </aside>
     </div>
+
+    <!-- Follow / social links -->
+    <section class="follow" id="follow" aria-labelledby="follow-title">
+      <div>
+        <h2 id="follow-title">Follow the story.</h2>
+        <p>New drops and updates, wherever you like to scroll.</p>
+      </div>
+      <nav id="social-links" class="social-links" aria-label="Social media links"></nav>
+    </section>
   </main>
 
+  <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
     <div class="shell footer-inner">
-      <p>© <span id="current-year">2026</span> <span class="footer-brand" data-site-name>BootyMansion</span>. All rights reserved.</p>
-      <a class="footer-offer" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">Sponsored offer · Exclusive</a>
+      <div class="footer-top">
+        <a class="brand" href="#top" aria-label="Back to top">
+          <span class="brand-mark" aria-hidden="true">
+            <svg class="icon icon--fill" viewBox="0 0 24 24"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"></path></svg>
+          </span>
+          <span class="brand-word" data-site-name>BootyMansion</span><span class="brand-dot" aria-hidden="true">.</span>
+        </a>
+
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="#top">Home</a>
+          <a href="#trending">Trending</a>
+          <a href="#shorts">Shorts</a>
+          <a href="#feed">Feed</a>
+          <a href="#follow">Follow</a>
+          <a data-telegram href="#telegram">Telegram</a>
+        </nav>
+
+        <span class="footer-badge">18+ only</span>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© <span id="current-year">2026</span> <span data-site-name>BootyMansion</span>. All rights reserved.</p>
+        <a class="footer-offer" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">Sponsored offer · Exclusive</a>
+      </div>
     </div>
   </footer>
 
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
   <script type="module">
-    import { videos } from "./videos.js";
+    /* ================================================================
+       CONFIG — edit these three values only
+       ================================================================ */
 
-    "use strict";
-
-    // EDIT THE SITE NAME HERE. The visible logo/footer and SEO title/meta are synced to this value.
+    // Visible branding + SEO title/meta follow this value.
     const SITE_NAME = "BootyMansion";
+
+    // TELEGRAM: paste your full channel link, e.g. "https://t.me/yourchannel".
+    // Leave it empty until you have the link; every Telegram button is rendered
+    // but stays inactive (and says so on hover) instead of linking nowhere.
+    const TELEGRAM_URL = "";
 
     // ADSTERRA SMARTLINK: paste your full Smartlink URL between the quotes.
     const SMARTLINK_URL = "PASTE_ADSTERRA_SMARTLINK_HERE";
 
-    // EDIT SOCIAL LINKS HERE. Replace each placeholder URL with your real profile URL.
+    // Social links: replace each placeholder with your real profile URL.
     const socialLinks = [
       { name: "YouTube", key: "youtube", url: "https://www.youtube.com/@YOUR_CHANNEL" },
       { name: "Instagram", key: "instagram", url: "https://www.instagram.com/YOUR_HANDLE/" },
@@ -1330,6 +1727,850 @@
       { name: "X / Twitter", key: "x", url: "https://x.com/YOUR_HANDLE" },
       { name: "Facebook", key: "facebook", url: "https://www.facebook.com/YOUR_PAGE" }
     ];
+
+    /* ================================================================
+       ICONS (inline SVG — no icon-library download)
+       ================================================================ */
+    const ICONS = {
+      play: '<path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"/>',
+      bookmark: '<path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"/>',
+      share: '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"/>',
+      external: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5.5H4.5V6H10"/>',
+      badge: '<path d="m9 12.5 2.2 2.2L15.5 10"/><path d="M12 3.2l2.2 1.6 2.7-.2 1 2.5 2.2 1.6-.8 2.6.8 2.6-2.2 1.6-1 2.5-2.7-.2L12 19.4l-2.2-1.6-2.7.2-1-2.5-2.2-1.6.8-2.6-.8-2.6 2.2-1.6 1-2.5 2.7.2L12 3.2Z"/>'
+    };
+
+    const svg = (name, cls = "icon") =>
+      `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
+
+    /* ================================================================
+       HELPERS
+       ================================================================ */
+    const $ = (selector, root = document) => root.querySelector(selector);
+
+    const esc = (value) =>
+      String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[character]));
+
+    const clean = (value) => {
+      if (typeof value !== "string") return "";
+      const trimmed = value.trim();
+      return trimmed ? trimmed : "";
+    };
+
+    const safeUrl = (value) => {
+      const candidate = clean(value);
+      if (!candidate) return "";
+      try {
+        const parsed = new URL(candidate, window.location.href);
+        return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+      } catch (error) {
+        return "";
+      }
+    };
+
+    const formatDuration = (seconds) => {
+      if (!Number.isFinite(seconds) || seconds <= 0) return "";
+      const total = Math.round(seconds);
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const secs = String(total % 60).padStart(2, "0");
+      return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
+    };
+
+    const plural = (count) => (count === 1 ? "" : "s");
+
+    const tone = (index) => ["253, 164, 175", "244, 114, 182", "251, 113, 133", "232, 121, 168", "253, 186, 187"][index % 5];
+
+    function toast(message) {
+      const node = $("#toast");
+      if (!node) return;
+      node.textContent = message;
+      node.classList.add("is-visible");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => node.classList.remove("is-visible"), 2600);
+    }
+
+    /* ================================================================
+       VIDEO DATA — everything comes from videos.js
+       ================================================================ */
+    let rawVideos = [];
+    try {
+      ({ videos: rawVideos } = await import("./videos.js"));
+    } catch (error) {
+      console.warn("videos.js could not be loaded:", error);
+      rawVideos = [];
+    }
+
+    function getVideoUrls(url) {
+      let originalUrl = null;
+      let directUrl = null;
+
+      try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
+          originalUrl = parsedUrl.href;
+
+          // Videy share links -> direct MP4 file.
+          if (/(^|\.)videy\.co$/i.test(parsedUrl.hostname) && /^\/v\/?$/.test(parsedUrl.pathname)) {
+            const id = parsedUrl.searchParams.get("id");
+            if (id && /^[\w-]+$/.test(id)) {
+              directUrl = `https://cdn.videy.co/${encodeURIComponent(id)}.mp4`;
+            }
+          }
+
+          // Any direct .mp4 link also plays in the built-in player.
+          if (!directUrl && /\.mp4$/i.test(parsedUrl.pathname)) {
+            directUrl = parsedUrl.href;
+          }
+        }
+      } catch (error) {
+        // Ignore invalid URLs; those entries are skipped below.
+      }
+
+      return { originalUrl, directUrl };
+    }
+
+    function normalizeVideo(video, index) {
+      if (!video || typeof video !== "object") return null;
+
+      const title = clean(video.title);
+      const { originalUrl, directUrl } = getVideoUrls(video.url);
+      if (!title || (!originalUrl && !directUrl)) return null;
+
+      const format = video.format === "short" || video.vertical === true ? "short" : "landscape";
+
+      return {
+        id: `v${index}`,
+        title,
+        creator: clean(video.creator),
+        views: clean(video.views),
+        duration: clean(video.duration),
+        posted: clean(video.posted || video.ago),
+        category: clean(video.category),
+        tag: clean(video.tag),
+        description: clean(video.description || video.subtitle),
+        thumb: safeUrl(video.thumb),
+        format,
+        url: originalUrl || directUrl,
+        directUrl,
+        durationKnown: clean(video.duration)
+      };
+    }
+
+    const VIDEOS = (Array.isArray(rawVideos) ? rawVideos : [])
+      .map(normalizeVideo)
+      .filter(Boolean);
+
+    const byId = (id) => VIDEOS.find((video) => video.id === id) || null;
+
+    const isShort = (video) => video.format === "short";
+
+    const categories = [...new Set(VIDEOS.map((video) => video.category).filter(Boolean))];
+    const hasShorts = VIDEOS.some(isShort);
+
+    /* ================================================================
+       LAYOUT — real videos, distributed once, no invented content
+       ================================================================ */
+    const LAYOUT = { featured: VIDEOS[0] || null, upNext: [], shorts: [], trending: [], feed: [], shortsMode: "landscape" };
+
+    (function buildLayout() {
+      if (!VIDEOS.length) return;
+
+      const pool = VIDEOS.slice(1);
+      LAYOUT.upNext = pool.slice(0, 3);
+
+      const afterUpNext = pool.slice(3);
+      let remaining = afterUpNext;
+
+      if (afterUpNext.length >= 4) {
+        const verticals = afterUpNext.filter(isShort);
+        LAYOUT.shortsMode = verticals.length ? "vertical" : "landscape";
+        LAYOUT.shorts = (verticals.length ? verticals : afterUpNext).slice(0, 6);
+        const taken = new Set(LAYOUT.shorts.map((video) => video.id));
+        remaining = afterUpNext.filter((video) => !taken.has(video.id));
+      }
+
+      const trendingCount = remaining.length > 8
+        ? 8
+        : Math.min(remaining.length, Math.max(4, Math.ceil(remaining.length / 2)));
+
+      LAYOUT.trending = remaining.slice(0, trendingCount);
+      LAYOUT.feed = remaining.slice(trendingCount, trendingCount + 6);
+    })();
+
+    const state = {
+      query: "",
+      category: "All",
+      showAll: false,
+      currentId: LAYOUT.featured ? LAYOUT.featured.id : null
+    };
+
+    /* ================================================================
+       THUMBNAILS (poster frame, lazy + data-saver aware)
+       ================================================================ */
+    const saveData = () => Boolean(navigator.connection && navigator.connection.saveData);
+
+    const frameObserver = "IntersectionObserver" in window
+      ? new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            frameObserver.unobserve(entry.target);
+            loadFirstFrame(entry.target);
+          });
+        }, { rootMargin: "320px 0px" })
+      : null;
+
+    function markReady(posterNode) {
+      if (!posterNode) return;
+      posterNode.classList.add("has-media");
+    }
+
+    function loadFirstFrame(media) {
+      const video = media.querySelector?.("video[data-src]");
+      if (video) {
+        video.src = video.dataset.src;
+        delete video.dataset.src;
+      }
+    }
+
+    function watchFrame(media, eager) {
+      if (eager || !frameObserver) loadFirstFrame(media);
+      else frameObserver.observe(media);
+    }
+
+    function attachMedia(posterButton, video, { eager = false } = {}) {
+      const posterNode = posterButton.closest(".poster");
+      if (!posterNode) return;
+
+      if (video.thumb) {
+        const image = document.createElement("img");
+        image.className = "poster__media";
+        image.alt = "";
+        image.decoding = "async";
+        image.loading = eager ? "eager" : "lazy";
+        if (eager) image.fetchPriority = "high";
+        image.src = video.thumb;
+        image.addEventListener("load", () => markReady(posterNode), { once: true });
+        image.addEventListener("error", () => {
+          image.remove();
+          addFrameVideo(posterButton, video, eager);
+        }, { once: true });
+        posterButton.append(image);
+        return;
+      }
+
+      addFrameVideo(posterButton, video, eager);
+    }
+
+    function addFrameVideo(posterButton, video, eager) {
+      const posterNode = posterButton.closest(".poster");
+      if (!posterNode || !video.directUrl) return;
+
+      // On metered connections the gradient artwork stands in for the frame.
+      if (saveData() && !eager) return;
+
+      const frame = document.createElement("video");
+      frame.className = "poster__media";
+      frame.muted = true;
+      frame.defaultMuted = true;
+      frame.playsInline = true;
+      frame.preload = "metadata";
+      frame.tabIndex = -1;
+      frame.setAttribute("aria-hidden", "true");
+      frame.dataset.src = `${video.directUrl}#t=0.5`;
+      posterButton.append(frame);
+
+      const ready = () => markReady(posterNode);
+      frame.addEventListener("loadeddata", ready, { once: true });
+      frame.addEventListener("seeked", ready, { once: true });
+      frame.addEventListener("loadedmetadata", () => {
+        if (frame.duration > 0.6) frame.currentTime = 0.5;
+        const known = formatDuration(frame.duration);
+        if (known && !video.durationKnown) {
+          video.durationKnown = known;
+          document.querySelectorAll(`[data-duration-for="${video.id}"]`).forEach((chip) => {
+            chip.textContent = known;
+            chip.hidden = false;
+          });
+          refreshHeroStats();
+        }
+      }, { once: true });
+      frame.addEventListener("error", () => frame.remove(), { once: true });
+
+      watchFrame(posterButton, eager);
+    }
+
+    /* ================================================================
+       POSTER / CARD MARKUP
+       ================================================================ */
+    function cardMetaText(video) {
+      return [video.creator, video.views ? `${video.views} views` : "", video.posted, video.category]
+        .filter(Boolean)
+        .join(" · ");
+    }
+
+    function createPoster(video, { variant = "wide", caption = false, featured = false, eager = false } = {}) {
+      const wrap = document.createElement("div");
+      wrap.className = variant === "player" ? "poster poster--player" : `poster poster--${variant}`;
+      wrap.style.setProperty("--tone", tone(Number(video.id.slice(1)) || 0));
+
+      const tag = video.tag || (variant === "vertical" && isShort(video) ? "Short" : "");
+      const shownDuration = video.duration || "";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "poster__btn";
+      button.dataset.play = video.id;
+      button.setAttribute("aria-label", `Play ${video.title}`);
+      button.innerHTML = [
+        '<span class="poster__art" aria-hidden="true"></span>',
+        '<span class="poster__shade" aria-hidden="true"></span>',
+        featured ? '<span class="poster__badge"><span class="pulse" aria-hidden="true"></span>Featured</span>' : "",
+        tag ? `<span class="poster__tag">${esc(tag)}</span>` : "",
+        `<span class="poster__dur" data-duration-for="${video.id}" ${shownDuration ? "" : "hidden"}>${esc(shownDuration)}</span>`,
+        `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`,
+        caption
+          ? `<span class="poster__caption"><span class="poster__title">${esc(video.title)}</span>${
+              cardMetaText(video) ? `<span class="poster__meta">${esc(cardMetaText(video))}</span>` : ""
+            }</span>`
+          : ""
+      ].join("");
+
+      wrap.append(button);
+      attachMedia(button, video, { eager });
+      return wrap;
+    }
+
+    function createLandscapeCard(video, options = {}) {
+      const card = document.createElement("article");
+      card.className = "media-card";
+
+      card.append(createPoster(video, { variant: "wide", eager: options.eager }));
+
+      const meta = cardMetaText(video) || "Tap to play";
+      const body = document.createElement("div");
+      body.className = "card__body";
+      body.innerHTML = [
+        `<span class="avatar" aria-hidden="true">${esc((video.creator || SITE_NAME).charAt(0))}</span>`,
+        `<div class="card__text">`,
+        `<h3 class="card__title"><button type="button" data-play="${video.id}">${esc(video.title)}</button></h3>`,
+        `<p class="card__meta">${esc(meta)}</p>`,
+        `</div>`
+      ].join("");
+      card.append(body);
+      return card;
+    }
+
+    function createVerticalCard(video) {
+      const card = document.createElement("article");
+      card.className = "media-card";
+      card.append(createPoster(video, { variant: "vertical", caption: true }));
+      return card;
+    }
+
+    function createSponsoredCard() {
+      const card = document.createElement("article");
+      card.className = "sponsored-card";
+      card.innerHTML = `
+        <a class="sponsored-card__link" data-smartlink href="#smartlink" target="_blank" rel="noopener sponsored">
+          <span>
+            <span class="sponsored-label">Sponsored · Exclusive</span>
+            <span class="sponsored-card__title">A private offer, selected for you.</span>
+            <span class="sponsored-card__description">Discover the featured promotion. This clearly marked sponsored placement is separate from the video library.</span>
+          </span>
+          <span class="sponsored-card__cta">Explore offer
+            <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </span>
+        </a>`;
+      return card;
+    }
+
+    function fillGrid(grid, items, { variant = "landscape", sponsoredEvery = 6, mosaic = false } = {}) {
+      grid.replaceChildren();
+      if (mosaic) grid.classList.add("is-mosaic");
+      else grid.classList.remove("is-mosaic");
+
+      items.forEach((video, index) => {
+        const card = variant === "vertical" ? createVerticalCard(video) : createLandscapeCard(video);
+
+        if (mosaic) {
+          const useVertical = isShort(video) && grid.classList.contains("is-mosaic");
+          if (useVertical) {
+            if (index % 3 === 0) card.classList.add("item--tall");
+          } else if (index === 1 || index === 3) {
+            card.classList.add("item--wide");
+          }
+        }
+
+        grid.append(card);
+
+        if (sponsoredEvery && (index + 1) % sponsoredEvery === 0) {
+          grid.append(createSponsoredCard());
+        }
+      });
+
+      applySmartlinks();
+    }
+
+    /* ================================================================
+       HERO: featured player + Up next
+       ================================================================ */
+    function refreshHeroStats() {
+      const video = byId(state.currentId);
+      const stats = $("#hero-stats");
+      if (!video || !stats) return;
+
+      const parts = [];
+      if (video.views) parts.push(`<span><b>${esc(video.views)}</b> views</span>`);
+      if (video.durationKnown) parts.push(`<span><b>${esc(video.durationKnown)}</b> runtime</span>`);
+      if (video.category) parts.push(`<span><b>${esc(video.category)}</b></span>`);
+      parts.push(`<span><b>${String(VIDEOS.indexOf(video) + 1).padStart(2, "0")}</b> / ${String(VIDEOS.length).padStart(2, "0")} in the vault</span>`);
+      stats.innerHTML = parts.join("");
+    }
+
+    function renderHeroMeta(video, { playing = false } = {}) {
+      const title = $("#featured-title");
+      const sub = $("#featured-sub");
+      const creatorBox = $("#hero-creator");
+      const railOpen = $("#rail-open");
+
+      if (!video) {
+        title.textContent = "New releases are on the way";
+        sub.hidden = true;
+        creatorBox.hidden = true;
+        $("#hero-stats").innerHTML = "";
+        if (railOpen) railOpen.setAttribute("aria-disabled", "true");
+        return;
+      }
+
+      title.textContent = video.title;
+
+      if (video.description) {
+        sub.textContent = video.description;
+        sub.hidden = false;
+      } else {
+        sub.hidden = true;
+      }
+
+      if (video.creator) {
+        creatorBox.innerHTML = `
+          <span class="avatar" aria-hidden="true">${esc(video.creator.charAt(0))}</span>
+          <span>
+            <span class="creator__name">${esc(video.creator)} ${svg("badge")}</span>
+            <span class="creator__note">Creator${video.category ? ` · ${esc(video.category)}` : ""}</span>
+          </span>
+          <a class="hero-follow" data-telegram href="#telegram">Follow ${svg("external")}</a>`;
+        creatorBox.hidden = false;
+      } else {
+        creatorBox.hidden = true;
+      }
+
+      refreshHeroStats();
+
+      const backdrop = $("#hero-backdrop-img");
+      if (backdrop && video.thumb) {
+        backdrop.src = video.thumb;
+        backdrop.alt = "";
+        backdrop.loading = "eager";
+      }
+
+      if (railOpen) {
+        railOpen.href = video.url;
+        railOpen.removeAttribute("aria-disabled");
+      }
+
+      const saveButton = $('[data-act="save"]');
+      if (saveButton) {
+        const saved = isSaved(video.id);
+        saveButton.classList.toggle("is-on", saved);
+        saveButton.setAttribute("aria-pressed", String(saved));
+        saveButton.querySelector("span:last-child").textContent = saved ? "Saved" : "Save";
+      }
+
+      applyTelegramLinks();
+      document.title = `${video.title} · ${SITE_NAME}`;
+    }
+
+    function makeEmptyPlayer() {
+      const empty = document.createElement("div");
+      empty.className = "player-empty";
+      empty.innerHTML = `<strong>New releases are on the way.</strong>
+        <span>Follow the Telegram channel to catch the next drop.</span>`;
+      return empty;
+    }
+
+    function makeFallback(video) {
+      const fallback = document.createElement("div");
+      fallback.className = "player-empty";
+      fallback.innerHTML = `<strong style="color:#fff">This video cannot play here.</strong>`;
+
+      if (video && video.url) {
+        const link = document.createElement("a");
+        link.href = video.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.style.color = "var(--rose)";
+        link.style.textDecoration = "underline";
+        link.style.marginTop = "0.4rem";
+        link.textContent = "Open the original video";
+        fallback.append(link);
+      }
+
+      return fallback;
+    }
+
+    function playVideo(video, { smooth = false } = {}) {
+      const player = $("#featured-player");
+      if (!video || !player) return;
+
+      state.currentId = video.id;
+      renderHeroMeta(video);
+
+      if (!video.directUrl) {
+        player.replaceChildren(makeFallback(video));
+      } else {
+        const media = document.createElement("video");
+        media.controls = true;
+        media.playsInline = true;
+        media.preload = "auto";
+        media.autoplay = true;
+        media.setAttribute("aria-label", `${video.title} video`);
+        if (video.thumb) media.poster = video.thumb;
+
+        media.addEventListener("error", () => {
+          if (player.contains(media)) player.replaceChildren(makeFallback(video));
+        }, { once: true });
+
+        player.replaceChildren(media);
+        media.src = video.directUrl;
+        media.play().catch(() => {
+          // Native controls remain if autoplay is blocked.
+        });
+      }
+
+      if (smooth) {
+        player.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      document.title = `${video.title} · ${SITE_NAME}`;
+    }
+
+    function renderFeatured() {
+      const player = $("#featured-player");
+      const video = LAYOUT.featured;
+
+      renderHeroMeta(video);
+
+      if (!video) {
+        player.replaceChildren(makeEmptyPlayer());
+        return;
+      }
+
+      player.replaceChildren(createPoster(video, { variant: "player", featured: true, eager: true }));
+    }
+
+    function renderUpNext() {
+      const list = $("#up-next-list");
+      list.replaceChildren();
+
+      if (!LAYOUT.upNext.length) {
+        const note = document.createElement("p");
+        note.className = "upnext__empty";
+        note.innerHTML = `More releases land here automatically. Follow the
+          <a data-telegram href="#telegram">Telegram channel</a> to catch the next drop.`;
+        list.append(note);
+        return;
+      }
+
+      LAYOUT.upNext.forEach((video) => {
+        const item = document.createElement("a");
+        item.className = "upnext__item";
+        item.href = video.url;
+        item.dataset.play = video.id;
+        item.innerHTML = `
+          <span class="upnext__thumb" data-thumb="${video.id}"></span>
+          <span class="upnext__body">
+            <span class="upnext__title">${esc(video.title)}</span>
+            <span class="upnext__meta">${esc(cardMetaText(video) || "Tap to play")}</span>
+          </span>`;
+
+        const thumb = item.querySelector(".upnext__thumb");
+        if (video.thumb) {
+          const image = document.createElement("img");
+          image.className = "poster__media";
+          image.alt = "";
+          image.loading = "lazy";
+          image.decoding = "async";
+          image.src = video.thumb;
+          image.addEventListener("load", () => markReady(thumb), { once: true });
+          thumb.append(image);
+        } else if (video.directUrl && !saveData()) {
+          const frame = document.createElement("video");
+          frame.className = "poster__media";
+          frame.muted = true;
+          frame.playsInline = true;
+          frame.preload = "metadata";
+          frame.setAttribute("aria-hidden", "true");
+          frame.dataset.src = `${video.directUrl}#t=0.5`;
+          frame.addEventListener("loadeddata", () => markReady(thumb), { once: true });
+          thumb.append(frame);
+          watchFrame(thumb, false);
+        }
+
+        thumb.classList.add("poster");
+        thumb.style.setProperty("--tone", tone(Number(video.id.slice(1)) || 0));
+        const art = document.createElement("span");
+        art.className = "poster__art";
+        art.setAttribute("aria-hidden", "true");
+        thumb.prepend(art);
+
+        item.addEventListener("click", (event) => {
+          event.preventDefault();
+          playVideo(video, { smooth: true });
+        });
+
+        list.append(item);
+      });
+    }
+
+    /* ================================================================
+       SECTIONS: chips, results, shorts, trending, feed
+       ================================================================ */
+    function matchesFilter(video) {
+      const query = state.query.trim().toLowerCase();
+      const inCategory =
+        state.category === "All" ||
+        (state.category === "Shorts" ? isShort(video) : video.category === state.category);
+      if (!inCategory) return false;
+      if (!query) return true;
+
+      const haystack = [video.title, video.creator, video.category, video.tag, video.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    }
+
+    const filtering = () => Boolean(state.query.trim()) || state.category !== "All" || state.showAll;
+
+    const sectionAvailability = {
+      shorts: LAYOUT.shorts.length > 0,
+      trending: LAYOUT.trending.length > 0,
+      feed: LAYOUT.feed.length > 0
+    };
+
+    function renderChips() {
+      const bar = $("#chips");
+      const labels = ["All", ...categories];
+      if (hasShorts) labels.push("Shorts");
+
+      // One chip is not a filter — hide the bar until there is something to choose.
+      if (labels.length < 2) {
+        bar.hidden = true;
+        return;
+      }
+
+      bar.hidden = false;
+      bar.replaceChildren();
+      labels.forEach((label) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.dataset.cat = label;
+        chip.textContent = label;
+        chip.setAttribute("aria-pressed", String(state.category === label));
+        if (state.category === label) chip.classList.add("is-active");
+        bar.append(chip);
+      });
+    }
+
+    function renderResults({ scroll = false } = {}) {
+      const results = $("#results");
+      const grid = $("#results-grid");
+      const title = $("#results-title");
+      const count = $("#results-count");
+
+      if (!filtering()) {
+        results.hidden = true;
+        Object.entries(sectionAvailability).forEach(([id, available]) => {
+          const section = document.getElementById(id);
+          if (section) section.hidden = !available;
+        });
+        return;
+      }
+
+      const items = VIDEOS.filter(matchesFilter);
+
+      if (state.query.trim()) title.firstChild.textContent = `Results for “${state.query.trim()}”`;
+      else if (state.showAll) title.firstChild.textContent = "Full library";
+      else title.firstChild.textContent = state.category;
+
+      count.textContent = `${items.length} video${plural(items.length)}`;
+      grid.replaceChildren();
+
+      if (!items.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty-card";
+        empty.textContent = "Nothing matched that search. Try a different word or clear the filter.";
+        grid.append(empty);
+      } else {
+        fillGrid(grid, items, { sponsoredEvery: 6 });
+      }
+
+      ["shorts", "trending", "feed"].forEach((id) => {
+        const section = document.getElementById(id);
+        if (section) section.hidden = true;
+      });
+
+      results.hidden = false;
+      if (scroll) results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderSections() {
+      const shorts = $("#shorts");
+      const trending = $("#trending");
+      const feed = $("#feed");
+
+      if (LAYOUT.shorts.length) {
+        $("#shorts-title").textContent = LAYOUT.shortsMode === "vertical" ? "Vertical Shorts" : "Shorts & Clips";
+        $("#shorts-note").textContent =
+          LAYOUT.shortsMode === "vertical" ? "Bite-sized, beautifully framed" : "Quick picks from the library";
+        fillGrid($("#shorts-grid"), LAYOUT.shorts, {
+          variant: LAYOUT.shortsMode === "vertical" ? "vertical" : "landscape",
+          sponsoredEvery: 6
+        });
+      }
+      shorts.hidden = !sectionAvailability.shorts;
+
+      if (LAYOUT.trending.length) {
+        $("#trending-note").textContent = `${LAYOUT.trending.length} release${plural(LAYOUT.trending.length)} in rotation`;
+        fillGrid($("#trending-grid"), LAYOUT.trending, { sponsoredEvery: 6 });
+      }
+      trending.hidden = !sectionAvailability.trending;
+
+      if (LAYOUT.feed.length) {
+        $("#feed-note").textContent = "Fresh uploads, in every format";
+        fillGrid($("#feed-grid"), LAYOUT.feed, {
+          sponsoredEvery: 6,
+          mosaic: LAYOUT.feed.some(isShort) && LAYOUT.feed.length >= 5
+        });
+      }
+      feed.hidden = !sectionAvailability.feed;
+    }
+
+    /* ================================================================
+       SAVE (local only) + SHARE
+       ================================================================ */
+    const SAVED_KEY = `saved:${SITE_NAME}`;
+
+    function savedSet() {
+      try {
+        return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"));
+      } catch (error) {
+        return new Set();
+      }
+    }
+
+    const isSaved = (id) => savedSet().has(id);
+
+    function toggleSave() {
+      const video = byId(state.currentId);
+      if (!video) return;
+      const saved = savedSet();
+      const nowSaved = !saved.has(video.id);
+
+      if (nowSaved) saved.add(video.id);
+      else saved.delete(video.id);
+
+      try {
+        localStorage.setItem(SAVED_KEY, JSON.stringify([...saved]));
+      } catch (error) {
+        // Private mode: saving is skipped silently.
+      }
+
+      const button = $('[data-act="save"]');
+      if (button) {
+        button.classList.toggle("is-on", nowSaved);
+        button.setAttribute("aria-pressed", String(nowSaved));
+        button.querySelector("span:last-child").textContent = nowSaved ? "Saved" : "Save";
+      }
+      toast(nowSaved ? "Saved to this device" : "Removed from saved");
+    }
+
+    async function shareCurrent() {
+      const video = byId(state.currentId);
+      if (!video) return;
+
+      const payload = { title: video.title, text: `${video.title} · ${SITE_NAME}`, url: video.url };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(payload);
+          return;
+        } catch (error) {
+          // User dismissed the sheet; fall through to copying.
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(video.url);
+        toast("Link copied");
+      } catch (error) {
+        toast("Copy the link from the address bar");
+      }
+    }
+
+    /* ================================================================
+       TELEGRAM + SMARTLINK + SOCIALS
+       ================================================================ */
+    const telegramConfigured = /^https?:\/\//i.test(TELEGRAM_URL.trim());
+
+    // Attributes only (no listeners), so it can safely run after every re-render.
+    function applyTelegramLinks() {
+      document.querySelectorAll("[data-telegram]").forEach((link) => {
+        if (telegramConfigured) {
+          link.href = TELEGRAM_URL.trim();
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.classList.remove("is-unconfigured");
+          link.removeAttribute("aria-disabled");
+          link.removeAttribute("title");
+        } else {
+          link.href = "#telegram";
+          link.classList.add("is-unconfigured");
+          link.setAttribute("aria-disabled", "true");
+          link.title = "Add your Telegram link to TELEGRAM_URL in index.html to activate this button.";
+        }
+      });
+    }
+
+    let smartlinkConfigured = "";
+    try {
+      const parsed = new URL(SMARTLINK_URL);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") smartlinkConfigured = parsed.href;
+    } catch (error) {
+      // Placeholder stays inactive until a real Adsterra Smartlink is added.
+    }
+
+    function applySmartlinks() {
+      document.querySelectorAll("[data-smartlink]").forEach((link) => {
+        link.target = "_blank";
+        link.rel = "noopener sponsored";
+
+        if (smartlinkConfigured) {
+          link.href = smartlinkConfigured;
+          link.classList.remove("is-unconfigured");
+          link.removeAttribute("aria-disabled");
+          link.removeAttribute("title");
+        } else {
+          link.href = "#smartlink";
+          link.classList.add("is-unconfigured");
+          link.setAttribute("aria-disabled", "true");
+          link.title = "Add your Adsterra URL to SMARTLINK_URL in the script to activate this offer.";
+        }
+      });
+    }
 
     const socialIcons = {
       youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.2 7.1a3 3 0 0 0-2.1-2.1C19.2 4.5 12 4.5 12 4.5s-7.2 0-9.1.5A3 3 0 0 0 .8 7.1 31 31 0 0 0 .3 12a31 31 0 0 0 .5 4.9 3 3 0 0 0 2.1 2.1c1.9.5 9.1.5 9.1.5s7.2 0 9.1-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.9 31 31 0 0 0-.5-4.9ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"></path></svg>',
@@ -1339,316 +2580,9 @@
       facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4.1 1.5-4.1 4.2v2.3H7.7v3.1h2.7v8h3.2Z"></path></svg>'
     };
 
-    const posterTones = [
-      "143, 102, 231",
-      "113, 80, 183",
-      "160, 123, 226",
-      "89, 69, 145",
-      "128, 93, 209",
-      "103, 80, 169"
-    ];
-
-    // Keep the visible branding and the basic SEO metadata in sync with SITE_NAME.
-    document.querySelectorAll("[data-site-name]").forEach((element) => {
-      element.textContent = SITE_NAME;
-    });
-    document.title = `${SITE_NAME} | Curated Video Entertainment`;
-    document.querySelector('meta[name="author"]')?.setAttribute("content", SITE_NAME);
-    document.querySelector('meta[name="description"]')?.setAttribute(
-      "content",
-      `${SITE_NAME} is a sleek home for curated video entertainment, featured releases, and exclusive picks.`
-    );
-    document.querySelector('meta[property="og:site_name"]')?.setAttribute("content", SITE_NAME);
-    document.querySelector('meta[property="og:title"]')?.setAttribute("content", `${SITE_NAME} | Curated Video Entertainment`);
-    document.querySelector('meta[property="og:description"]')?.setAttribute(
-      "content",
-      `Discover featured releases and the latest video picks at ${SITE_NAME}.`
-    );
-    document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", `${SITE_NAME} | Curated Video Entertainment`);
-    document.querySelector('meta[name="twitter:description"]')?.setAttribute(
-      "content",
-      `Discover featured releases and the latest video picks at ${SITE_NAME}.`
-    );
-    document.querySelector(".brand")?.setAttribute("aria-label", `${SITE_NAME} home`);
-    document.querySelector("#social-links")?.setAttribute("aria-label", `${SITE_NAME} social media links`);
-    document.getElementById("current-year").textContent = String(new Date().getFullYear());
-
-    function getVideoUrls(video) {
-      let originalUrl = null;
-      let directUrl = null;
-
-      try {
-        const parsedUrl = new URL(video.url);
-        if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
-          originalUrl = parsedUrl.href;
-          if (
-            (parsedUrl.hostname === "videy.co" || parsedUrl.hostname === "www.videy.co") &&
-            /^\/v\/?$/.test(parsedUrl.pathname)
-          ) {
-            const id = parsedUrl.searchParams.get("id");
-            if (id && /^[\w-]+$/.test(id)) {
-              directUrl = `https://cdn.videy.co/${encodeURIComponent(id)}.mp4`;
-            }
-          }
-        }
-      } catch (error) {
-        // Invalid or non-HTTP URLs are not loaded.
-      }
-
-      return { originalUrl, directUrl };
-    }
-
-    function makeThumbnailMedia(video, button) {
-      const { directUrl } = getVideoUrls(video);
-      const showFirstFrame = () => {
-        if (!directUrl) return;
-        const thumbnail = document.createElement("video");
-        thumbnail.className = "video-thumbnail-media";
-        thumbnail.muted = true;
-        thumbnail.playsInline = true;
-        thumbnail.preload = "metadata";
-        thumbnail.tabIndex = -1;
-        thumbnail.setAttribute("aria-hidden", "true");
-        thumbnail.src = `${directUrl}#t=0.5`;
-        thumbnail.addEventListener("loadedmetadata", () => {
-          if (thumbnail.duration > 0.5 && thumbnail.currentTime < 0.45) {
-            thumbnail.currentTime = 0.5;
-          }
-        });
-        thumbnail.addEventListener("loadeddata", () => {
-          thumbnail.classList.add("is-ready");
-          button.classList.add("has-media");
-        }, { once: true });
-        button.insertBefore(thumbnail, button.firstChild);
-      };
-
-      if (video.thumb) {
-        const image = document.createElement("img");
-        image.className = "video-thumbnail-media";
-        image.alt = "";
-        image.loading = button.closest("#featured-player") ? "eager" : "lazy";
-        image.decoding = "async";
-        image.src = video.thumb;
-        image.addEventListener("load", () => {
-          image.classList.add("is-ready");
-          button.classList.add("has-media");
-        }, { once: true });
-        image.addEventListener("error", () => {
-          image.remove();
-          showFirstFrame();
-        }, { once: true });
-        button.append(image);
-      } else {
-        showFirstFrame();
-      }
-    }
-
-    function makeVideoPoster(video, index, onPlay) {
-      const button = document.createElement("button");
-      button.className = "video-poster";
-      button.type = "button";
-      button.setAttribute("aria-label", `Play ${video.title}`);
-      button.style.setProperty("--poster-tone", posterTones[index % posterTones.length]);
-
-      const art = document.createElement("span");
-      art.className = "poster-art";
-      art.setAttribute("aria-hidden", "true");
-
-      const meta = document.createElement("span");
-      meta.className = "poster-meta";
-      meta.setAttribute("aria-hidden", "true");
-      meta.textContent = index === 0
-        ? "SIGNATURE SELECTION"
-        : `THE VAULT  /  ${String(index).padStart(2, "0")}`;
-
-      const playIcon = document.createElement("span");
-      playIcon.className = "poster-play";
-      playIcon.setAttribute("aria-hidden", "true");
-      playIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l11 7.2a.9.9 0 0 1 0 1.4l-11 7.2c-.6.4-1.4 0-1.4-.7V4.8Z"></path></svg>';
-
-      const posterTitle = document.createElement("span");
-      posterTitle.className = "poster-title";
-      posterTitle.setAttribute("aria-hidden", "true");
-      posterTitle.textContent = video.title;
-
-      const hint = document.createElement("span");
-      hint.className = "poster-hint";
-      hint.setAttribute("aria-hidden", "true");
-      hint.textContent = "Tap to play";
-
-      makeThumbnailMedia(video, button);
-      button.append(art, meta, playIcon, posterTitle, hint);
-      button.addEventListener("click", onPlay);
-      return button;
-    }
-
-    function updateFeaturedDetails(video, index) {
-      document.getElementById("featured-title").textContent = video.title;
-      document.getElementById("featured-index").textContent =
-        `${String(index + 1).padStart(2, "0")} / ${String(videos.length).padStart(2, "0")}`;
-    }
-
-    function makeFallback(originalUrl) {
-      const fallback = document.createElement("div");
-      fallback.className = "video-fallback";
-
-      const message = document.createElement("p");
-      message.textContent = "This video could not play here.";
-      fallback.append(message);
-
-      if (originalUrl) {
-        const link = document.createElement("a");
-        link.href = originalUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Open the original video";
-        fallback.append(link);
-      }
-
-      return fallback;
-    }
-
-    function playInMainPlayer(video, index, scrollToPlayer = false) {
-      const player = document.getElementById("featured-player");
-      const { originalUrl, directUrl } = getVideoUrls(video);
-      updateFeaturedDetails(video, index);
-
-      if (!directUrl) {
-        player.replaceChildren(makeFallback(originalUrl));
-      } else {
-        const media = document.createElement("video");
-        media.controls = true;
-        media.playsInline = true;
-        media.preload = "auto";
-        media.autoplay = true;
-        media.setAttribute("aria-label", `${video.title} video`);
-        if (video.thumb) media.poster = video.thumb;
-        media.addEventListener("error", () => {
-          if (player.contains(media)) {
-            player.replaceChildren(makeFallback(originalUrl));
-          }
-        }, { once: true });
-        player.replaceChildren(media);
-        media.src = directUrl;
-        media.play().catch(() => {
-          // Native controls remain available if autoplay is blocked by the browser.
-        });
-      }
-
-      if (scrollToPlayer) {
-        player.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }
-
-    function renderFeaturedVideo() {
-      const featuredVideo = videos[0];
-      const player = document.getElementById("featured-player");
-      if (!featuredVideo) {
-        player.textContent = "Add a video to videos.js to feature it here.";
-        return;
-      }
-
-      updateFeaturedDetails(featuredVideo, 0);
-      player.replaceChildren(makeVideoPoster(
-        featuredVideo,
-        0,
-        () => playInMainPlayer(featuredVideo, 0)
-      ));
-    }
-
-    function makeVideoCard(video, index) {
-      const card = document.createElement("article");
-      card.className = "video-card";
-
-      const frame = document.createElement("div");
-      frame.className = "video-frame video-frame--card";
-      frame.append(makeVideoPoster(video, index, () => playInMainPlayer(video, index, true)));
-
-      const body = document.createElement("div");
-      body.className = "video-card__body";
-
-      const title = document.createElement("h3");
-      title.textContent = video.title;
-      body.append(title);
-      card.append(frame, body);
-
-      card.addEventListener("click", (event) => {
-        if (event.target.closest("a, button")) return;
-        playInMainPlayer(video, index, true);
-      });
-      return card;
-    }
-
-    function makeSponsoredCard() {
-      const card = document.createElement("article");
-      card.className = "sponsored-card";
-
-      const link = document.createElement("a");
-      link.className = "sponsored-card__link";
-      link.dataset.smartlink = "";
-      link.href = "#smartlink";
-      link.target = "_blank";
-      link.rel = "noopener sponsored";
-
-      const body = document.createElement("span");
-      body.className = "sponsored-card__body";
-
-      const label = document.createElement("span");
-      label.className = "sponsored-label";
-      label.textContent = "Sponsored · Exclusive";
-
-      const title = document.createElement("span");
-      title.className = "sponsored-card__title";
-      title.textContent = "A private offer, selected for you.";
-
-      const description = document.createElement("span");
-      description.className = "sponsored-card__description";
-      description.textContent = "Discover the featured promotion. This clearly marked sponsored placement is separate from the video library.";
-
-      const bottom = document.createElement("span");
-      bottom.className = "sponsored-card__bottom";
-
-      const cta = document.createElement("span");
-      cta.className = "sponsored-card__cta";
-      cta.textContent = "Explore offer";
-
-      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      arrow.setAttribute("viewBox", "0 0 24 24");
-      arrow.setAttribute("class", "sponsored-arrow");
-      arrow.setAttribute("aria-hidden", "true");
-      arrow.innerHTML = '<path d="M5 12h14M13 6l6 6-6 6"></path>';
-
-      cta.append(arrow);
-      bottom.append(cta);
-      body.append(label, title, description);
-      link.append(body, bottom);
-      card.append(link);
-      return card;
-    }
-
-    function renderVideoGrid() {
-      const grid = document.getElementById("video-grid");
-      const gridVideos = videos;
-
-      if (!gridVideos.length) {
-        const empty = document.createElement("p");
-        empty.className = "empty-message";
-        empty.textContent = "Add videos to videos.js to fill the library.";
-        grid.append(empty);
-        return;
-      }
-
-      gridVideos.forEach((video, index) => {
-        grid.append(makeVideoCard(video, index + 1));
-        // A clearly marked sponsored card is inserted after each six regular video cards.
-        if ((index + 1) % 6 === 0) {
-          grid.append(makeSponsoredCard());
-        }
-      });
-    }
-
     function renderSocialLinks() {
-      const socialContainer = document.getElementById("social-links");
+      const container = $("#social-links");
+      container.replaceChildren();
       socialLinks.forEach((social) => {
         const link = document.createElement("a");
         link.className = "social-link";
@@ -1656,71 +2590,253 @@
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.setAttribute("aria-label", `${SITE_NAME} on ${social.name}`);
-        link.innerHTML = `${socialIcons[social.key]}<span>${social.name}</span>`;
-        socialContainer.append(link);
+        link.innerHTML = `${socialIcons[social.key] || ""}<span>${social.name}</span>`;
+        container.append(link);
       });
     }
 
-    function configureSmartlinks() {
-      let configuredUrl = "";
-      try {
-        const parsedUrl = new URL(SMARTLINK_URL);
-        if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
-          configuredUrl = parsedUrl.href;
-        }
-      } catch (error) {
-        // The placeholder is intentionally inactive until a real Adsterra Smartlink is added.
-      }
-
-      document.querySelectorAll("[data-smartlink]").forEach((link) => {
-        link.target = "_blank";
-        link.rel = "noopener sponsored";
-        if (configuredUrl) {
-          link.href = configuredUrl;
-          link.removeAttribute("aria-disabled");
-          link.classList.remove("smartlink-unconfigured");
-          link.removeAttribute("title");
-        } else {
-          // Prevent the placeholder from sending visitors to a broken relative URL before setup.
-          link.href = "#smartlink";
-          link.setAttribute("aria-disabled", "true");
-          link.classList.add("smartlink-unconfigured");
-          link.title = "Add your Adsterra URL to SMARTLINK_URL in the script to activate this offer.";
-          link.addEventListener("click", (event) => event.preventDefault());
-        }
+    /* ================================================================
+       NAV / SEARCH / MENU
+       ================================================================ */
+    function syncSearchInputs(value) {
+      ["#search-input", "#search-input-mobile"].forEach((selector) => {
+        const input = $(selector);
+        if (input && input.value !== value) input.value = value;
       });
     }
 
-    function setupMobileMenu() {
-      const toggle = document.querySelector(".menu-toggle");
-      const nav = document.getElementById("primary-nav");
-      const closeMenu = () => {
-        toggle.setAttribute("aria-expanded", "false");
-        toggle.setAttribute("aria-label", "Open navigation menu");
-        nav.classList.remove("is-open");
-      };
+    let searchTimer = 0;
+
+    function handleSearch(value) {
+      state.query = value;
+      state.showAll = false;
+      syncSearchInputs(value);
+      renderResults();
+
+      clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(() => {
+        const resultSection = $("#results");
+        if (!state.query.trim() || !resultSection || resultSection.hidden) return;
+        // Only pull the results back into view if the visitor has scrolled past them.
+        const rect = resultSection.getBoundingClientRect();
+        if (rect.top < 0) {
+          window.scrollTo({ top: rect.top + window.scrollY - 96, behavior: "smooth" });
+        }
+      }, 450);
+    }
+
+    function closeMenu() {
+      const toggle = $(".menu-toggle");
+      const nav = $("#primary-nav");
+      if (!toggle || !nav) return;
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open navigation menu");
+      nav.classList.remove("is-open");
+    }
+
+    function setupMenu() {
+      const toggle = $(".menu-toggle");
+      const nav = $("#primary-nav");
+      if (!toggle || !nav) return;
 
       toggle.addEventListener("click", () => {
-        const isOpen = toggle.getAttribute("aria-expanded") === "true";
-        toggle.setAttribute("aria-expanded", String(!isOpen));
-        toggle.setAttribute("aria-label", isOpen ? "Open navigation menu" : "Close navigation menu");
-        nav.classList.toggle("is-open", !isOpen);
+        const open = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!open));
+        toggle.setAttribute("aria-label", open ? "Open navigation menu" : "Close navigation menu");
+        nav.classList.toggle("is-open", !open);
       });
 
       nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeMenu();
       });
+
       window.addEventListener("resize", () => {
-        if (window.innerWidth > 760) closeMenu();
+        if (window.innerWidth >= 1080) closeMenu();
       });
     }
 
-    renderFeaturedVideo();
-    renderVideoGrid();
+    function setupSearch() {
+      $("#search-input")?.addEventListener("input", (event) => handleSearch(event.target.value));
+      $("#search-input-mobile")?.addEventListener("input", (event) => handleSearch(event.target.value));
+
+      const toggle = $(".search-toggle");
+      const panel = $("#search-mobile");
+      toggle?.addEventListener("click", () => {
+        const open = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!open));
+        panel.hidden = open;
+        if (!open) $("#search-input-mobile")?.focus();
+      });
+
+      document.querySelectorAll(".search").forEach((form) => {
+        form.addEventListener("submit", (event) => event.preventDefault());
+      });
+    }
+
+    function scrollToSection(id) {
+      const section = document.getElementById(id);
+      if (!section) return;
+
+      // If a section is empty (or currently filtered away), open the full library instead.
+      if (section.hidden) {
+        state.showAll = true;
+        state.category = "All";
+        state.query = "";
+        syncSearchInputs("");
+        renderChips();
+        renderResults({ scroll: true });
+      }
+    }
+
+    /* ================================================================
+       EVENTS
+       ================================================================ */
+    function setupEvents() {
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+
+        const telegramLink = target.closest("[data-telegram]");
+        if (telegramLink) {
+          if (!telegramConfigured) {
+            event.preventDefault();
+            toast("Telegram link coming soon");
+          }
+          return;
+        }
+
+        const smartlink = target.closest("[data-smartlink]");
+        if (smartlink) {
+          if (!smartlinkConfigured) event.preventDefault();
+          return;
+        }
+
+        if (target.closest("[data-play]")) {
+          const id = target.closest("[data-play]").dataset.play;
+          const video = byId(id);
+          if (video) {
+            event.preventDefault();
+            playVideo(video, { smooth: true });
+          }
+          return;
+        }
+
+        const chip = target.closest("[data-cat]");
+        if (chip) {
+          state.category = chip.dataset.cat;
+          state.showAll = false;
+          renderChips();
+          renderResults({ scroll: true });
+          return;
+        }
+
+        if (target.closest("[data-show-all]")) {
+          state.category = "All";
+          state.showAll = true;
+          state.query = "";
+          syncSearchInputs("");
+          renderChips();
+          renderResults({ scroll: true });
+          return;
+        }
+
+        if (target.closest("[data-clear]")) {
+          state.category = "All";
+          state.showAll = false;
+          state.query = "";
+          syncSearchInputs("");
+          renderChips();
+          renderResults();
+          return;
+        }
+
+        const action = target.closest("[data-act]");
+        if (action && action.dataset.act === "save") {
+          event.preventDefault();
+          toggleSave();
+          return;
+        }
+        if (action && action.dataset.act === "share") {
+          event.preventDefault();
+          shareCurrent();
+          return;
+        }
+
+        if (target.closest(".media-card") && !target.closest("a")) {
+          const card = target.closest(".media-card");
+          const button = card.querySelector("[data-play]");
+          const video = button ? byId(button.dataset.play) : null;
+          if (video) playVideo(video, { smooth: true });
+        }
+      });
+
+      document.querySelectorAll("[data-nav]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          const id = link.getAttribute("href").slice(1);
+          closeMenu();
+          if (id === "top") return;
+          event.preventDefault();
+          const section = document.getElementById(id);
+          if (!section) return;
+          if (section.hidden) {
+            scrollToSection(id);
+          } else {
+            section.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    }
+
+    /* ================================================================
+       BRANDING SYNC + BOOT
+       ================================================================ */
+    function syncBranding() {
+      document.querySelectorAll("[data-site-name]").forEach((node) => {
+        node.textContent = SITE_NAME;
+      });
+
+      const suffix = " | Curated Video Entertainment";
+      document.title = `${SITE_NAME}${suffix}`;
+      document.querySelector('meta[name="author"]')?.setAttribute("content", SITE_NAME);
+      document.querySelector('meta[name="description"]')?.setAttribute(
+        "content",
+        `${SITE_NAME} is a sleek home for curated video entertainment, featured releases, and exclusive picks.`
+      );
+      document.querySelector('meta[property="og:site_name"]')?.setAttribute("content", SITE_NAME);
+      document.querySelector('meta[property="og:title"]')?.setAttribute("content", `${SITE_NAME}${suffix}`);
+      document.querySelector('meta[property="og:description"]')?.setAttribute(
+        "content",
+        `Discover featured releases and the latest video picks at ${SITE_NAME}.`
+      );
+      document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", `${SITE_NAME}${suffix}`);
+      document.querySelector('meta[name="twitter:description"]')?.setAttribute(
+        "content",
+        `Discover featured releases and the latest video picks at ${SITE_NAME}.`
+      );
+
+      const brandLink = $(".brand");
+      brandLink?.setAttribute("aria-label", `${SITE_NAME} home`);
+      $("#social-links")?.setAttribute("aria-label", `${SITE_NAME} social media links`);
+      const year = $("#current-year");
+      if (year) year.textContent = String(new Date().getFullYear());
+    }
+
+    syncBranding();
+    renderFeatured();
+    renderUpNext();
+    renderChips();
+    renderSections();
     renderSocialLinks();
-    configureSmartlinks();
-    setupMobileMenu();
+    applyTelegramLinks();
+    applySmartlinks();
+    setupMenu();
+    setupSearch();
+    setupEvents();
+    renderResults();
+
+    // Fills in any hero duration discovered after the first metadata event.
+    window.addEventListener("load", refreshHeroStats);
   </script>
 </body>
 </html>
