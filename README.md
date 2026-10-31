@@ -3,9 +3,11 @@ For hosting videos
 
 ## Running this project
 
-This is a static video site: the page, styles and player are all in `index.html`,
-and the editable video list is in `videos.js`. No third-party packages, database,
-or secrets are required to run it.
+This is a video site with an optional private admin. The page, styles and player
+are all in `index.html`; the video library is served by a small Cloudflare Pages
+Functions API (`functions/api/videos.js`) backed by a D1 database, and managed
+from `/admin`. Without a backend the site still runs as a plain static page and
+falls back to the sample library in `videos.js`.
 
 Click **Run** to start the **Start application** workflow and view the site in
 Preview. The workflow runs:
@@ -14,12 +16,44 @@ Preview. The workflow runs:
 python3 server.py
 ```
 
-The server listens on `0.0.0.0:5000`, serves `/` and `/index.html`, serves the
-video list at `/videos.js`, and serves the brand images under `/assets/`. It
-disables caching so refreshing Preview picks up page edits; other workspace files
-are not publicly served.
+The server listens on `0.0.0.0:5000`, serves `/` and `/index.html`, the admin
+page at `/admin`, the video list at `/videos.js`, and the brand images under
+`/assets/`. It disables caching so refreshing Preview picks up page edits; other
+workspace files are not publicly served. `/api/*` answers with a short JSON note
+explaining that the real API runs on Cloudflare — see **[SETUP.md](SETUP.md)** for
+the deploys, D1 database, R2 bucket, secrets and Telegram bot.
 
 ## Adding videos
+
+### From the admin (the normal way)
+
+Open `/admin` on the deployed site, sign in, and tap **+ Add video**. There are
+two flows: paste an embed/video link, or upload a thumbnail to R2 and paste the
+video URL. **Feature** and **Pin** control the hero player and list order, the
+search box filters the list, and the **Settings** tab edits the site name,
+Telegram link and the three ad slots.
+
+The admin writes to D1 (`videos`, `settings`, `login_attempts`) through these
+Functions:
+
+| Route | Who can use it |
+| --- | --- |
+| `GET /api/videos` | public — published videos only |
+| `GET /api/videos?all=1` | admin — includes drafts |
+| `POST /api/videos` | admin |
+| `PUT` / `PATCH` / `DELETE /api/videos/:id` | admin |
+| `GET /api/settings` | public — site name, Telegram link, ad slots |
+| `PUT /api/settings` | admin |
+| `POST /api/upload` | admin — thumbnail → R2 |
+| `GET /api/media/<key>` | public — streams R2 files |
+| `POST /api/login`, `POST /api/logout`, `GET /api/session` | password / session |
+| `POST /api/telegram` | Telegram webhook (secret + admin allowlist) |
+
+The public page loads `/api/videos` and `/api/settings` on boot. If the API is
+**unreachable** (static hosting, `server.py`) it falls back to `videos.js`; if the
+API is **empty** it shows the "library opens soon" state instead of fake cards.
+
+### From the file (fallback / samples)
 
 Add entries to the exported `videos` list in `videos.js`:
 
@@ -126,21 +160,101 @@ Everything is configured at the top of the script block in `index.html`:
 - `SITE_NAME` — visible logo/footer text plus the SEO title and meta tags.
 - `TELEGRAM_URL` — every Telegram button. Left empty, the buttons are visible but
   inactive; paste `https://t.me/yourchannel` to activate them.
-- `SMARTLINK_URL` — optional Adsterra Smartlink used by the sponsored spots.
+
+Both are **defaults**: when the API is live, the values saved in `/admin →
+Settings` are applied on top of them.
+- `AD_CONFIG` — every advertisement on the page (see below). With the API live,
+  the three ad snippets come from `/admin → Settings` instead of this object.
 - `socialLinks` — the Follow section links.
 
 ## Advertising
 
-Ad slots keep their original IDs so existing snippets drop in unchanged:
+There are at most three ad placements, all driven by one `AD_CONFIG` object at
+the top of the script in `index.html`:
 
-- `#adsterra-rectangle` — 300×250 under "Up next".
-- `#adsterra-leaderboard` — 728×90 above the curated rows (desktop only).
-- `#adsterra-native` — native banner above the Follow section.
-- `[data-smartlink]` — hero offer, sponsored strip, sponsored grid cards and the
-  footer link.
+```js
+const AD_CONFIG = {
+  banner:    { label: "Advertisement", code: "" },              // (a)
+  native:    { label: "Advertisement", every: 8, code: "" },     // (b)
+  smartlink: { label: "Sponsored", url: "", code: "" }           // (c)
+};
+```
 
-Paste each snippet inside its `<aside>` in `index.html` and delete the two
-placeholder label spans. Analytics can be pasted into the marked comment in
-`<head>`.
+- **(a) `banner`** — one responsive banner between the Vertical Shorts and
+  Trending Now sections: 300×250 on phones, 728×90 from 768px up. It is the only
+  banner on the page; there are no ads above the fold or inside the featured
+  player.
+- **(b) `native`** — one native card inside the Mixed Feed, placed after the
+  `every`-th video (default 8). A feed shorter than that gets its single native
+  card at the end, so the placement still appears; the card is never repeated, so
+  only one ad unit is ever on the page.
+- **(c) `smartlink`** — one "Sponsored" card closing the feed. Set `url` for the
+  built-in text card, or `code` for a banner-style card.
+
+Rules that are enforced in code:
+
+- **Empty means gone.** A slot with no `code` (or, for the smartlink, no `url`)
+  is removed from the layout entirely — no placeholder box and no reserved
+  space. Only active slots get the small `Advertisement` / `Sponsored` label.
+- **Lazy.** Ad snippets are parsed but their scripts are only executed once the
+  slot comes within ~300px of the viewport, so nothing loads on first paint.
+- **No layout shift.** Active slots reserve the banner's height (250px on
+  phones, 90px on desktop) and the ad card's height before the ad fills in.
+- **No popups, popunders or auto-redirects.** Only the snippets you paste are
+  rendered; nothing opens a window on its own.
+- Use asynchronous snippets. A snippet that calls `document.write` cannot work
+  after load.
+
+Analytics can be pasted into the marked comment in `<head>`.
+
+## Age gate (18+)
+
+`assets/age-gate.js` is loaded before any page content and shows a full-screen
+dark overlay on a first visit: the logo, the required adult-content notice, an
+**I am 18 or older - Enter** button and an **Exit** link to
+`https://www.google.com`.
+
+- The confirmation is remembered for **30 days** in `localStorage`
+  (`ageVerifiedUntil`), with an `age_ok=1` cookie as a fallback for browsers
+  that block storage.
+- While it is open the page cannot be scrolled or interacted with (`inert` +
+  `aria-hidden` + hidden content), focus is moved into the dialog and trapped
+  there, and **Escape does not dismiss it**.
+- It is responsive and keyboard/screen-reader friendly.
+- Every page also carries `<meta name="rating" content="adult">` and the RTA
+  label `<meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">`.
+
+## Admin, API and Telegram bot
+
+| Path | What it is |
+| --- | --- |
+| `admin/index.html` | The `/admin` control panel (dark, mobile-first, `noindex`, unlinked). |
+| `functions/_lib/auth.js` | Password check, signed session cookie (`HttpOnly`, `Secure`, `SameSite`, 12 h), D1 login throttle (5 failures → 15 min block). |
+| `functions/_lib/db.js` | D1 access; creates the tables and default settings on first use. |
+| `functions/_lib/validate.js` | Input sanitising — strips `<`, `>` and control characters, requires `http(s)` URLs. |
+| `functions/_lib/telegram.js` | The bot: link / photo / video uploads, `/list`, `/delete`, `/feature`. |
+| `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |
+| `functions/_middleware.js` | Security headers on every response. |
+| `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
+| `wrangler.toml` | Binding names and local-development notes. |
+| `SETUP.md` | Step-by-step setup: D1, R2, secrets, @BotFather, webhook. |
+
+Nothing in the front end ever receives a secret: the browser only talks to
+`/api/*`, and the password, bot token and session key stay in Cloudflare's
+environment variables.
+
+## Legal pages
+
+- `terms.html` — Terms of Service.
+- `privacy.html` — Privacy Policy (age cookie, theme preference, advertising,
+  hosting).
+- `compliance.html` — 18 U.S.C. § 2257 / compliance statement, content standards
+  and the RTA labelling note.
+
+All three share `assets/legal.css`, link to each other and to the site, and are
+linked from the footer of `index.html`. They are **placeholder copy** with
+bracketed fields (contact email, records custodian, address) to fill in; they
+also load the same age gate. `server.py` serves them at `/terms`, `/privacy` and
+`/compliance` as well.
 
 Google Fonts and hosted videos require an internet connection.

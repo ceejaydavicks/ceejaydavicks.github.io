@@ -1,0 +1,211 @@
+/* ============================================================================
+   LEGAL PAGES (Terms / Privacy / 2257 & Compliance)
+   Shared by terms.html, privacy.html and compliance.html. Uses the same
+   tokens as the main site so the pages feel native to it.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+  --bg: #0B0B0F;
+  --panel: #111116;
+  --line: rgba(221, 212, 237, 0.12);
+  --line-strong: rgba(221, 212, 237, 0.2);
+  --text: #F4F1F8;
+  --muted: #A1A1AA;
+  --quiet: #7C7C86;
+  --rose: #FDA4AF;
+  --rose-soft: rgba(253, 164, 175, 0.1);
+  --logo: url("./logo-lockup@3x.png");
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #FAFAFB;
+  --panel: #FFFFFF;
+  --line: rgba(24, 24, 27, 0.12);
+  --line-strong: rgba(24, 24, 27, 0.2);
+  --text: #18181B;
+  --muted: #52525B;
+  --quiet: #71717A;
+  --rose: #E11D48;
+  --rose-soft: rgba(225, 29, 72, 0.07);
+  --logo: url("./logo-lockup-light@3x.png");
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Age gate lock — assets/age-gate.js toggles these classes. */
+html.age-locked,
+html.age-locked body { overflow: hidden; }
+
+html.age-locked body > :not(.age-gate) { visibility: hidden !important; }
+
+a { color: var(--rose); text-underline-offset: 3px; }
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: 1rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  z-index: 40;
+}
+
+.skip-link:focus { top: 1rem; }
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(860px, 100%);
+  margin: 0 auto;
+  padding: 1rem clamp(1rem, 4vw, 2rem);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-logo {
+  display: block;
+  width: clamp(150px, 40vw, 190px);
+  aspect-ratio: 707 / 108;
+  background: var(--logo) center / contain no-repeat;
+}
+
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  font-size: 12.5px;
+}
+
+.header-nav a { color: var(--muted); text-decoration: none; }
+.header-nav a:hover { color: var(--text); }
+
+main {
+  width: min(860px, 100%);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 3rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.6rem;
+  color: var(--rose);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.6rem, 4.6vw, 2.15rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.updated {
+  margin: 0 0 1.75rem;
+  color: var(--quiet);
+  font-size: 12.5px;
+}
+
+.card {
+  padding: clamp(1.3rem, 4vw, 2.25rem);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+}
+
+.card h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.card h2:first-of-type { margin-top: 0; }
+
+.card p { margin: 0 0 1rem; color: var(--muted); }
+.card ul { margin: 0 0 1rem; padding-left: 1.2rem; color: var(--muted); }
+.card li { margin-bottom: 0.4rem; }
+.card strong { color: var(--text); font-weight: 500; }
+
+.placeholder-note {
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--rose-soft);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.site-footer {
+  border-top: 1px solid var(--line);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  width: min(860px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 4vw, 2rem) 2.5rem;
+  color: var(--quiet);
+  font-size: 11.5px;
+}
+
+.footer-inner p { margin: 0; }
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+}
+
+.footer-links a {
+  color: var(--quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-links a:hover { color: var(--rose); }
+
+.footer-links a[aria-current="page"] { color: var(--text); text-decoration: none; }

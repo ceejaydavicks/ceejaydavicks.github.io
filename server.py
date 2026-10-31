@@ -8,11 +8,24 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).parent
 ASSETS = ROOT / "assets"
 
-SERVED_FILES = {
-    "/": (ROOT / "index.html", "text/html; charset=utf-8"),
-    "/index.html": (ROOT / "index.html", "text/html; charset=utf-8"),
-    "/videos.js": (ROOT / "videos.js", "text/javascript; charset=utf-8"),
+PAGES = {
+    "/": "index.html",
+    "/index.html": "index.html",
+    "/terms.html": "terms.html",
+    "/terms": "terms.html",
+    "/privacy.html": "privacy.html",
+    "/privacy": "privacy.html",
+    "/compliance.html": "compliance.html",
+    "/compliance": "compliance.html",
+    "/2257": "compliance.html",
+    "/admin": "admin/index.html",
+    "/admin/": "admin/index.html",
 }
+
+SERVED_FILES = {
+    path: (ROOT / name, "text/html; charset=utf-8") for path, name in PAGES.items()
+}
+SERVED_FILES["/videos.js"] = (ROOT / "videos.js", "text/javascript; charset=utf-8")
 
 ASSET_TYPES = {
     ".png": "image/png",
@@ -21,6 +34,8 @@ ASSET_TYPES = {
     ".webp": "image/webp",
     ".svg": "image/svg+xml",
     ".ico": "image/x-icon",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
 }
 
 
@@ -40,8 +55,32 @@ def resolve_request(path: str):
     return None
 
 
+API_HINT = (
+    b'{"error":"The admin API runs on Cloudflare Pages Functions. '
+    b'Deploy the repo, or run `npx wrangler pages dev .` with your D1 + R2 bindings, '
+    b'to use it locally."}'
+)
+
+
 class PageHandler(BaseHTTPRequestHandler):
+    def serve_api_hint(self, include_body=True):
+        """The static preview has no D1/R2, so API routes explain themselves."""
+        self.send_response(501)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(API_HINT)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        if include_body:
+            self.wfile.write(API_HINT)
+
+    def is_api(self):
+        return urlsplit(self.path).path.startswith("/api/")
+
     def serve_page(self, include_body=True):
+        if self.is_api():
+            self.serve_api_hint(include_body)
+            return
+
         asset = resolve_request(urlsplit(self.path).path)
         if asset is None:
             self.send_error(404)
@@ -67,6 +106,16 @@ class PageHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         self.serve_page(include_body=False)
+
+    def do_POST(self):
+        if self.is_api():
+            self.serve_api_hint()
+        else:
+            self.send_error(404)
+
+    do_PUT = do_POST
+    do_PATCH = do_POST
+    do_DELETE = do_POST
 
 
 if __name__ == "__main__":

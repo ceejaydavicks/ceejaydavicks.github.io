@@ -1,0 +1,16 @@
+# Files that live in the repository but must not be published as static assets.
+# Cloudflare Pages reads this file from the build output directory (the repo
+# root) and skips every matching path. The site itself needs none of these:
+# `functions/` is compiled into the Pages Functions worker, and the rest is
+# tooling/documentation.
+
+/functions
+/wrangler.toml
+/schema.sql
+/server.py
+/README.md
+/SETUP.md
+/replit.md
+/.gitignore
+/.agents
+/.replit

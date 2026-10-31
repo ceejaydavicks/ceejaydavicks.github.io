@@ -1,0 +1,47 @@
+-- ---------------------------------------------------------------------------
+-- BootyMansion admin schema (Cloudflare D1)
+--
+-- The Pages Functions create these tables automatically on the first request,
+-- so running this file is optional. It is here for reference and for anyone who
+-- prefers `npx wrangler d1 execute <db> --remote --file=./schema.sql`.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS videos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  creator TEXT NOT NULL DEFAULT '',
+  thumbnail_url TEXT NOT NULL DEFAULT '',
+  video_url TEXT NOT NULL DEFAULT '',
+  embed_url TEXT NOT NULL DEFAULT '',
+  duration TEXT NOT NULL DEFAULT '',
+  "views" TEXT NOT NULL DEFAULT '',
+  tag TEXT NOT NULL DEFAULT '',
+  orientation TEXT NOT NULL DEFAULT 'horizontal',
+  featured INTEGER NOT NULL DEFAULT 0,
+  pinned INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS videos_order_idx
+  ON videos (featured DESC, pinned DESC, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+  ip TEXT PRIMARY KEY,
+  count INTEGER NOT NULL DEFAULT 0,
+  first_at INTEGER NOT NULL DEFAULT 0,
+  blocked_until INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT OR IGNORE INTO settings (key, value) VALUES
+  ('site_name', 'BootyMansion'),
+  ('telegram_url', ''),
+  ('ad_banner_code', ''),
+  ('ad_native_code', ''),
+  ('ad_smartlink_url', ''),
+  ('ad_smartlink_code', '');

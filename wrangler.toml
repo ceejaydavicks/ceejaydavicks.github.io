@@ -1,0 +1,51 @@
+# ---------------------------------------------------------------------------
+# Cloudflare Pages configuration for the admin (Functions + D1 + R2).
+#
+# IMPORTANT
+# ---------
+# If Cloudflare builds this repo from GitHub (the normal setup), create the
+# bindings and secrets in the dashboard instead:
+#
+#   Pages project → Settings → Bindings          → D1 "DB", R2 "MEDIA"
+#   Pages project → Settings → Variables and Secrets → the secrets below
+#
+# The commented blocks at the bottom are only used when you run the project
+# locally with `npx wrangler pages dev`, or deploy with `npx wrangler pages deploy`.
+#
+# Secrets / variables the code expects:
+#   DB                       D1 binding                 (required)
+#   MEDIA                    R2 bucket binding          (required)
+#   ADMIN_PASSWORD           password for /admin        (required)
+#   SESSION_SECRET           random 32+ characters      (recommended)
+#   ADMIN_TELEGRAM_IDS       comma-separated Telegram user IDs   (bot)
+#   TELEGRAM_BOT_TOKEN       token from @BotFather               (bot)
+#   TELEGRAM_WEBHOOK_SECRET  random string in the webhook URL    (bot)
+# ---------------------------------------------------------------------------
+
+name = "ceejaydavicks-github-io"
+compatibility_date = "2025-09-01"
+
+# The static site lives in the repository root, so this is its output directory.
+# It matches the Pages dashboard setting ("Build output directory: /") and lets
+# `npx wrangler pages dev` / `npx wrangler pages deploy` run without extra flags.
+pages_build_output_dir = "."
+
+# ---------------------------------------------------------------------------
+# Local / CLI bindings — uncomment and fill in.
+# `npx wrangler d1 list` prints the database id of an existing database.
+# ---------------------------------------------------------------------------
+#
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "bootymansion"
+# database_id = "PASTE_YOUR_DATABASE_ID_HERE"
+#
+# [[r2_buckets]]
+# binding = "MEDIA"
+# bucket_name = "bootymansion-media"
+#
+# Plain-text variables can live here; secrets belong in .dev.vars (local) or the
+# dashboard (production).
+#
+# [vars]
+# ADMIN_TELEGRAM_IDS = "123456789"
