@@ -2246,6 +2246,17 @@
        ================================================================ */
     const API_TIMEOUT = 7000;
 
+    /* ================================================================
+       BOT FEED — videos published through your Telegram bot
+       ================================================================
+       The bot runs as a standalone Cloudflare Worker and keeps its own
+       catalogue in Workers KV, separate from this site's D1 database. Those
+       videos are merged into the same grid below, so anything you post to the
+       bot appears here within a page refresh. Point this at your Worker's
+       /api/videos feed, or set it to "" to use the site's own catalogue only.
+       ================================================================ */
+    const BOT_FEED_URL = "https://bootymansionbot.prosperj392.workers.dev/api/videos";
+
     async function fetchJson(url) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), API_TIMEOUT);
@@ -2266,11 +2277,22 @@
     let apiLive = false;
     let siteSettings = null;
 
-    // Both calls run in parallel; one failing never blocks the other.
-    const [videosResult, settingsResult] = await Promise.allSettled([
+    // All three calls run in parallel; one failing never blocks the others.
+    const [videosResult, settingsResult, botResult] = await Promise.allSettled([
       fetchJson("/api/videos"),
-      fetchJson("/api/settings")
+      fetchJson("/api/settings"),
+      BOT_FEED_URL ? fetchJson(BOT_FEED_URL) : Promise.resolve({ videos: [] })
     ]);
+
+    let botVideos = [];
+    if (botResult.status === "fulfilled") {
+      const payload = botResult.value || {};
+      botVideos = (Array.isArray(payload.videos) ? payload.videos : [])
+        .map(botRowToVideo)
+        .filter(Boolean);
+    } else {
+      console.warn("Bot feed unavailable — showing this site's catalogue only.", botResult.reason);
+    }
 
     if (videosResult.status === "fulfilled") {
       const payload = videosResult.value || {};
@@ -2285,9 +2307,10 @@
     }
 
     // Without a backend (GitHub Pages, a static preview) the bundled samples keep
-    // the layout working. When the API *is* live but empty we show the empty state,
-    // never fake cards.
-    if (!apiLive) {
+    // the layout working. Bot videos are real content, so when there are any the
+    // samples are skipped. When the API *is* live but empty we show the empty
+    // state, never fake cards.
+    if (!apiLive && !botVideos.length) {
       try {
         ({ videos: rawVideos } = await import("./videos.js"));
       } catch (error) {
@@ -2312,6 +2335,38 @@
       AD_CONFIG.native.code = asCode(siteSettings.adNativeCode);
       AD_CONFIG.smartlink.code = asCode(siteSettings.adSmartlinkCode);
       if (/^https?:\/\//i.test(smartlinkUrl)) AD_CONFIG.smartlink.url = smartlinkUrl;
+    }
+
+    // A video published by the Telegram bot Worker becomes the same shape.
+    function botRowToVideo(row) {
+      if (!row || typeof row !== "object") return null;
+
+      const stream = clean(row.streamUrl);
+      const title = clean(row.title);
+      if (!title || !/^https?:\/\//i.test(stream)) return null;
+
+      const tags = Array.isArray(row.tags) ? row.tags.map((tag) => clean(tag)).filter(Boolean) : [];
+      const createdAt = Number(row.createdAt);
+
+      return {
+        id: `bot-${clean(row.id) || title.slice(0, 24)}`,
+        title,
+        creator: "",
+        views: row.views ? String(row.views) : "",
+        duration: formatDuration(Number(row.durationSec)),
+        tag: tags[0] || clean(row.category),
+        category: clean(row.category) || tags[0] || "",
+        description: clean(row.description),
+        thumb: clean(row.thumbUrl),
+        url: stream,
+        embed: null,
+        orientation: Number(row.width) > Number(row.height) ? "landscape" : "vertical",
+        featured: false,
+        pinned: false,
+        posted: Number.isFinite(createdAt) && createdAt > 0
+          ? postedLabel(new Date(createdAt).toISOString())
+          : ""
+      };
     }
 
     // An API row becomes the same shape videos.js uses.
@@ -2423,9 +2478,20 @@
       };
     }
 
-    const VIDEOS = (Array.isArray(rawVideos) ? rawVideos : [])
+    const siteVideos = (Array.isArray(rawVideos) ? rawVideos : [])
       .map(apiLive ? apiRowToVideo : (video) => video)
-      .filter(Boolean)
+      .filter(Boolean);
+
+    // Bot videos first (they are the newest), then the site's own rows, minus
+    // anything that is clearly the same file or poster.
+    const botSeen = new Set(
+      botVideos.flatMap((video) => [video.url, video.thumb]).filter(Boolean)
+    );
+
+    const VIDEOS = [
+      ...botVideos,
+      ...siteVideos.filter((video) => !botSeen.has(video.url) && !botSeen.has(video.thumb))
+    ]
       .map(normalizeVideo)
       .filter(Boolean);
 

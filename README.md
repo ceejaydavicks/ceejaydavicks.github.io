@@ -69,6 +69,29 @@ The public page loads `/api/videos` and `/api/settings` on boot. If the API is
 **unreachable** (static hosting, `server.py`) it falls back to `videos.js`; if the
 API is **empty** it shows the "library opens soon" state instead of fake cards.
 
+### From the Telegram bot Worker (Workers KV)
+
+The bot in `worker/` keeps its own catalogue in Workers KV, separate from D1. The
+public page merges that feed into the same grid, so a video published from the bot
+appears on the site without touching the database.
+
+The feed URL is one constant near the top of the module script in `index.html`:
+
+```js
+const BOT_FEED_URL = "https://<your-worker>.workers.dev/api/videos";
+```
+
+- Set it to your Worker and bot videos are shown first (they are the newest), with
+  the Worker's streaming proxy as the playable URL and its thumbnail proxy as the poster.
+- Set it to `""` to switch the merge off and use the site's own catalogue only.
+- If the Worker is unreachable the page still renders normally — the merge is a
+  third parallel request and a failure only logs a warning.
+- Rows that look like the same file or poster as a bot video are skipped, so a video
+  added both ways does not appear twice.
+
+Because the Worker sends `Access-Control-Allow-Origin: *`, this works on the
+Cloudflare Pages deployment and on plain GitHub Pages alike.
+
 ### From the file (fallback / samples)
 
 Add entries to the exported `videos` list in `videos.js`:
