@@ -44,6 +44,11 @@ compatibility_date = "2025-09-01"
 #
 # [vars]
 # ADMIN_TELEGRAM_IDS = "123456789"
+#
+# Optional — scraped links (the bot's automatic path):
+#   SCRAPE_MIRROR_MAX_MB = "90"   largest scraped file copied into R2
+#   SCRAPE_MIRROR = "off"         never copy scraped files, only thumbnails
+#   SCRAPE_ALLOW_PAGE = "on"      also publish pages whose player could not be read
 
 # Local development only:
 #   npx wrangler pages dev . --d1 DB --r2 MEDIA

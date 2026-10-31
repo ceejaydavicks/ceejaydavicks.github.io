@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS videos (
   pinned INTEGER NOT NULL DEFAULT 0,
   tg_chat TEXT,          -- channel a video was published from (NULL for manual rows)
   tg_message_id INTEGER,
+  source_url TEXT NOT NULL DEFAULT '',  -- page a scraped row came from
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
