@@ -664,6 +664,30 @@
     .player-empty span { color: #A1A1AA; font-size: 12.5px; }
     .player-empty a { color: #FDA4AF; font-weight: 500; }
 
+    .video-frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #08080B;
+    }
+
+    .empty-library {
+      display: grid;
+      gap: 0.55rem;
+      padding: clamp(1.6rem, 5vw, 2.6rem);
+      border: 1px solid rgba(221, 212, 237, 0.12);
+      border-radius: 18px;
+      background: linear-gradient(160deg, #14121A, #0C0B10);
+      text-align: center;
+      justify-items: center;
+    }
+
+    .empty-library strong { color: #fff; font-size: 1.05rem; font-weight: 500; }
+    .empty-library p { margin: 0; max-width: 46ch; color: #A1A1AA; font-size: 13.5px; }
+    .empty-library .btn { margin-top: 0.5rem; }
+
     .hero-rail {
       display: flex;
       flex: 0 0 auto;
@@ -2038,6 +2062,18 @@
       <div class="grid-feed" id="feed-grid"></div>
     </section>
 
+    <!-- Shown when the library is empty (the admin has no published videos yet) -->
+    <section class="section" id="library-empty" aria-labelledby="library-empty-title" hidden>
+      <div class="empty-library">
+        <strong id="library-empty-title">The library opens soon.</strong>
+        <p>Fresh releases are added every week. Follow the Telegram channel and you will be the first to see the next drop.</p>
+        <a class="btn btn-telegram" data-telegram href="#telegram">
+          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+          Join on Telegram
+        </a>
+      </div>
+    </section>
+
     <!-- Telegram call to action -->
     <section class="telegram-cta" id="telegram" aria-labelledby="telegram-title">
       <div class="telegram-cta__inner">
@@ -2101,12 +2137,12 @@
        ================================================================ */
 
     // Visible branding + SEO title/meta follow this value.
-    const SITE_NAME = "BootyMansion";
+    let SITE_NAME = "BootyMansion";
 
     // TELEGRAM: paste your full channel link, e.g. "https://t.me/yourchannel".
     // Leave it empty until you have the link; every Telegram button is rendered
     // but stays inactive (and says so on hover) instead of linking nowhere.
-    const TELEGRAM_URL = "";
+    let TELEGRAM_URL = "";
 
     // ADVERTISING — one config object drives every ad slot on the page.
     // Paste the ad snippet (Adsterra or any network) as a string. A slot with an
@@ -2206,14 +2242,119 @@
     }
 
     /* ================================================================
-       VIDEO DATA — everything comes from videos.js
+       VIDEO DATA — served by /api/videos (D1, managed from /admin)
        ================================================================ */
+    const API_TIMEOUT = 7000;
+
+    async function fetchJson(url) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), API_TIMEOUT);
+      try {
+        const response = await fetch(url, {
+          headers: { accept: "application/json" },
+          credentials: "same-origin",
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error(`${url} responded ${response.status}`);
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
     let rawVideos = [];
-    try {
-      ({ videos: rawVideos } = await import("./videos.js"));
-    } catch (error) {
-      console.warn("videos.js could not be loaded:", error);
-      rawVideos = [];
+    let apiLive = false;
+    let siteSettings = null;
+
+    // Both calls run in parallel; one failing never blocks the other.
+    const [videosResult, settingsResult] = await Promise.allSettled([
+      fetchJson("/api/videos"),
+      fetchJson("/api/settings")
+    ]);
+
+    if (videosResult.status === "fulfilled") {
+      const payload = videosResult.value || {};
+      rawVideos = Array.isArray(payload.videos) ? payload.videos : [];
+      apiLive = true;
+    } else {
+      console.warn("Video API unavailable — falling back to the bundled samples.", videosResult.reason);
+    }
+
+    if (settingsResult.status === "fulfilled") {
+      siteSettings = (settingsResult.value && settingsResult.value.settings) || null;
+    }
+
+    // Without a backend (GitHub Pages, a static preview) the bundled samples keep
+    // the layout working. When the API *is* live but empty we show the empty state,
+    // never fake cards.
+    if (!apiLive) {
+      try {
+        ({ videos: rawVideos } = await import("./videos.js"));
+      } catch (error) {
+        console.warn("videos.js could not be loaded:", error);
+        rawVideos = [];
+      }
+    }
+
+    // Site name, Telegram link and the three ad slots are edited in /admin.
+
+    if (siteSettings) {
+      const siteName = clean(siteSettings.siteName);
+      if (siteName) SITE_NAME = siteName.slice(0, 60);
+
+      const telegram = clean(siteSettings.telegramUrl);
+      if (/^https?:\/\//i.test(telegram)) TELEGRAM_URL = telegram;
+
+      const asCode = (value) => (typeof value === "string" ? value.trim() : "");
+      const smartlinkUrl = asCode(siteSettings.adSmartlinkUrl);
+
+      AD_CONFIG.banner.code = asCode(siteSettings.adBannerCode);
+      AD_CONFIG.native.code = asCode(siteSettings.adNativeCode);
+      AD_CONFIG.smartlink.code = asCode(siteSettings.adSmartlinkCode);
+      if (/^https?:\/\//i.test(smartlinkUrl)) AD_CONFIG.smartlink.url = smartlinkUrl;
+    }
+
+    // An API row becomes the same shape videos.js uses.
+    function apiRowToVideo(row) {
+      if (!row || typeof row !== "object") return null;
+
+      const embedUrl = clean(row.embed_url);
+      const videoUrl = clean(row.video_url);
+
+      return {
+        id: row.id != null ? `a${row.id}` : null,
+        title: row.title,
+        creator: row.creator,
+        views: row.views,
+        duration: row.duration,
+        tag: row.tag,
+        category: clean(row.tag),
+        thumb: row.thumbnail_url,
+        url: videoUrl || embedUrl,
+        embed: /^https?:\/\//i.test(embedUrl) ? embedUrl : null,
+        orientation: row.orientation,
+        featured: row.featured === true || row.featured === 1,
+        pinned: row.pinned === true || row.pinned === 1,
+        posted: postedLabel(row.created_at)
+      };
+    }
+
+    function postedLabel(value) {
+      if (!value) return "";
+      const raw = String(value);
+      const date = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
+      if (Number.isNaN(date.getTime())) return "";
+
+      const days = Math.floor((Date.now() - date.getTime()) / 86400000);
+      if (days <= 0) return "Today";
+      if (days === 1) return "Yesterday";
+      if (days < 7) return `${days} days ago`;
+      if (days < 30) {
+        const weeks = Math.floor(days / 7);
+        return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+      }
+      const months = Math.floor(days / 30);
+      return `${months} month${months === 1 ? "" : "s"} ago`;
     }
 
     function getVideoUrls(url) {
@@ -2221,7 +2362,7 @@
       let directUrl = null;
 
       try {
-        const parsedUrl = new URL(url);
+        const parsedUrl = new URL(url, window.location.href);
         if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
           originalUrl = parsedUrl.href;
 
@@ -2252,10 +2393,16 @@
       const { originalUrl, directUrl } = getVideoUrls(video.url);
       if (!title || (!originalUrl && !directUrl)) return null;
 
-      const format = video.format === "short" || video.vertical === true ? "short" : "landscape";
+      const embedUrl = typeof video.embed === "string" && /^https?:\/\//i.test(video.embed)
+        ? video.embed
+        : null;
+
+      const format = video.format === "short" || video.vertical === true || video.orientation === "vertical"
+        ? "short"
+        : "landscape";
 
       return {
-        id: `v${index}`,
+        id: video.id || `v${index}`,
         title,
         creator: clean(video.creator),
         views: clean(video.views),
@@ -2268,12 +2415,17 @@
         format,
         url: originalUrl || directUrl,
         directUrl,
+        embedUrl,
         durationKnown: clean(video.duration),
+        featured: Boolean(video.featured),
+        pinned: Boolean(video.pinned),
         ratio: 0
       };
     }
 
     const VIDEOS = (Array.isArray(rawVideos) ? rawVideos : [])
+      .map(apiLive ? apiRowToVideo : (video) => video)
+      .filter(Boolean)
       .map(normalizeVideo)
       .filter(Boolean);
 
@@ -2292,7 +2444,16 @@
     (function buildLayout() {
       if (!VIDEOS.length) return;
 
-      const pool = VIDEOS.slice(1);
+      // The admin's featured video leads; pinned videos come next.
+      const featured = VIDEOS.find((video) => video.featured) || VIDEOS[0];
+      LAYOUT.featured = featured;
+
+      const pool = VIDEOS.filter((video) => video !== featured);
+      const pinned = pool.filter((video) => video.pinned);
+      const rest = pool.filter((video) => !video.pinned);
+      pool.length = 0;
+      pool.push(...pinned, ...rest);
+
       LAYOUT.upNext = pool.slice(0, 3);
 
       const afterUpNext = pool.slice(3);
@@ -2865,7 +3026,18 @@
       state.currentId = video.id;
       renderHeroMeta(video);
 
-      if (!video.directUrl) {
+      if (video.embedUrl) {
+        const frame = document.createElement("iframe");
+        frame.className = "player-frame";
+        frame.src = video.embedUrl;
+        frame.title = `${video.title} video`;
+        frame.loading = "lazy";
+        frame.referrerPolicy = "strict-origin-when-cross-origin";
+        frame.allow = "autoplay; encrypted-media; fullscreen; picture-in-picture";
+        frame.setAttribute("allowfullscreen", "");
+        frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:#08080B";
+        player.replaceChildren(frame);
+      } else if (!video.directUrl) {
         player.replaceChildren(makeFallback(video));
       } else {
         const media = document.createElement("video");
@@ -3093,6 +3265,10 @@
         fillGrid($("#feed-grid"), LAYOUT.feed, { native: true });
       }
       feed.hidden = !sectionAvailability.feed;
+
+      const emptyLibrary = $("#library-empty");
+      if (emptyLibrary) emptyLibrary.hidden = VIDEOS.length > 0;
+
       scheduleMasonryReflow();
     }
 

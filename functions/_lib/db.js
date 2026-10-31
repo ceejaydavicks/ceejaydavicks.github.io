@@ -1,0 +1,216 @@
+/* ============================================================================
+   D1 data access. The schema is created automatically on first use (cheap
+   `CREATE TABLE IF NOT EXISTS` guarded by an in-isolate promise), and the same
+   statements live in schema.sql for `wrangler d1 execute`.
+   ========================================================================== */
+
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS videos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    creator TEXT NOT NULL DEFAULT '',
+    thumbnail_url TEXT NOT NULL DEFAULT '',
+    video_url TEXT NOT NULL DEFAULT '',
+    embed_url TEXT NOT NULL DEFAULT '',
+    duration TEXT NOT NULL DEFAULT '',
+    "views" TEXT NOT NULL DEFAULT '',
+    tag TEXT NOT NULL DEFAULT '',
+    orientation TEXT NOT NULL DEFAULT 'horizontal',
+    featured INTEGER NOT NULL DEFAULT 0,
+    pinned INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS videos_order_idx
+     ON videos (featured DESC, pinned DESC, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS login_attempts (
+    ip TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 0,
+    first_at INTEGER NOT NULL DEFAULT 0,
+    blocked_until INTEGER NOT NULL DEFAULT 0
+  )`
+];
+
+const DEFAULT_SETTINGS = {
+  site_name: "BootyMansion",
+  telegram_url: "",
+  ad_banner_code: "",
+  ad_native_code: "",
+  ad_smartlink_url: "",
+  ad_smartlink_code: ""
+};
+
+let schemaPromise = null;
+
+export function ensureSchema(env) {
+  if (!env.DB) throw new Error("Missing D1 binding named DB");
+  if (!schemaPromise) {
+    schemaPromise = (async () => {
+      await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
+      const seed = env.DB.prepare(
+        "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)"
+      );
+      await env.DB.batch(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => seed.bind(key, value)));
+    })().catch((error) => {
+      schemaPromise = null;
+      throw error;
+    });
+  }
+  return schemaPromise;
+}
+
+export const VIDEO_COLUMNS = [
+  "id",
+  "title",
+  "creator",
+  "thumbnail_url",
+  "video_url",
+  "embed_url",
+  "duration",
+  "views",
+  "tag",
+  "orientation",
+  "featured",
+  "pinned",
+  "created_at"
+].join(", ");
+
+export async function listVideos(env) {
+  const { results } = await env.DB.prepare(
+    `SELECT ${VIDEO_COLUMNS} FROM videos
+     ORDER BY featured DESC, pinned DESC, datetime(created_at) DESC, id DESC`
+  ).all();
+  return results || [];
+}
+
+export async function listPublishedVideos(env) {
+  const { results } = await env.DB.prepare(
+    `SELECT ${VIDEO_COLUMNS} FROM videos
+     WHERE video_url <> '' OR embed_url <> ''
+     ORDER BY featured DESC, pinned DESC, datetime(created_at) DESC, id DESC`
+  ).all();
+  return results || [];
+}
+
+export async function getVideo(env, id) {
+  return env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE id = ?`).bind(id).first();
+}
+
+export async function insertVideo(env, values) {
+  const result = await env.DB.prepare(
+    `INSERT INTO videos
+       (title, creator, thumbnail_url, video_url, embed_url, duration, "views", tag, orientation, featured, pinned)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      values.title,
+      values.creator,
+      values.thumbnail_url,
+      values.video_url,
+      values.embed_url,
+      values.duration,
+      values.views,
+      values.tag,
+      values.orientation,
+      values.featured,
+      values.pinned
+    )
+    .run();
+
+  const id = result.meta && result.meta.last_row_id;
+  if (values.featured && id) {
+    await env.DB.prepare("UPDATE videos SET featured = 0 WHERE id <> ?").bind(id).run();
+  }
+  return getVideo(env, id);
+}
+
+export async function updateVideo(env, id, values) {
+  await env.DB.prepare(
+    `UPDATE videos SET
+       title = ?, creator = ?, thumbnail_url = ?, video_url = ?, embed_url = ?,
+       duration = ?, "views" = ?, tag = ?, orientation = ?, featured = ?, pinned = ?
+     WHERE id = ?`
+  )
+    .bind(
+      values.title,
+      values.creator,
+      values.thumbnail_url,
+      values.video_url,
+      values.embed_url,
+      values.duration,
+      values.views,
+      values.tag,
+      values.orientation,
+      values.featured,
+      values.pinned,
+      id
+    )
+    .run();
+
+  if (values.featured) {
+    await env.DB.prepare("UPDATE videos SET featured = 0 WHERE id <> ?").bind(id).run();
+  }
+  return getVideo(env, id);
+}
+
+export async function deleteVideo(env, id) {
+  await env.DB.prepare("DELETE FROM videos WHERE id = ?").bind(id).run();
+}
+
+export async function setVideoFlags(env, id, { featured, pinned }) {
+  if (featured !== undefined) {
+    await env.DB.prepare("UPDATE videos SET featured = ? WHERE id = ?").bind(featured, id).run();
+    if (featured) {
+      await env.DB.prepare("UPDATE videos SET featured = 0 WHERE id <> ?").bind(id).run();
+    }
+  }
+  if (pinned !== undefined) {
+    await env.DB.prepare("UPDATE videos SET pinned = ? WHERE id = ?").bind(pinned, id).run();
+  }
+  return getVideo(env, id);
+}
+
+/* ---- settings ---------------------------------------------------------- */
+
+export async function readSettings(env) {
+  const { results } = await env.DB.prepare("SELECT key, value FROM settings").all();
+  const map = Object.fromEntries((results || []).map((row) => [row.key, row.value]));
+  return {
+    siteName: map.site_name ?? DEFAULT_SETTINGS.site_name,
+    telegramUrl: map.telegram_url ?? DEFAULT_SETTINGS.telegram_url,
+    adBannerCode: map.ad_banner_code ?? DEFAULT_SETTINGS.ad_banner_code,
+    adNativeCode: map.ad_native_code ?? DEFAULT_SETTINGS.ad_native_code,
+    adSmartlinkUrl: map.ad_smartlink_url ?? DEFAULT_SETTINGS.ad_smartlink_url,
+    adSmartlinkCode: map.ad_smartlink_code ?? DEFAULT_SETTINGS.ad_smartlink_code
+  };
+}
+
+export const SETTINGS_KEYS = {
+  siteName: "site_name",
+  telegramUrl: "telegram_url",
+  adBannerCode: "ad_banner_code",
+  adNativeCode: "ad_native_code",
+  adSmartlinkUrl: "ad_smartlink_url",
+  adSmartlinkCode: "ad_smartlink_code"
+};
+
+export async function writeSettings(env, patch) {
+  const statements = [];
+  for (const [field, key] of Object.entries(SETTINGS_KEYS)) {
+    if (!(field in patch)) continue;
+    statements.push(
+      env.DB
+        .prepare(
+          "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now')) " +
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+        )
+        .bind(key, patch[field])
+    );
+  }
+  if (statements.length) await env.DB.batch(statements);
+  return readSettings(env);
+}

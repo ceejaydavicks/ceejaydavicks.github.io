@@ -1,0 +1,11 @@
+# Local secrets for `npx wrangler pages dev` — never commit this file.
+.dev.vars
+.env
+
+# Wrangler / tooling
+.wrangler/
+node_modules/
+
+# OS noise
+.DS_Store
+Thumbs.db
