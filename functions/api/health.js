@@ -60,7 +60,7 @@ export async function onRequestGet({ env }) {
   }
   if (!checks.mediaBinding) {
     report.notes.push(
-      "No MEDIA (R2) binding: thumbnail uploads and Telegram video files are unavailable. External image URLs, video URLs and embed links still work."
+      "No MEDIA (R2) binding. Nothing breaks for the automatic paths: scraped links, page embeds and Telegram channel videos are linked, not copied. Only admin file uploads and bot downloads of files up to 20 MB need R2."
     );
   }
   if (!checks.telegram) {

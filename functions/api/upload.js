@@ -112,7 +112,13 @@ async function store(env, { body, info, size }) {
 
 export async function onRequestPost({ request, env }) {
   if (!(await isAdminRequest({ request, env }))) return fail("Unauthorized", 401);
-  if (!env.MEDIA) return fail("R2 bucket is not configured (binding MEDIA).", 503);
+  if (!env.MEDIA) {
+    return fail(
+      "Uploads need the R2 binding MEDIA, which is optional (R2 is a paid product). "
+        + "Without it, paste an image or video URL in the panel instead — everything else works.",
+      503
+    );
+  }
 
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
 

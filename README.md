@@ -56,10 +56,10 @@ Functions:
 
 | Route | Size | Where it lives |
 | --- | --- | --- |
-| **/admin → Upload video** | ≤ 95 MB | R2, played from your own domain (`/api/media/videos/…`) |
+| **/admin → Upload video** | ≤ 95 MB | R2 (optional binding), played from your own domain (`/api/media/videos/…`) |
 | **Telegram: post in the channel** | any (2 GB / 4 GB Premium) | Telegram, embedded with `t.me/…?embed=1` |
 | **Telegram: send the video to the bot** | any | copied into the channel server-side, then embedded |
-| **Telegram: paste a page link** | scraped file ≤ 90 MB | copied into R2 (`SCRAPE_MIRROR_MAX_MB`); a larger file, or an embed-only page, is linked instead |
+| **Telegram: paste a page link** | scraped | linked from the source site, no storage needed (optional R2 copy with `SCRAPE_MIRROR=on`, ≤ 90 MB) |
 | **/admin → Video URL / Embed link** | — | wherever the link points |
 
 Cloudflare rejects a request body over 100 MB, which is why the panel stops at
@@ -248,7 +248,7 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `functions/_lib/auth.js` | Password check, signed session cookie (`HttpOnly`, `Secure`, `SameSite`, 12 h), D1 login throttle (5 failures → 15 min block). |
 | `functions/_lib/db.js` | D1 access; creates the tables and default settings on first use. |
 | `functions/_lib/validate.js` | Input sanitising — strips `<`, `>` and control characters, requires `http(s)` URLs. |
-| `functions/_lib/telegram.js` | The bot. Videos arrive four ways: a **channel post** in `TELEGRAM_CHANNEL` (any size, published as a `t.me/<channel>/<id>?embed=1` player), a **DM**, which is `copyMessage`d into that channel first, a **page link** (scraped automatically — see `scrape.js`), or a **link posted in the channel**, scraped silently. Without a channel it falls back to downloading ≤ 20 MB into R2. Also `/scrape`, `/list`, `/delete` (removes the channel post too), `/feature`, `/id`. Accepts the template's `BOT_TOKEN` / `WEBHOOK_SECRET` / `ALLOWED_USER_IDS` names as fallbacks for the `TELEGRAM_*` ones. |
+| `functions/_lib/telegram.js` | The bot. Videos arrive four ways: a **channel post** in `TELEGRAM_CHANNEL` (any size, published as a `t.me/<channel>/<id>?embed=1` player), a **DM**, which is `copyMessage`d into that channel first, a **page link** (scraped automatically — see `scrape.js`, linked rather than stored unless `SCRAPE_MIRROR=on`), or a **link posted in the channel**, scraped silently. Without a channel it falls back to downloading ≤ 20 MB into R2. Also `/scrape`, `/list`, `/delete` (removes the channel post too), `/feature`, `/id`. Accepts the template's `BOT_TOKEN` / `WEBHOOK_SECRET` / `ALLOWED_USER_IDS` names as fallbacks for the `TELEGRAM_*` ones. |
 | `functions/_lib/scrape.js` | The link scraper: Open Graph/Twitter metadata, schema.org `VideoObject` (single videos and `ItemList` galleries), `<video>`/`<source>` tags, iframe players, JS player configs (`sources: [{ file: "…mp4" }]`), known-tube embed derivation, WordPress REST rescue and one level of iframe chasing. Returns playable items (`file` / `embed` / `page`) with title, poster and duration; no database or side effects. |
 | `functions/api/telegram/setup.js` | Webhook setup and diagnosis. `GET` reports `getMe` + `getWebhookInfo` beside the expected URL; `POST` calls `setWebhook`. The secret is never echoed back. |
 | `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |

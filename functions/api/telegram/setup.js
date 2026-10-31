@@ -69,6 +69,7 @@ function configSummary(env, secret) {
     channel: channel.username ? `@${channel.username}` : channel.chatId ? "(numeric id — embeds need @username)" : "",
     admins: allowedIds(env),
     r2: Boolean(env.MEDIA),
+    r2Copy: /^(?:1|on|true|yes)$/i.test(String(env.SCRAPE_MIRROR || "").trim()),
     db: Boolean(env.DB),
     autoPublish: true,
     mirrorMaxMb: Number(env.SCRAPE_MIRROR_MAX_MB) > 0 ? Number(env.SCRAPE_MIRROR_MAX_MB) : 90,
@@ -142,8 +143,13 @@ export async function onRequestGet({ request, env }) {
   if (!config.admins.length) {
     hints.push("ADMIN_TELEGRAM_IDS (or ALLOWED_USER_IDS) is empty — every DM is refused. Send /id to the bot to learn your id.");
   }
-  if (!config.r2) {
-    hints.push("No MEDIA (R2) binding: scraped files and thumbnails cannot be copied to the site.");
+  /* R2 is optional by design: the bot links videos instead of storing them. It
+     only becomes a problem when copying was explicitly switched on. */
+  if (config.r2Copy && !config.r2) {
+    hints.push(
+      "SCRAPE_MIRROR is on but there is no MEDIA (R2) binding on this deployment, so nothing can be copied. " +
+        "Remove SCRAPE_MIRROR to link videos instead."
+    );
   }
 
   return json({
