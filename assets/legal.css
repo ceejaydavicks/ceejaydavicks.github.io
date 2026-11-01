@@ -195,6 +195,7 @@ h1 {
 }
 
 .footer-inner p { margin: 0; }
+.footer-brand .brand-logo { width: clamp(130px, 32vw, 170px); }
 
 .footer-links {
   display: flex;

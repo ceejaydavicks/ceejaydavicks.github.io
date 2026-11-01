@@ -147,13 +147,6 @@
 
 .watch__related { margin-top: clamp(1.6rem, 4vw, 2.6rem); }
 
-.watch__more {
-  margin: 1rem 0 0;
-  color: var(--quiet);
-  font-size: 12.5px;
-  text-align: center;
-}
-
 /* The card title is a link on this page, so it gets the same shape as the
    button it replaces. */
 .card__title a {

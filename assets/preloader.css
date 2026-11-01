@@ -1,0 +1,85 @@
+/* Shared site-wide logo / heartbeat / rotating-ring preloader. */
+.preloader {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg, #0B0B0F);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 420ms ease, visibility 420ms ease;
+}
+
+.preloader.is-done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(200px, 56vw, 268px);
+  aspect-ratio: 1;
+}
+
+.preloader__stage::before {
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 75, 181, 0.3), transparent 70%);
+  filter: blur(18px);
+  content: "";
+  animation: preloader-heartbeat 1.15s ease-in-out infinite;
+}
+
+.preloader__ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--ring-track, rgba(244, 63, 94, 0.16));
+  border-radius: 50%;
+  box-shadow: 0 0 44px var(--glow, rgba(244, 63, 94, 0.35));
+}
+
+.preloader__ring::after {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 8%, rgba(251, 113, 133, 0.1) 26%, var(--accent-hi, #FB7185) 94%, transparent 100%);
+  content: "";
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+  animation: preloader-spin 1.05s linear infinite;
+}
+
+.preloader__logo {
+  position: relative;
+  display: block;
+  width: 86%;
+  aspect-ratio: 707 / 108;
+  background: url("/assets/logo-lockup@3x.png") center / contain no-repeat;
+  animation: preloader-heartbeat 1.15s ease-in-out infinite;
+}
+
+[data-theme="light"] .preloader__logo {
+  background-image: url("/assets/logo-lockup-light@3x.png");
+}
+
+@keyframes preloader-spin { to { transform: rotate(360deg); } }
+@keyframes preloader-heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.035); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.025); }
+  70% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader__ring::after,
+  .preloader__logo,
+  .preloader__stage::before { animation: none; }
+  .preloader { transition-duration: 180ms; }
+}

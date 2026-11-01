@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B0B0F">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="noindex,follow">
+  <meta name="rating" content="adult">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+  <title>Page not found · BootyMansion</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") theme = saved;
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      } catch (_) {}
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/preloader.css">
+  <link rel="stylesheet" href="/assets/legal.css">
+  <style>
+    .not-found { min-height: 54vh; display: grid; align-content: center; text-align: center; }
+    .not-found h1 { color: var(--text); }
+    .not-found p { color: var(--muted); }
+    .not-found .home-link { display: inline-block; margin-top: 1rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <script src="/assets/age-gate.js"></script>
+  <script src="/assets/preloader.js"></script>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
+      <nav class="header-nav" aria-label="Site"><a href="/">Home</a></nav>
+    </div>
+  </header>
+  <main class="not-found">
+    <p class="eyebrow">404 · Page not found</p>
+    <h1>This page went missing.</h1>
+    <p>The page may have moved or the address may be incorrect.</p>
+    <p><a class="home-link" href="/">Return home</a></p>
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <a class="brand footer-brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
+      <p>© <span id="year">2026</span> BootyMansion. 18+ only.</p>
+      <nav class="footer-links" aria-label="Legal"><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/compliance.html">Compliance</a></nav>
+    </div>
+  </footer>
+  <script>document.getElementById("year").textContent = String(new Date().getFullYear());</script>
+</body>
+</html>

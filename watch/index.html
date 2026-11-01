@@ -56,6 +56,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
   <!-- The same stylesheet as the home page, so a card looks the same here. -->
+  <link rel="stylesheet" href="/assets/preloader.css">
+  <script src="/assets/video-rules.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
   <link rel="stylesheet" href="/assets/watch.css">
 </head>
@@ -63,6 +65,7 @@
   <!-- AGE GATE: runs before any content is parsed, so a locked page never
        flashes. Screen-reader/keyboard/scroll handling lives in the script. -->
   <script src="/assets/age-gate.js"></script>
+  <script src="/assets/preloader.js"></script>
 
   <header class="site-header">
     <div class="shell nav-shell">
@@ -86,7 +89,6 @@
         <h1 class="watch__title" id="watch-title">Loading…</h1>
         <p class="watch__caption" id="watch-caption" hidden></p>
         <div class="watch__meta" id="watch-meta"></div>
-        <div class="watch__tags" id="watch-tags" hidden></div>
 
         <div class="watch__actions">
           <button class="btn btn-ghost" type="button" id="watch-share">
@@ -107,20 +109,10 @@
     </section>
 
     <section class="watch__related" id="related-section" aria-labelledby="related-title">
-      <div class="section-head">
-        <div>
-          <div class="section-head__title">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path></svg>
-            <h2 id="related-title">More like this</h2>
-          </div>
-          <p id="related-note">Picked from the same tags, words and length</p>
-        </div>
-        <span class="results__count" id="related-count"></span>
-      </div>
+      <h2 id="related-title">More like this</h2>
 
       <div class="grid-feed" id="related-grid"></div>
       <div id="related-sentinel" aria-hidden="true"></div>
-      <p class="watch__more" id="related-more" hidden>Loading more…</p>
     </section>
 
     <!-- At most one ad on this page, and never right next to the player. -->

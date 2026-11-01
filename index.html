@@ -68,6 +68,8 @@
        in <head> keeps page views accurate for the single-page layout.
        ============================================================ -->
 
+  <link rel="stylesheet" href="/assets/preloader.css">
+  <script src="/assets/video-rules.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
@@ -75,38 +77,7 @@
        flashes. Screen-reader/keyboard/scroll handling lives in the script. -->
   <script src="./assets/age-gate.js"></script>
 
-  <!-- Preloader: the logo inside a rose spinner. Transparent PNG, no plate. -->
-  <div class="preloader" id="preloader" aria-hidden="true">
-    <div class="preloader__stage">
-      <span class="preloader__ring"></span>
-      <span class="preloader__logo" aria-hidden="true"></span>
-    </div>
-  </div>
-  <script>
-    // Dismissed on load (min 400ms so it never flashes), with a hard 1.6s cap.
-    (function () {
-      var preloader = document.getElementById("preloader");
-      if (!preloader) return;
-      var started = Date.now();
-      var dismissed = false;
-
-      function dismiss() {
-        if (dismissed) return;
-        dismissed = true;
-        var wait = Math.max(0, 400 - (Date.now() - started));
-        window.setTimeout(function () {
-          preloader.classList.add("is-done");
-          window.setTimeout(function () {
-            if (preloader.parentNode) preloader.parentNode.removeChild(preloader);
-          }, 460);
-        }, wait);
-      }
-
-      if (document.readyState === "complete") dismiss();
-      else window.addEventListener("load", dismiss, { once: true });
-      window.setTimeout(dismiss, 1600);
-    })();
-  </script>
+  <script src="/assets/preloader.js"></script>
 
   <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -114,7 +85,7 @@
   <!-- ================= HEADER ================= -->
   <header class="site-header">
     <div class="shell nav-shell">
-      <a class="brand" href="#top" aria-label="BootyMansion home">
+      <a class="brand" href="/" aria-label="BootyMansion home">
         <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
       </a>
 
@@ -376,7 +347,7 @@
   <footer class="site-footer">
     <div class="shell footer-inner">
       <div class="footer-top">
-        <a class="brand" href="#top" aria-label="Back to top">
+        <a class="brand" href="/" aria-label="BootyMansion home">
           <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
         </a>
 
@@ -507,30 +478,6 @@
 
     const plural = (count) => (count === 1 ? "" : "s");
 
-    /* Real length in seconds. The API sends `duration_seconds`; rows created
-       before that column existed only have the "m:ss" label, so parse it. */
-    function durationToSeconds(value) {
-      if (typeof value === "number") return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
-      const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
-      if (!raw) return 0;
-      if (/^\d+(?:\.\d+)?$/.test(raw)) return Math.round(Number(raw));
-      const parts = raw.split(":").map((part) => part.trim());
-      if (parts.length >= 2 && parts.length <= 3 && parts.every((part) => /^\d+(?:\.\d+)?$/.test(part))) {
-        return Math.round(parts.map(Number).reduce((total, part) => total * 60 + part, 0));
-      }
-      const match = /^(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?$/.exec(raw);
-      if (match && (match[1] || match[2] || match[3])) {
-        return Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0);
-      }
-      return 0;
-    }
-
-    /* THE SHORTS RULE: under 60 seconds is a Short, 60 or more is a regular
-       video. It is computed from the length alone, so it applies to every
-       existing row and to anything new from /admin, a scraped link or the bot.
-       An unknown length is treated as a regular video. */
-    const SHORT_LIMIT_SECONDS = 60;
-
     const tone = (index) => ["244, 63, 94", "225, 29, 72", "251, 113, 133", "190, 18, 60", "253, 164, 175"][index % 5];
 
     function toast(message) {
@@ -643,7 +590,7 @@
         creator: row.creator,
         views: row.views,
         duration: clean(row.duration) || formatDuration(Number(row.duration_seconds)),
-        durationSeconds: Number(row.duration_seconds) || durationToSeconds(row.duration),
+        durationSeconds: window.VideoRules.seconds(row.duration_seconds) || window.VideoRules.seconds(row.duration),
         tag: row.tag,
         category: clean(row.tag),
         tags: splitTags(row.tags),
@@ -728,7 +675,7 @@
         creator: clean(video.creator),
         views: clean(video.views),
         duration: clean(video.duration) || formatDuration(Number(video.durationSeconds)),
-        durationSeconds: Number(video.durationSeconds) || durationToSeconds(video.duration),
+        durationSeconds: window.VideoRules.seconds(video.durationSeconds) || window.VideoRules.seconds(video.duration),
         posted: clean(video.posted || video.ago),
         category: clean(video.category),
         tag: clean(video.tag),
@@ -755,9 +702,7 @@
 
     const byId = (id) => VIDEOS.find((video) => video.id === id) || null;
 
-    const isShort = (video) =>
-      Number(video.durationSeconds) > 0 &&
-      Number(video.durationSeconds) < SHORT_LIMIT_SECONDS;
+    const isShort = (video) => window.VideoRules.isShort(video.durationSeconds);
 
     /* ================================================================
        HOW RECENT IS A VIDEO
@@ -965,7 +910,7 @@
        POSTER / CARD MARKUP
        ================================================================ */
     function cardMetaText(video) {
-      return [video.creator, video.views ? `${video.views} views` : "", video.posted, video.category]
+      return [video.creator, video.views ? `${video.views} views` : "", video.posted]
         .filter(Boolean)
         .join(" · ");
     }
@@ -978,19 +923,16 @@
       // otherwise a sensible default based on the declared format.
       wrap.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
 
-      const tag = isShort(video) ? "Short" : video.tag || "";
       const shownDuration = video.duration || "";
 
-      const button = document.createElement("button");
-      button.type = "button";
+      const button = document.createElement("a");
       button.className = "poster__btn";
-      button.dataset.play = video.id;
-      button.setAttribute("aria-label", `Play ${video.title}`);
+      button.href = watchUrl(video);
+      button.setAttribute("aria-label", `Watch ${video.title}`);
       button.innerHTML = [
         '<span class="poster__art" aria-hidden="true"></span>',
         '<span class="poster__shade" aria-hidden="true"></span>',
-        featured ? '<span class="poster__badge"><span class="pulse" aria-hidden="true"></span>Featured</span>' : "",
-        tag ? `<span class="poster__tag">${esc(tag)}</span>` : "",
+        isShort(video) ? '<span class="poster__short">Short</span>' : "",
         `<span class="poster__dur" data-duration-for="${video.id}" ${shownDuration ? "" : "hidden"}>${esc(shownDuration)}</span>`,
         `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`,
         caption
@@ -1017,7 +959,7 @@
       body.innerHTML = [
         `<span class="avatar" aria-hidden="true">${esc((video.creator || SITE_NAME).charAt(0))}</span>`,
         `<div class="card__text">`,
-        `<h3 class="card__title"><button type="button" data-play="${video.id}">${esc(video.title)}</button></h3>`,
+        `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
         `<p class="card__meta">${esc(meta)}</p>`,
         `</div>`
       ].join("");
@@ -1034,7 +976,7 @@
       body.className = "card__body";
       body.innerHTML = [
         '<div class="card__text">',
-        `<h3 class="card__title"><button type="button" data-play="${video.id}">${esc(video.title)}</button></h3>`,
+        `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
         `<p class="card__meta">${esc(video.creator || SITE_NAME)}</p>`,
         "</div>"
       ].join("");
@@ -1304,7 +1246,6 @@
       const parts = [];
       if (video.views) parts.push(`<span><b>${esc(video.views)}</b> views</span>`);
       if (video.durationKnown) parts.push(`<span><b>${esc(video.durationKnown)}</b> runtime</span>`);
-      if (video.category) parts.push(`<span><b>${esc(video.category)}</b></span>`);
       parts.push(`<span><b>${String(VIDEOS.indexOf(video) + 1).padStart(2, "0")}</b> / ${String(VIDEOS.length).padStart(2, "0")} in the vault</span>`);
       stats.innerHTML = parts.join("");
     }
@@ -1341,7 +1282,7 @@
           <span class="avatar" aria-hidden="true">${esc(video.creator.charAt(0))}</span>
           <span>
             <span class="creator__name">${esc(video.creator)} ${svg("badge")}</span>
-            <span class="creator__note">Creator${video.category ? ` · ${esc(video.category)}` : ""}</span>
+            <span class="creator__note">Creator</span>
           </span>
           <a class="hero-follow" data-telegram href="#telegram">Follow ${svg("external")}</a>`;
         creatorBox.hidden = false;
@@ -1950,6 +1891,7 @@
         }
 
         if (target.closest("[data-play]")) {
+          if (target.closest("[data-play]").tagName === "A") return;
           const id = target.closest("[data-play]").dataset.play;
           const video = byId(id);
           if (video) {
