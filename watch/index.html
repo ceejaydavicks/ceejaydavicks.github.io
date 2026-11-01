@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0B0F">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="index,follow">
+  <!-- Adult-content rating signals (required on every page). -->
+  <meta name="rating" content="adult">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+
+  <!-- The watch page has its own title and meta tags; they are filled in
+       with the video that is opened. -->
+  <title>Watch · BootyMansion</title>
+  <meta name="description" id="meta-description" content="Watch the latest releases on BootyMansion.">
+  <meta property="og:type" content="video.other">
+  <meta property="og:title" id="og-title" content="Watch · BootyMansion">
+  <meta property="og:description" id="og-description" content="Watch the latest releases on BootyMansion.">
+  <meta property="og:image" id="og-image" content="">
+  <link rel="canonical" id="canonical" href="">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+
+  <!-- THEME BOOTSTRAP: runs before the stylesheet so the right theme paints
+       first. Saved choice wins; otherwise the device setting decides. -->
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") theme = saved;
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      } catch (error) {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+      }
+
+      document.documentElement.setAttribute("data-theme", theme);
+
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", theme === "light" ? "#F7F7FA" : "#0B0B0F");
+
+      var preload = document.createElement("link");
+      preload.setAttribute("rel", "preload");
+      preload.setAttribute("as", "image");
+      preload.href = theme === "light" ? "/assets/logo-lockup-light@3x.png" : "/assets/logo-lockup@3x.png";
+      preload.setAttribute("fetchpriority", "high");
+      document.head.appendChild(preload);
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- The same stylesheet as the home page, so a card looks the same here. -->
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/watch.css">
+</head>
+<body class="watch-page">
+  <!-- AGE GATE: runs before any content is parsed, so a locked page never
+       flashes. Screen-reader/keyboard/scroll handling lives in the script. -->
+  <script src="/assets/age-gate.js"></script>
+
+  <header class="site-header">
+    <div class="shell nav-shell">
+      <a class="brand" href="/" aria-label="BootyMansion home">
+        <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
+      </a>
+
+      <a class="watch-back" href="/">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+        <span>Back to the vault</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="main" class="shell watch">
+    <div class="watch__player-wrap">
+      <div class="video-frame watch__player" id="watch-player"></div>
+    </div>
+
+    <section class="watch__info">
+        <h1 class="watch__title" id="watch-title">Loading…</h1>
+        <p class="watch__caption" id="watch-caption" hidden></p>
+        <div class="watch__meta" id="watch-meta"></div>
+        <div class="watch__tags" id="watch-tags" hidden></div>
+
+        <div class="watch__actions">
+          <button class="btn btn-ghost" type="button" id="watch-share">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"></path></svg>
+            <span>Share</span>
+          </button>
+          <button class="btn btn-ghost" type="button" id="watch-save" aria-pressed="false">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
+            <span>Save</span>
+          </button>
+          <a class="btn btn-telegram" id="watch-telegram" href="#" target="_blank" rel="noopener noreferrer">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+            <span>Telegram</span>
+          </a>
+        </div>
+
+        <p class="watch__note" id="watch-note" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="watch__related" id="related-section" aria-labelledby="related-title">
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path></svg>
+            <h2 id="related-title">More like this</h2>
+          </div>
+          <p id="related-note">Picked from the same tags, words and length</p>
+        </div>
+        <span class="results__count" id="related-count"></span>
+      </div>
+
+      <div class="grid-feed" id="related-grid"></div>
+      <div id="related-sentinel" aria-hidden="true"></div>
+      <p class="watch__more" id="related-more" hidden>Loading more…</p>
+    </section>
+
+    <!-- At most one ad on this page, and never right next to the player. -->
+    <div class="ad-slot" id="watch-ad" hidden></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div class="footer-top">
+        <a class="brand" href="/" aria-label="Back to the vault">
+          <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
+        </a>
+
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="/">Home</a>
+          <a href="/#trending">Trending</a>
+          <a href="/#shorts">Shorts</a>
+          <a href="/#feed">Feed</a>
+        </nav>
+
+        <span class="footer-badge">18+ only</span>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© <span id="current-year">2026</span> <span data-site-name>BootyMansion</span>. All rights reserved.</p>
+        <nav class="footer-legal" aria-label="Legal">
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/compliance.html">18 U.S.C. 2257 / Compliance</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/watch.js"></script>
+  <script>
+    (function () {
+      var year = document.getElementById("current-year");
+      if (year) year.textContent = String(new Date().getFullYear());
+    })();
+  </script>
+</body>
+</html>

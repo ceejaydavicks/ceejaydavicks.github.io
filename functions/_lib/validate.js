@@ -73,10 +73,28 @@ export function formatDurationSeconds(seconds) {
     : `${minutes}:${secs}`;
 }
 
+/* Every tag of a video, as a list. The panel writes them comma separated, the
+   Telegram bot sends them as an array — both end up in the same column. */
+export function cleanTags(value) {
+  const list = Array.isArray(value) ? value : String(value == null ? "" : value).split(",");
+  const seen = new Set();
+  const out = [];
+  for (const entry of list) {
+    const tag = cleanText(entry, 32);
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+  }
+  return out;
+}
+
 export function rowToInput(row) {
   return {
     title: row.title,
     creator: row.creator,
+    caption: row.caption,
     thumbnail_url: row.thumbnail_url,
     video_url: row.video_url,
     embed_url: row.embed_url,
@@ -84,9 +102,11 @@ export function rowToInput(row) {
     duration_seconds: row.duration_seconds,
     views: row.views,
     tag: row.tag,
+    tags: row.tags,
     orientation: row.orientation,
     featured: Boolean(row.featured),
-    pinned: Boolean(row.pinned)
+    pinned: Boolean(row.pinned),
+    thumb_source: row.thumb_source
   };
 }
 
@@ -128,20 +148,32 @@ export function validateVideoInput(body = {}, { requireSource = false } = {}) {
     ? formatDurationSeconds(durationSeconds)
     : cleanText(body.duration, 16);
 
+  const tags = cleanTags(body.tags);
+  const tag = cleanText(body.tag, 32) || tags[0] || "";
+
+  /* How the thumbnail was made. "manual" (uploaded in the panel) always wins
+     over anything automatic, so it is kept as it is. */
+  const thumbSource = ["manual", "auto", "telegram", "embed"].includes(body.thumb_source)
+    ? body.thumb_source
+    : "";
+
   return {
     values: {
       title,
       creator: cleanText(body.creator, 80),
+      caption: cleanText(body.caption, 600),
       thumbnail_url: thumbnail,
       video_url: video,
       embed_url: embed,
       duration: durationLabel,
       duration_seconds: durationSeconds,
       views: cleanText(body.views, 32),
-      tag: cleanText(body.tag, 32),
+      tag,
+      tags: tags.join(", "),
       orientation: body.orientation === "vertical" ? "vertical" : "horizontal",
       featured: boolInt(body.featured),
-      pinned: boolInt(body.pinned)
+      pinned: boolInt(body.pinned),
+      thumb_source: thumbSource
     }
   };
 }
