@@ -8,7 +8,8 @@ a private admin page and a database":
 
 | Piece | What it does |
 | --- | --- |
-| `admin/index.html` (served at `/admin`) | Private control panel: add / edit / delete videos, upload thumbnails, set featured + pinned, edit settings. `noindex`, not linked anywhere. |
+| `admin/index.html` (served at `/admin`) | Private control panel: every video as a card (newest first, searchable, All / Shorts / Regular), edit the details, make or replace the picture, pin the featured video, delete a video with its files, edit settings. `noindex`, not linked anywhere. |
+| `watch/index.html` (served at `/watch?v=<id>`) | The watch page: its own player, its own title and meta tags, and the "More like this" list. |
 | `functions/` | Cloudflare Pages **Functions** — the server code behind `/api/*`. This is where the password check, database and uploads live. |
 | **D1** (binding `DB`) | Stores the video list, the site settings and login-throttle counters. |
 | **R2** (binding `MEDIA`) — **optional** | Only for files you upload from `/admin` (or send to the bot as a download). The bot's automatic paths never need it: scraped videos and posters are linked where they already live. R2 is a paid product (a billing profile is required even inside its free allowance), so the whole guide works without it. |
@@ -150,6 +151,28 @@ Settings changes apply to the **next** deployment:
 **Wrong password five times in fifteen minutes from the same IP → 15 minute
 lockout.** Wait it out, or clear the row in the `login_attempts` table.
 
+### The video list
+
+The **Videos** tab lists every video the site knows about, newest first, as a
+card: thumbnail, title, creator, tags, length, the `Short` badge (under a
+minute), a `★ Featured` star on the pinned video and the day it was added. The
+search box looks through title, creator, tags and caption; the
+**All / Shorts / Regular** buttons narrow the list.
+
+Each card has three buttons:
+
+- **Edit** — title, caption, creator, tags, thumbnail, duration, views label and
+  orientation. The file itself is not part of the form: a video is uploaded
+  once, when it is added. Saving writes straight to the database, so the change
+  is on the site at once.
+- **Set as featured** — pins this video and unpins the one that was pinned
+  before. There is only ever one featured video, and a new upload never takes
+  that place on its own. Without a pinned video the site shows the newest
+  release for the time being, and the panel says so in a banner.
+- **Delete** — asks first, then removes the row *and* the files that belong to
+  it in R2. A video published through the Telegram bot loses its channel post
+  too, and it is not brought back by the next catalogue copy.
+
 ### Adding a video — three ways
 
 **A. Paste a link.** Tap **+ Add video**, put the link in **Embed link** (a player
@@ -175,12 +198,6 @@ plans), so 95 MB keeps a safe margin. For anything bigger, use the Telegram
 channel (Part 7b): the file goes to Telegram's servers, never through your
 Worker, and the site plays it with Telegram's own player.
 
-- **Feature** makes a video the big hero player (only one at a time).
-- **Pin** keeps a video at the top of the lists.
-- The search box filters by title, creator, tag and id.
-- **Delete** removes the row. Files already in R2 are left alone, so delete those
-  in the R2 tab if you want the space back. If the video came from your Telegram
-  channel, its channel post is deleted too — one delete, everywhere gone.
 - A row with no video URL *and* no embed link is a **Draft**: it stays in the
   admin list but never appears on the public site.
 
@@ -189,9 +206,29 @@ Worker, and the site plays it with Telegram's own player.
 - **Site name** — used in the logo, footer, page title and meta tags.
 - **Telegram link** — fills in every "Join on Telegram" button. Empty = buttons
   stay inactive.
+- **Bot feed URL** — where the Telegram bot's own catalogue is copied from (see
+  below). Write `off` to switch the copy off.
 - **Ad slots** — banner code, native card code, smartlink URL + code. Paste the
   network's snippet exactly as they give it. **An empty slot disappears from the
   page completely**, and there are only ever three slots.
+
+### The bot's own catalogue (the standalone Worker in `worker/`)
+
+The bot in `worker/` is a Worker of its own: it keeps its video list in Workers
+KV, not in this site's database. The site's Functions copy that list into the
+site's own `videos` table (at most once a minute), so **the panel and the public
+page read the same rows** — that is why the panel lists every video the site
+shows, and an edit made in the panel is on the site at once.
+
+The copy is deliberately one-way: a new bot video is added, a video that is
+already there is never overwritten (the panel's edit always wins), and a video
+deleted in the panel is remembered and not brought back. The bot itself is not
+changed in any way.
+
+Point the site at the feed with **Settings → Bot feed URL**
+(`https://YOUR-BOT-WORKER.workers.dev/api/videos`), or with the
+`BOT_FEED_URL` variable. If the Worker is unreachable the site keeps working
+with the videos it already has.
 
 ---
 

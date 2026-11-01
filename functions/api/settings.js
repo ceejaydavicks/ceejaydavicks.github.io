@@ -39,6 +39,19 @@ function validateSettings(body) {
     patch.adSmartlinkUrl = url;
   }
 
+  /* Where the Telegram bot's own catalogue is mirrored from. "off" switches
+     the mirror off; an empty value falls back to the built-in default. */
+  if ("botFeedUrl" in body) {
+    const raw = typeof body.botFeedUrl === "string" ? body.botFeedUrl.trim() : "";
+    if (raw.toLowerCase() === "off") {
+      patch.botFeedUrl = "off";
+    } else {
+      const url = safeHttpUrl(raw);
+      if (raw && !url) return { error: "The bot feed URL must be a valid http(s) URL (or \"off\")." };
+      patch.botFeedUrl = url;
+    }
+  }
+
   // Ad snippets are HTML by design (they carry the network's own <script>),
   // so they are length-limited rather than stripped. Only an admin can write them.
   for (const field of ["adBannerCode", "adNativeCode", "adSmartlinkCode"]) {

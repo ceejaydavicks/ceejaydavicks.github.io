@@ -48,12 +48,13 @@ export function safeHttpUrl(value, max = 2048) {
   }
 }
 
-/* Thumbnails may live in R2 (served from /api/media/…) or on another host. */
+/* Thumbnails may live in R2 (served from /api/media/…), in the site's own
+   static files (/assets/…, used for the embed placeholder) or on another host. */
 export function safeAssetUrl(value, max = 2048) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim().slice(0, max);
   if (!trimmed) return "";
-  if (trimmed.startsWith("/api/media/")) {
+  if (trimmed.startsWith("/api/media/") || trimmed.startsWith("/assets/")) {
     return trimmed.includes("..") || trimmed.includes("\\") ? "" : trimmed;
   }
   return safeHttpUrl(trimmed, max);

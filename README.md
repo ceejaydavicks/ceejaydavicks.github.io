@@ -28,12 +28,45 @@ the deploys, D1 database, R2 bucket, secrets and Telegram bot.
 ### From the admin (the normal way)
 
 Open `/admin` on the deployed site, sign in, and tap **+ Add video**. There are
-two flows: paste an embed/video link, or upload a thumbnail to R2 and paste the
-video URL. **Duration** accepts `mm:ss` (or `42s`, `1m 5s`) and decides whether
-the clip becomes a Short — see [Shorts](#shorts-under-a-minute).
-**Feature** and **Pin** control the hero player and list order, the
-search box filters the list, and the **Settings** tab edits the site name,
-Telegram link and the three ad slots.
+two flows: paste an embed/video link, or upload the file itself. **Duration**
+accepts `mm:ss` (or `42s`, `1m 5s`) and decides whether the clip becomes a
+Short — see [Shorts](#shorts-under-a-minute).
+
+The **Videos** tab lists every video the site knows about, newest first:
+
+| Card | What it shows |
+| --- | --- |
+| Thumbnail | the picture, cropped to the video's own shape |
+| Title, creator, views | as they appear on the site |
+| Tags | every tag of the video |
+| `Short` | the clip is under a minute |
+| `★ Featured` | this is the one pinned video |
+| Date added | the day it entered the library |
+
+Each card has **Edit**, **Set as featured** and **Delete**. The search box
+looks through title, creator, tags and caption; the **All / Shorts / Regular**
+buttons narrow the list further.
+
+**Edit** opens the details of a video — title, caption, creator, tags,
+thumbnail, duration, views label and orientation. The file itself is not part
+of the edit form: a video is uploaded once, when it is added, and never
+replaced. Saving writes straight to D1, so the change is on the site at once.
+
+**Delete** asks first, then removes the row *and* the files that belong to it
+(the thumbnail and the video in R2). A video that was published through the
+Telegram bot is also forgotten by the catalogue sync, so it does not come back.
+
+The **Settings** tab edits the site name, the Telegram link, the bot feed URL
+and the three ad slots.
+
+### The featured video
+
+Only one video is featured at a time — the pinned one. It leads the home page
+and nothing else does: a new upload (from the panel *or* from the Telegram
+bot) never takes that place on its own. **Set as featured** pins a video and
+unpins the one that was pinned before; **Unfeature** clears it. Without a
+pinned video the home page shows the newest release for the time being and
+the panel says so in a banner (*No featured video pinned.*).
 
 The admin writes to D1 (`videos`, `settings`, `login_attempts`) through these
 Functions:
@@ -73,26 +106,31 @@ API is **empty** it shows the "library opens soon" state instead of fake cards.
 
 ### From the Telegram bot Worker (Workers KV)
 
-The bot in `worker/` keeps its own catalogue in Workers KV, separate from D1. The
-public page merges that feed into the same grid, so a video published from the bot
-appears on the site without touching the database.
+The bot in `worker/` keeps its own catalogue in Workers KV. The site's
+Functions copy that catalogue into the site's own D1 table (`videos`), so the
+**admin panel and the public page read the same rows** — the panel shows every
+video the site shows, and an edit made in the panel is on the site at once.
 
-The feed URL is one constant near the top of the module script in `index.html`:
+The copy runs on the server (`functions/_lib/catalogue.js`), at most once a
+minute, and it is deliberately one-way:
+
+- a video the bot does not know yet is added to `videos`;
+- a video that is already there is **never** overwritten, so an edit made in
+  the panel always wins;
+- a video deleted in the panel is remembered (`deleted_sources`) and is not
+  brought back by the next copy;
+- the bot itself is not changed in any way — its public feed is read exactly
+  as it is published.
+
+The feed URL lives in the panel (**Settings → Bot feed URL**) and defaults to
+the built-in one:
 
 ```js
-const BOT_FEED_URL = "https://<your-worker>.workers.dev/api/videos";
+const DEFAULT_BOT_FEED_URL = "https://<your-worker>.workers.dev/api/videos";
 ```
 
-- Set it to your Worker and bot videos are shown first (they are the newest), with
-  the Worker's streaming proxy as the playable URL and its thumbnail proxy as the poster.
-- Set it to `""` to switch the merge off and use the site's own catalogue only.
-- If the Worker is unreachable the page still renders normally — the merge is a
-  third parallel request and a failure only logs a warning.
-- Rows that look like the same file or poster as a bot video are skipped, so a video
-  added both ways does not appear twice.
-
-Because the Worker sends `Access-Control-Allow-Origin: *`, this works on the
-Cloudflare Pages deployment and on plain GitHub Pages alike.
+Write `off` in that field to stop copying the bot's videos. If the Worker is
+unreachable the site keeps working with the videos it already has.
 
 ### From the file (fallback / samples)
 
@@ -132,9 +170,59 @@ categories.
 For Videy links, the site extracts the ID and plays the matching
 `https://cdn.videy.co/ID.mp4` file in its single player. Direct `.mp4` links play
 as-is. If no thumbnail is provided, the site requests video metadata to display a
-frame at 0.5 seconds and to label the real duration. The main video file loads
-only when a visitor taps a thumbnail. If playback fails, the player offers the
+frame at one second and to label the real duration. The main video file loads
+only when a visitor opens a video. If playback fails, the watch page offers the
 original video page link.
+
+## The watch page (`/watch?v=<id>`)
+
+Every card on the site — the Shorts row, the grids, Up next, the search
+results and the featured **Watch Now** button — opens `/watch?v=<id>`:
+
+- its own address, so it can be shared, bookmarked and opened in a new tab;
+- its own title and meta tags (the page title, the description and the
+  Open Graph tags are filled in with the video that is open);
+- a refresh or a pasted link works on Cloudflare Pages, because the page is a
+  normal static file (`watch/index.html`);
+- the browser's back button goes back to where the visitor came from.
+
+Under the player the page shows the title, the caption, the creator, the tags,
+the views, the length and three buttons: **Share**, **Save** and **Telegram**
+(blue and white). The player autoplays; when the browser blocks that, a play
+button is there instead. A wide video fills the width, a vertical one keeps
+its own shape in the middle while the blurred thumbnail fills the sides — no
+black bars — and an embed link plays in an iframe.
+
+**More like this** lists the rest of the library, ranked by
+
+1. the tags the two videos share,
+2. the words their title and caption have in common,
+3. a similar length or the same shape,
+4. and finally the newest one.
+
+The watched video is never in its own list. At least a dozen videos are shown
+(more are loaded while the visitor scrolls), in the same masonry grid as the
+rest of the site: two columns on a desktop, three on a phone, every thumbnail
+in its own shape. On a phone the player stays on top while the list scrolls
+underneath. The page carries at most one ad slot, and never next to the
+player.
+
+## Pictures (thumbnails)
+
+Every video should have a picture. The panel makes one:
+
+| Where the video came from | The picture |
+| --- | --- |
+| Uploaded in the panel | a frame of the file, taken at ~1s in the browser, compressed to WebP (or JPG) and stored in R2 |
+| A video already in the library | **Regenerate** takes a new frame — the **Moment** slider says which second |
+| The Telegram bot | Telegram's own thumbnail, through the bot's picture proxy |
+| An embed link | the picture YouTube or Vimeo publishes for that video |
+| Any other embed | the dark placeholder with the site logo (`assets/embed-placeholder.webp`) — never a black box |
+| Nothing at all | the first frame of the file, read in the browser with `preload="metadata"` and `#t=1` |
+
+A picture you upload yourself always wins: the panel records where a picture
+came from (`manual`, `auto`, `telegram`, `embed`) and never replaces a manual
+one with an automatic one.
 
 ## Video grid (Mixed Feed + Full library)
 
@@ -168,7 +256,12 @@ videos.
 
 ## Featured block and Up next
 
-The featured block is one row on desktop: the **player** takes about 45% of the
+The featured block shows **the one pinned video** and nothing else — a new
+upload never takes that place on its own, and without a pinned video the
+newest release leads the page for the time being (see
+[the featured video](#the-featured-video)).
+
+It is one row on desktop: the **player** takes about 45% of the
 width, the **info panel** about 28% and the **Up next** rail about 27%. All three
 are exactly as tall as the player (capped at 420px), so nothing is stretched and
 the block never opens a hole between itself and the chips below it.
@@ -184,7 +277,8 @@ the block never opens a hole between itself and the chips below it.
   are always visible without it.
 - Up next lists the **four newest** releases other than the one on stage, sorted
   by `created_at` (falling back to the "3 days ago" label, then to the catalogue
-  order). Tapping an item makes it the featured video and the rail moves on.
+  order). Tapping an item opens its watch page — the featured block never
+  swaps a card into the player any more.
 - Each item shows a 16:9 poster (about 128x72) with the length on it, the
   title, the creator with views and age, and a **Short** badge when the clip is
   under a minute.
@@ -372,10 +466,13 @@ dark overlay on a first visit: the logo, the required adult-content notice, an
 | `admin/index.html` | The `/admin` control panel (dark, mobile-first, `noindex`, unlinked). |
 | `functions/_lib/auth.js` | Password check, signed session cookie (`HttpOnly`, `Secure`, `SameSite`, 12 h), D1 login throttle (5 failures → 15 min block). |
 | `functions/_lib/db.js` | D1 access; creates the tables and default settings on first use. |
+| `functions/_lib/catalogue.js` | The one catalogue: copies the Telegram bot's own list into `videos` (at most once a minute, never overwriting a row the panel changed), and finds the picture of an embed link (YouTube, Vimeo, or the dark placeholder with the logo). |
 | `functions/_lib/validate.js` | Input sanitising — strips `<`, `>` and control characters, requires `http(s)` URLs. |
 | `functions/_lib/telegram.js` | The bot. Videos arrive four ways: a **channel post** in `TELEGRAM_CHANNEL` (any size, published as a `t.me/<channel>/<id>?embed=1` player), a **DM**, which is `copyMessage`d into that channel first, a **page link** (scraped automatically — see `scrape.js`, linked rather than stored unless `SCRAPE_MIRROR=on`), or a **link posted in the channel**, scraped silently. Without a channel it falls back to downloading ≤ 20 MB into R2. Also `/scrape`, `/list`, `/delete` (removes the channel post too), `/feature`, `/id`. Accepts the template's `BOT_TOKEN` / `WEBHOOK_SECRET` / `ALLOWED_USER_IDS` names as fallbacks for the `TELEGRAM_*` ones. |
 | `functions/_lib/scrape.js` | The link scraper: Open Graph/Twitter metadata, schema.org `VideoObject` (single videos and `ItemList` galleries), `<video>`/`<source>` tags, iframe players, JS player configs (`sources: [{ file: "…mp4" }]`), known-tube embed derivation, WordPress REST rescue and one level of iframe chasing. Returns playable items (`file` / `embed` / `page`) with title, poster and duration; no database or side effects. |
 | `functions/api/telegram/setup.js` | Webhook setup and diagnosis. `GET` reports `getMe` + `getWebhookInfo` beside the expected URL; `POST` calls `setWebhook`. The secret is never echoed back. |
+| `watch/index.html`, `assets/watch.js`, `assets/watch.css` | The watch page (`/watch?v=<id>`): its own player, its own title and meta tags, and the "More like this" list. |
+| `assets/site.css` | The stylesheet of the whole site — the home page and the watch page load the same file, so a card looks the same everywhere. |
 | `functions/api/*` | The HTTP routes listed above. Route parameters are single path segments (`videos/[id].js`, `media/[folder]/[file].js`, `telegram/[secret].js`); Next.js-style `[...param].js` filenames are rejected by Wrangler while it builds the Functions bundle. |
 | `functions/_middleware.js` | Security headers on every response. |
 | `schema.sql` | The same schema as `db.js`, for `wrangler d1 execute`. |
