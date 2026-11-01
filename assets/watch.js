@@ -70,7 +70,6 @@ const AD_CONFIG = {
 
 const API_TIMEOUT = 7000;
 const RELATED_PAGE = 12;
-const SHORT_LIMIT_SECONDS = 60;
 
 async function fetchJson(url) {
   const controller = new AbortController();
@@ -130,7 +129,7 @@ function rowToVideo(row) {
     directUrl = "";
   }
 
-  const durationSeconds = Number(row.duration_seconds) || 0;
+  const durationSeconds = window.VideoRules.seconds(row.duration_seconds) || window.VideoRules.seconds(row.duration);
 
   return {
     id: row.id != null ? `a${row.id}` : null,
@@ -140,7 +139,7 @@ function rowToVideo(row) {
     duration: clean(row.duration) || formatDuration(durationSeconds),
     durationSeconds,
     tag: clean(row.tag),
-    tags: splitTags(row.tags),
+    tags: splitTags(row.tags).length ? splitTags(row.tags) : splitTags(row.tag),
     category: clean(row.tag),
     caption: clean(row.caption),
     description: clean(row.caption),
@@ -156,8 +155,7 @@ function rowToVideo(row) {
   };
 }
 
-const isShort = (video) =>
-  Number(video.durationSeconds) > 0 && Number(video.durationSeconds) < SHORT_LIMIT_SECONDS;
+const isShort = (video) => window.VideoRules.isShort(video.durationSeconds);
 
 /* How old a video is, so the newest ones come first when nothing else tells
    them apart. */
@@ -283,7 +281,10 @@ function renderPlayer(video) {
 
   if (video.embedUrl) {
     const iframe = document.createElement("iframe");
-    iframe.src = video.embedUrl;
+    const embed = new URL(video.embedUrl);
+    embed.searchParams.set("autoplay", "1");
+    embed.searchParams.set("muted", "1");
+    iframe.src = embed.href;
     iframe.title = `${video.title} video`;
     iframe.loading = "eager";
     iframe.referrerPolicy = "strict-origin-when-cross-origin";
@@ -303,6 +304,7 @@ function renderPlayer(video) {
   media.playsInline = true;
   media.preload = "metadata";
   media.autoplay = true;
+  media.muted = true;
   media.setAttribute("aria-label", `${video.title} video`);
   if (video.thumb) media.poster = video.thumb;
 
@@ -341,7 +343,6 @@ function renderInfo(video) {
   const title = $("#watch-title");
   const caption = $("#watch-caption");
   const meta = $("#watch-meta");
-  const tags = $("#watch-tags");
 
   if (!video) return;
 
@@ -362,15 +363,6 @@ function renderInfo(video) {
   if (isShort(video)) bits.push(`<span class="watch__short">Short</span>`);
   meta.innerHTML = bits.join('<span class="watch__dot" aria-hidden="true">·</span>');
 
-  const allTags = (video.tags && video.tags.length ? video.tags : video.tag ? [video.tag] : []);
-  tags.replaceChildren();
-  allTags.forEach((tag) => {
-    const chip = document.createElement("span");
-    chip.className = "watch__tag";
-    chip.textContent = tag;
-    tags.append(chip);
-  });
-  tags.hidden = allTags.length === 0;
 }
 
 /* ---- share, save, telegram ---------------------------------------------- */
@@ -488,9 +480,8 @@ function rankRelated(video, current, currentTags, currentWords) {
   const here = Number(current.durationSeconds) || 0;
   const there = Number(video.durationSeconds) || 0;
   if (here > 0 && there > 0) {
-    close += Math.max(0, 1 - Math.abs(here - there) / Math.max(here, there));
+    close = Math.max(0, 1 - Math.abs(here - there) / Math.max(here, there));
   }
-  if ((current.orientation === "vertical") === (video.orientation === "vertical")) close += 1;
 
   return { video, shared, keywords, close, at: publishedAt(video) };
 }
@@ -532,14 +523,14 @@ function createCard(video, index) {
   poster.style.setProperty("--tone", tone(index));
   poster.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
 
-  const button = document.createElement("button");
-  button.type = "button";
+  const button = document.createElement("a");
   button.className = "poster__btn";
+  button.href = watchUrl(video);
   button.setAttribute("aria-label", `Watch ${video.title}`);
   button.innerHTML = [
     '<span class="poster__art" aria-hidden="true"></span>',
     '<span class="poster__shade" aria-hidden="true"></span>',
-    video.tag ? `<span class="poster__tag">${esc(video.tag)}</span>` : "",
+    isShort(video) ? '<span class="poster__short">Short</span>' : "",
     `<span class="poster__dur" ${video.duration ? "" : "hidden"}>${esc(video.duration || "")}</span>`,
     `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`
   ].join("");
@@ -682,46 +673,81 @@ function applyNaturalRatio(posterNode, video, width, height) {
 
 /* ---- the list itself ---------------------------------------------------- */
 
+const SEEN_KEY = "bootymansion:watch-session-seen";
+const sessionSeen = (() => {
+  try { return new Set(JSON.parse(sessionStorage.getItem(SEEN_KEY) || "[]")); }
+  catch (_) { return new Set(); }
+})();
+
+function rememberSeen(id) {
+  if (!id) return;
+  sessionSeen.add(String(id));
+  try { sessionStorage.setItem(SEEN_KEY, JSON.stringify([...sessionSeen])); }
+  catch (_) { /* Session storage can be unavailable in private browsing. */ }
+}
+
 let relatedItems = [];
 let relatedShown = 0;
+let fallbackCursor = 0;
+const shownOnThisPage = new Set();
+
+function newestOtherVideos() {
+  return VIDEOS.filter((video) => video.id !== (current && current.id))
+    .slice()
+    .sort((a, b) => publishedAt(b) - publishedAt(a));
+}
+
+function nextEndlessChunk() {
+  const newest = newestOtherVideos();
+  const unseen = newest.filter((video) => !sessionSeen.has(video.id) && !shownOnThisPage.has(video.id));
+  if (unseen.length) return unseen.slice(0, RELATED_PAGE);
+
+  /* Nothing unseen remains in this browser session. Keep the page alive by
+     looping through the newest other videos, never including the current one. */
+  if (!newest.length) return [];
+  const chunk = [];
+  for (let i = 0; i < RELATED_PAGE; i += 1) {
+    chunk.push(newest[(fallbackCursor + i) % newest.length]);
+  }
+  fallbackCursor = (fallbackCursor + chunk.length) % newest.length;
+  return chunk;
+}
 
 function renderRelatedChunk() {
   const grid = $("#related-grid");
   if (!grid) return;
 
-  const chunk = relatedItems.slice(relatedShown, relatedShown + RELATED_PAGE);
-  if (!chunk.length) {
-    const more = $("#related-more");
-    if (more) more.hidden = true;
-    return;
-  }
+  let chunk = relatedItems.slice(relatedShown, relatedShown + RELATED_PAGE);
+  if (!chunk.length) chunk = nextEndlessChunk();
+  if (!chunk.length) return; // Only possible when the catalogue has no other video.
 
   const cards = grid._masonryCards || [];
   chunk.forEach((video, index) => {
     cards.push(createCard(video, cards.length + index));
+    shownOnThisPage.add(video.id);
+    rememberSeen(video.id);
   });
 
   grid._masonryCards = cards;
   relatedShown += chunk.length;
-
   distributeMasonry(grid);
 
-  const count = $("#related-count");
-  if (count) count.textContent = `${relatedShown} video${plural(relatedShown)}`;
-
-  const more = $("#related-more");
-  if (more) more.hidden = relatedShown >= relatedItems.length;
 }
 
 function setupInfiniteScroll() {
   const sentinel = $("#related-sentinel");
-  if (!sentinel || !("IntersectionObserver" in window)) return;
+  if (!sentinel) return;
+  if (!("IntersectionObserver" in window)) {
+    window.addEventListener("scroll", () => {
+      if (sentinel.getBoundingClientRect().top < window.innerHeight + 400) renderRelatedChunk();
+    }, { passive: true });
+    return;
+  }
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        if (relatedShown >= relatedItems.length) return;
         renderRelatedChunk();
       });
     },
@@ -784,12 +810,15 @@ function renderNotFound() {
 applyHead(current);
 
 if (current) {
+  rememberSeen(current.id);
   renderPlayer(current);
   renderInfo(current);
   setupActions();
   syncSaveButton(savedSet().has(current.id));
 
-  relatedItems = relatedVideos(current);
+  // The first screen is the top twelve ranked by tags, title/caption words,
+  // duration similarity and recency. Later chunks then continue newest-first.
+  relatedItems = relatedVideos(current).slice(0, RELATED_PAGE);
   renderRelatedChunk();
   setupInfiniteScroll();
 } else {

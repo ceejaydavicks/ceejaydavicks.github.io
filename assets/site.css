@@ -873,13 +873,13 @@
     left: 0.35rem;
     padding: 0.1rem 0.35rem;
     border-radius: 6px;
-    background: var(--accent-gradient-ink);
-    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.54);
+    color: rgba(255, 255, 255, 0.88);
     font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-weight: 500;
+    letter-spacing: 0.045em;
     text-transform: uppercase;
-    text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
   }
 
   .upnext__meta {
@@ -1088,56 +1088,25 @@
     background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.45));
   }
 
-  .poster__badge {
-    position: absolute;
-    z-index: 3;
-    top: 0.85rem;
-    left: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    background: var(--accent-gradient-ink);
-    color: #fff;
-    font-size: 10.5px;
-    text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    backdrop-filter: blur(10px);
-  }
-
-  .pulse {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--rose-400);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-
-  .poster__badge .pulse { background: #FFFFFF; }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.45; transform: scale(0.8); }
-  }
-
-  .poster__tag {
+  .poster__short {
     position: absolute;
     z-index: 3;
     top: 0.75rem;
     left: 0.75rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 6px;
-    background: var(--accent-gradient-ink);
-    color: #FFFFFF;
-    font-size: 10px;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(10, 6, 20, 0.45);
+    padding: 0.12rem 0.42rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.54);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.045em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
   }
 
-  .poster__badge + .poster__tag { left: auto; right: 0.75rem; }
+  .poster__btn { color: inherit; text-decoration: none; }
 
   .poster__dur {
     position: absolute;
@@ -1242,6 +1211,8 @@
   }
 
   .card__title button { padding: 0; text-align: left; }
+  .card__title a { color: inherit; text-decoration: none; }
+  .card__title a:hover { color: var(--accent-hi); }
 
   .card__meta {
     margin: 0.2rem 0 0;
@@ -1367,7 +1338,8 @@
 
   .masonry-card .card__title { font-size: 13.5px; }
 
-  .masonry-card .card__title button {
+  .masonry-card .card__title button,
+  .masonry-card .card__title a {
     display: -webkit-box;
     overflow: hidden;
     -webkit-box-orient: vertical;
@@ -1412,7 +1384,8 @@
       line-height: 1.35;
     }
 
-    .masonry-card .card__title button {
+    .masonry-card .card__title button,
+    .masonry-card .card__title a {
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1768,97 +1741,6 @@
       box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
   }
 
-  /* ============ 17. PRELOADER ============ */
-  .preloader {
-    position: fixed;
-    z-index: 90;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background: var(--bg);
-    opacity: 1;
-    visibility: visible;
-    /* Fades itself out at 3s even if JavaScript never runs. */
-    animation: preloader-auto-out 0.45s ease 3s forwards;
-  }
-
-  .preloader.is-done {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-  }
-
-  .preloader__stage {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: clamp(200px, 56vw, 268px);
-    aspect-ratio: 1;
-  }
-
-  .preloader__stage::before {
-    position: absolute;
-    inset: 16%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(107, 75, 181, 0.3), transparent 70%);
-    filter: blur(18px);
-    content: "";
-  }
-
-  .preloader__ring {
-    position: absolute;
-    inset: 0;
-    border: 2px solid var(--ring-track);
-    border-radius: 50%;
-    box-shadow: 0 0 44px var(--glow);
-  }
-
-  /* Smooth violet sweep on top of the static track (falls back to the track). */
-  .preloader__ring::after {
-    position: absolute;
-    inset: -2px;
-    border-radius: 50%;
-    background: conic-gradient(
-      from 0deg,
-      transparent 0 8%,
-      rgba(251, 113, 133, 0.1) 26%,
-      var(--accent-hi) 94%,
-      transparent 100%
-    );
-    content: "";
-    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
-    animation: preloader-spin 1.05s linear infinite;
-  }
-
-  .preloader__logo {
-    position: relative;
-    display: block;
-    width: 86%;
-    aspect-ratio: 707 / 108;
-    background-image: url("/assets/logo-lockup@3x.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-  }
-
-  [data-theme="light"] .preloader__logo {
-    background-image: url("/assets/logo-lockup-light@3x.png");
-  }
-
-  @keyframes preloader-spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes preloader-auto-out {
-    to { opacity: 0; visibility: hidden; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .preloader__ring::after { animation: none; }
-  }
-
   /* ============ 19. AGE GATE LOCK ============ */
   /* assets/age-gate.js adds these classes before the page paints. While
      locked, nothing behind the overlay is visible or scrollable. */
@@ -2188,9 +2070,6 @@
   /* ---- cards / posters ------------------------------------------ */
   .poster { border-radius: var(--radius); }
   .poster--vertical { border-radius: var(--radius); }
-
-  .poster__badge { background: var(--accent-gradient-ink); }
-  .poster__tag { background: var(--accent-gradient-ink); }
 
   .poster__dur {
     background: rgba(0, 0, 0, 0.68);

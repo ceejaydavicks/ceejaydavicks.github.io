@@ -18,6 +18,10 @@ PAGES = {
     "/compliance.html": "compliance.html",
     "/compliance": "compliance.html",
     "/2257": "compliance.html",
+    "/watch": "watch/index.html",
+    "/watch/": "watch/index.html",
+    "/watch/index.html": "watch/index.html",
+    "/404.html": "404.html",
     "/admin": "admin/index.html",
     "/admin/": "admin/index.html",
 }
@@ -82,9 +86,10 @@ class PageHandler(BaseHTTPRequestHandler):
             return
 
         asset = resolve_request(urlsplit(self.path).path)
+        status = 200
         if asset is None:
-            self.send_error(404)
-            return
+            asset = (ROOT / "404.html", "text/html; charset=utf-8")
+            status = 404
 
         file_path, content_type = asset
         try:
@@ -93,7 +98,7 @@ class PageHandler(BaseHTTPRequestHandler):
             self.send_error(500, "Unable to read requested site file")
             return
 
-        self.send_response(200)
+        self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Cache-Control", "no-store")
