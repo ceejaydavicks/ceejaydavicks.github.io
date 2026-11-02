@@ -269,6 +269,7 @@
         const response = await fetch(url, {
           headers: { accept: "application/json" },
           credentials: "same-origin",
+          cache: "no-store",
           signal: controller.signal
         });
         if (!response.ok) throw new Error(`${url} responded ${response.status}`);
@@ -524,6 +525,201 @@
       chip: clean(pageParams.get("category")) || "All",
       query: ""
     };
+
+    /* ================================================================
+       HOME FEED RESHUFFLE
+       ----------------------------------------------------------------
+       Only the unfiltered home shelves (Shorts + Latest/Movies) are
+       shuffled. A random seed is created on every fresh home visit and
+       kept in sessionStorage; the same seed drives both shelves and every
+       infinite-scroll page, so the order cannot change while browsing.
+       Back/forward and bfcache restores reuse that seed and the saved
+       scroll position instead of reshuffling.
+       ================================================================ */
+    const SEED_KEY = "bootymansion.home.shuffle.seed";
+    const FEED_KEY = "bootymansion.home.feed";
+    const navEntry = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    const cameFromHistory = Boolean(navEntry && navEntry.type === "back_forward");
+
+    function createShuffleSeed() {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const bytes = new Uint32Array(1);
+        window.crypto.getRandomValues(bytes);
+        return (bytes[0] >>> 0) || 0x6d2b79f5;
+      }
+      return (Math.floor(Math.random() * 4294967296) >>> 0) || 0x6d2b79f5;
+    }
+
+    function storedSeed() {
+      try {
+        const value = Number(sessionStorage.getItem(SEED_KEY));
+        return Number.isFinite(value) && value > 0 ? value >>> 0 : 0;
+      } catch (error) {
+        return 0;
+      }
+    }
+
+    function saveSeed(seed) {
+      try { sessionStorage.setItem(SEED_KEY, String(seed)); } catch (error) { /* private mode */ }
+    }
+
+    /* mulberry32: a small deterministic PRNG for a 32-bit seed. */
+    function seededRandom(seed) {
+      let value = seed >>> 0;
+      return () => {
+        value = (value + 0x6D2B79F5) >>> 0;
+        let next = value;
+        next = Math.imul(next ^ (next >>> 15), next | 1);
+        next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+        return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    /* Proper Fisher-Yates: every permutation is equally likely, so the first
+       eight are never weighted towards the newest uploads. */
+    function fisherYates(list, random) {
+      const shuffled = list.slice();
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(random() * (i + 1));
+        const swap = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = swap;
+      }
+      return shuffled;
+    }
+
+    const isPinned = (video) => Boolean(video.pinned || video.featured);
+
+    /* Pinned videos keep their existing admin order at the front; only the
+       rest is shuffled. Then two of this shelf's newest uploads are placed
+       in the first eight, without ever moving a pinned video. */
+    function shuffleShelf(list, random) {
+      const pinned = list.filter(isPinned);
+      const rest = fisherYates(list.filter((video) => !isPinned(video)), random);
+      const result = pinned.concat(rest);
+      const head = Math.min(8, result.length);
+      const inShelf = new Set(result);
+      const recent = new Set(BY_RECENCY.filter((video) => inShelf.has(video)).slice(0, 6));
+      const countRecent = (from, to) => {
+        let count = 0;
+        for (let i = from; i < to; i += 1) if (recent.has(result[i])) count += 1;
+        return count;
+      };
+      const wanted = Math.min(2, countRecent(0, result.length));
+      let present = countRecent(0, head);
+      if (present >= wanted || !head) return result;
+
+      const donors = [];
+      for (let i = head; i < result.length; i += 1) if (recent.has(result[i])) donors.push(i);
+      const slots = [];
+      for (let i = pinned.length; i < head; i += 1) if (!recent.has(result[i])) slots.push(i);
+
+      while (present < wanted && donors.length && slots.length) {
+        const from = donors.splice(Math.floor(random() * donors.length), 1)[0];
+        const to = slots.splice(Math.floor(random() * slots.length), 1)[0];
+        const swap = result[from];
+        result[from] = result[to];
+        result[to] = swap;
+        present += 1;
+      }
+      return result;
+    }
+
+    let homeSeed = createShuffleSeed();
+    let homeShorts = SHORTS;
+    let homeLatest = HOME_LATEST;
+
+    function rebuildHomeOrder() {
+      /* Two independent streams keep Shorts and Movies shuffled separately. */
+      homeShorts = shuffleShelf(SHORTS, seededRandom(homeSeed ^ 0x9e3779b9));
+      homeLatest = shuffleShelf(HOME_LATEST, seededRandom(homeSeed));
+    }
+
+    function readFeedState() {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(FEED_KEY) || "null");
+        return saved && typeof saved === "object" ? saved : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveFeedState(cursor, scrollY) {
+      try {
+        sessionStorage.setItem(FEED_KEY, JSON.stringify({
+          seed: homeSeed,
+          cursor: Number(cursor) || 0,
+          scrollY: Math.max(0, Number(scrollY) || 0)
+        }));
+      } catch (error) { /* private mode */ }
+    }
+
+    if (state.view === "home") {
+      if (cameFromHistory) homeSeed = storedSeed() || homeSeed;
+      saveSeed(homeSeed);
+      if (!cameFromHistory) saveFeedState(0, 0);
+      rebuildHomeOrder();
+    }
+    const savedFeed = state.view === "home" && cameFromHistory ? readFeedState() : null;
+
+    function restoreHomeFeed(saved) {
+      if (!saved || saved.seed !== homeSeed) return;
+      if (state.chip !== "All" || state.query.trim()) return;
+      const target = Math.min(Number(saved.cursor) || 0, homeLatest.length);
+      let guard = 0;
+      while (pager && pager.cursor < target && guard < 100) {
+        loadNextPage();
+        guard += 1;
+      }
+      const y = Math.max(0, Number(saved.scrollY) || 0);
+      if (!y) return;
+      /* The stylesheet sets scroll-behavior:smooth on <html>; temporarily
+         override it so the restored position lands immediately instead of
+         animating (and so it cannot race native scroll restoration). */
+      const jump = () => {
+        const root = document.documentElement;
+        const previous = root.style.scrollBehavior;
+        root.style.scrollBehavior = "auto";
+        window.scrollTo(0, y);
+        root.style.scrollBehavior = previous;
+      };
+      window.requestAnimationFrame(jump);
+      window.setTimeout(jump, 400);
+    }
+
+    function setupHomeFeedPersistence() {
+      if (state.view !== "home") return;
+      const remember = () => saveFeedState(pager ? pager.cursor : 0, window.scrollY);
+      window.addEventListener("pagehide", remember);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") remember();
+      });
+      let scrollTimer = 0;
+      window.addEventListener("scroll", () => {
+        if (scrollTimer) return;
+        scrollTimer = window.setTimeout(() => { scrollTimer = 0; remember(); }, 400);
+      }, { passive: true });
+    }
+
+    /* The logo/Home is a fresh home visit. The preloader intercepts .brand
+       links on this page instead of reloading, so create the new seed here. */
+    function handleBrandReshuffle(event) {
+      if (state.view !== "home") return;
+      const link = event.target.closest && event.target.closest("a.brand");
+      if (!link) return;
+      let destination;
+      try { destination = new URL(link.href, window.location.href); } catch (error) { return; }
+      if (destination.origin !== window.location.origin) return;
+      if (destination.pathname !== "/" && destination.pathname !== "/index.html") return;
+      state.chip = "All";
+      state.query = "";
+      syncSearchInputs("");
+      homeSeed = createShuffleSeed();
+      saveSeed(homeSeed);
+      saveFeedState(0, 0);
+      rebuildHomeOrder();
+      renderPage();
+    }
 
     /* ================================================================
        THUMBNAILS (poster frame, lazy + data-saver aware)
@@ -1025,13 +1221,13 @@
       if (state.view === "home") {
         const isFiltered = state.chip !== "All" || Boolean(state.query.trim());
         if (!isFiltered) {
-          const shorts = SHORTS.slice(0, 8);
+          const shorts = homeShorts.slice(0, 8);
           if (shorts.length) {
             shortsSection.hidden = false;
             fillGrid($("#shorts-grid"), shorts, { variant: "shorts" });
           }
           mountBannerAd();
-          const latest = HOME_LATEST;
+          const latest = homeLatest;
           if (latest.length) {
             latestSection.hidden = false;
             showPaginatedGrid($("#latest-grid"), latest, { variant: "movie", native: true });
@@ -1181,6 +1377,8 @@
           return;
         }
       });
+
+      document.addEventListener("click", handleBrandReshuffle);
     }
 
     /* Top navigation and mobile tabs share the current type-filtered view. */
@@ -1306,6 +1504,8 @@
     setupSearch();
     setupEvents();
     renderPage();
+    setupHomeFeedPersistence();
+    if (state.view === "home" && cameFromHistory) restoreHomeFeed(savedFeed);
 
   </script>
 </body>
