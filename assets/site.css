@@ -10,16 +10,16 @@
     color-scheme: dark;
 
     /* ---- surfaces & ink -------------------------------------------- */
-    --bg: #0B0B0F;
-    --surface: #15151B;
-    --surface-2: #1B1B22;
-    --surface-3: #101016;
+    --bg: #050507;
+    --surface: #0A0A0D;
+    --surface-2: #0E0E12;
+    --surface-3: #0A0A0D;
     --text: #F4F4F6;
-    --muted: #9A9AA8;
-    --quiet: #86869A;
-    --line: #26262F;
-    --line-soft: #1F1F27;
-    --line-strong: #33333E;
+    --muted: #8E8E9A;
+    --quiet: #8E8E9A;
+    --line: #1E1E25;
+    --line-soft: #1E1E25;
+    --line-strong: #2C2C36;
     --tint: rgba(255, 255, 255, 0.04);
     --tint-soft: rgba(255, 255, 255, 0.025);
     --tint-strong: rgba(255, 255, 255, 0.07);
@@ -38,47 +38,54 @@
     --rose-line: rgba(244, 63, 94, 0.38);
     --rose-fill: rgba(244, 63, 94, 0.18);
     --on-rose: #FFFFFF;
+    /* Solid, flat accent for active states and buttons: no gradient, no glow. */
+    --accent-flat: #E11D48;
+    --accent-flat-hover: #BE123C;
+    --accent-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    --tg-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
 
     /* ---- Telegram: blue in BOTH themes ----------------------------- */
     --tg: #229ED9;
     --tg-hover: #1C8CC2;
 
     /* ---- type ------------------------------------------------------ */
-    --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Montserrat", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font: var(--font-body);
 
     /* ---- elevation + chrome ---------------------------------------- */
-    --shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
-    --card-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-    --card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-    --frame-shadow: 0 34px 80px rgba(0, 0, 0, 0.6);
-    --header-bg: rgba(11, 11, 15, 0.82);
-    --panel-bg: rgba(21, 21, 27, 0.98);
-    --toast-bg: rgba(27, 27, 34, 0.96);
-    --tabbar-bg: rgba(15, 15, 20, 0.92);
+    --shadow: 0 20px 48px rgba(0, 0, 0, 0.42);
+    --card-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+    --card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --frame-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(5, 5, 7, 0.55);
+    --panel-bg: rgba(10, 10, 13, 0.98);
+    --toast-bg: rgba(14, 14, 18, 0.96);
+    --tabbar-bg: rgba(8, 8, 11, 0.92);
 
     /* ---- component surfaces ---------------------------------------- */
     --input-bg: rgba(255, 255, 255, 0.045);
     --input-bg-focus: rgba(255, 255, 255, 0.07);
     --chip-bg: rgba(255, 255, 255, 0.045);
-    --chip-active-bg: var(--accent-gradient-ink);
+    --chip-active-bg: var(--accent-flat);
     --chip-active-text: #FFFFFF;
-    --ad-label: #9A9AA8;
+    --ad-label: #8E8E9A;
     --ad-bg: linear-gradient(150deg, rgba(27, 27, 34, 0.7), rgba(16, 16, 22, 0.9));
     --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(244, 63, 94, 0.16), transparent 46%),
       linear-gradient(150deg, rgba(30, 20, 26, 0.98), rgba(16, 14, 18, 0.98));
     --cta-bg: linear-gradient(135deg, #1B1418, #101016);
-    --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 244, 63, 94), 0.26), transparent 62%),
-      linear-gradient(150deg, #1B1418, #09090E 78%);
+    --poster-bg: linear-gradient(150deg, #0E0E12, #0A0A0D 78%);
     --poster-grid: rgba(255, 255, 255, 0.035);
-    --media-bg: #0D0D12;
-    --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.12), transparent 62%);
+    --media-bg: #0E0E12;
+    /* Gray loading placeholder; the sheen animates transform/opacity only. */
+    --skeleton: #17171E;
+    --skeleton-sheen: rgba(255, 255, 255, 0.09);
+    --ambient: none;
     --selection: rgba(244, 63, 94, 0.3);
     --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.32), rgba(225, 29, 72, 0.12));
-    --footer-quiet: #7C7C8A;
+    --footer-quiet: #8E8E9A;
     --ring-track: rgba(244, 63, 94, 0.16);
-    --glow: rgba(244, 63, 94, 0.35);
+    --glow: transparent;
 
     /* ---- fixed surfaces: identical in both themes ------------------
        The player, the media area and the 18+ / Telegram banner stay dark so
@@ -91,6 +98,7 @@
     --banner-muted: #B4B4C0;
 
     --radius: 18px;
+    --card-radius: 14px;
     --radius-lg: 26px;
     --radius-sm: 12px;
     --max: 1440px;
@@ -108,10 +116,10 @@
     --surface-2: #F2F2F7;
     --surface-3: #FFFFFF;
     --text: #14141A;
-    --muted: #6B6B7A;
+    --muted: #62626F;
     --quiet: #686878;
     --line: #E4E4EC;
-    --line-soft: rgba(20, 20, 26, 0.06);
+    --line-soft: #E4E4EC;
     --line-strong: #D5D5E0;
     --tint: rgba(20, 20, 26, 0.04);
     --tint-soft: rgba(20, 20, 26, 0.025);
@@ -130,36 +138,41 @@
     --rose-line: rgba(244, 63, 94, 0.34);
     --rose-fill: rgba(244, 63, 94, 0.12);
     --on-rose: #FFFFFF;
+    --accent-flat: #E11D48;
+    --accent-flat-hover: #BE123C;
+    --accent-shadow: 0 1px 2px rgba(20, 20, 26, 0.10);
+    --tg-shadow: 0 1px 2px rgba(20, 20, 26, 0.10);
 
-    --shadow: 0 24px 60px rgba(20, 20, 26, 0.08);
-    --card-shadow: 0 12px 30px rgba(20, 20, 26, 0.07);
+    --shadow: 0 20px 48px rgba(20, 20, 26, 0.08);
+    --card-shadow: 0 8px 20px rgba(20, 20, 26, 0.06);
     --card-ring: inset 0 0 0 1px rgba(20, 20, 26, 0.05);
-    --frame-shadow: 0 26px 60px rgba(20, 20, 26, 0.14);
-    --header-bg: rgba(247, 247, 250, 0.86);
-    --panel-bg: rgba(255, 255, 255, 0.99);
-    --toast-bg: rgba(255, 255, 255, 0.98);
-    --tabbar-bg: rgba(255, 255, 255, 0.94);
+    --frame-shadow: 0 20px 48px rgba(20, 20, 26, 0.12);
+    --header-bg: rgba(247, 247, 250, 0.62);
+    --panel-bg: rgba(255, 255, 255, 0.98);
+    --toast-bg: rgba(255, 255, 255, 0.96);
+    --tabbar-bg: rgba(255, 255, 255, 0.92);
 
     --input-bg: #FFFFFF;
     --input-bg-focus: #FFFFFF;
     --chip-bg: rgba(20, 20, 26, 0.04);
-    --chip-active-bg: var(--accent-gradient-ink);
+    --chip-active-bg: var(--accent-flat);
     --chip-active-text: #FFFFFF;
-    --ad-label: #6B6B7A;
+    --ad-label: #62626F;
     --ad-bg: linear-gradient(150deg, #F2F2F7, #FFFFFF);
     --sponsored-bg: radial-gradient(ellipse at 92% 6%, rgba(244, 63, 94, 0.1), transparent 46%),
       linear-gradient(150deg, #FFFFFF, #FFF5F6);
     --cta-bg: linear-gradient(135deg, #FFF5F6, #FFFFFF);
-    --poster-bg: radial-gradient(ellipse 70% 60% at 72% 18%, rgba(var(--tone, 244, 63, 94), 0.16), transparent 62%),
-      linear-gradient(150deg, #F2F2F7, #E7E7EE 78%);
+    --poster-bg: linear-gradient(150deg, #F2F2F7, #E7E7EE 78%);
     --poster-grid: rgba(20, 20, 26, 0.05);
     --media-bg: #EDEDF2;
-    --ambient: radial-gradient(ellipse 70% 55% at 50% -8%, rgba(244, 63, 94, 0.08), transparent 62%);
+    --skeleton: #E6E6EE;
+    --skeleton-sheen: rgba(255, 255, 255, 0.72);
+    --ambient: none;
     --selection: rgba(244, 63, 94, 0.18);
     --avatar-bg: linear-gradient(140deg, rgba(251, 113, 133, 0.2), rgba(225, 29, 72, 0.06));
-    --footer-quiet: #7A7A88;
+    --footer-quiet: #686878;
     --ring-track: rgba(244, 63, 94, 0.18);
-    --glow: rgba(244, 63, 94, 0.16);
+    --glow: transparent;
   }
 
   /* ============ 2. BASE ============ */
@@ -243,7 +256,7 @@
     position: sticky;
     z-index: 40;
     top: 0;
-    border-bottom: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line);
     background: var(--header-bg);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
@@ -401,14 +414,13 @@
   .btn-accent {
     height: 40px;
     padding: 0 0.9rem;
-    background: var(--accent-gradient);
+    background: var(--accent-flat);
     color: #FFFFFF;
     font-size: 13px;
-    text-shadow: 0 1px 2px rgba(10, 6, 20, 0.4);
-    box-shadow: 0 12px 28px rgba(63, 42, 122, 0.35);
+    box-shadow: var(--accent-shadow);
   }
 
-  .btn-accent:hover { background: linear-gradient(135deg, #33215F 0%, #8B6FDB 100%); }
+  .btn-accent:hover { background: var(--accent-flat-hover); }
 
   /* Telegram actions are Telegram blue with a white plane — in BOTH themes. */
   .btn-telegram-nav {
@@ -417,7 +429,7 @@
     background: var(--tg);
     color: #FFFFFF;
     font-size: 13px;
-    box-shadow: 0 12px 28px rgba(34, 158, 217, 0.26);
+    box-shadow: var(--tg-shadow);
   }
 
   .btn-telegram-nav:hover { background: var(--tg-hover); color: #FFFFFF; }
@@ -494,7 +506,7 @@
     height: 6px;
     border-radius: 50%;
     background: var(--rose);
-    box-shadow: 0 0 12px rgba(251, 113, 133, 0.75);
+    box-shadow: none;
   }
 
   .section { margin-top: 2.25rem; }
@@ -1038,23 +1050,31 @@
     text-align: left;
   }
 
+  /* Gray skeleton shown until the real poster frame/image is ready. The
+     sheen only animates transform + opacity, so it stays compositor-cheap. */
   .poster__art {
     position: absolute;
     inset: 0;
-    background: var(--poster-bg);
+    overflow: hidden;
+    background: var(--skeleton);
     transition: opacity 400ms ease;
   }
 
   .poster__art::after {
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(var(--poster-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--poster-grid) 1px, transparent 1px);
-    background-size: 44px 44px;
+    background: linear-gradient(100deg, transparent 20%, var(--skeleton-sheen) 50%, transparent 80%);
     content: "";
-    mask-image: linear-gradient(140deg, #000, transparent 72%);
-    -webkit-mask-image: linear-gradient(140deg, #000, transparent 72%);
+    pointer-events: none;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+
+  .poster.has-media .poster__art::after { animation: none; }
+
+  @keyframes skeleton-shimmer {
+    0%   { transform: translateX(-100%); opacity: 0; }
+    25%  { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
   }
 
   .poster__media {
@@ -1449,7 +1469,6 @@
     height: 18rem;
     border-radius: 50%;
     background: var(--glow);
-    filter: blur(60px);
     content: "";
     pointer-events: none;
   }
@@ -1489,7 +1508,7 @@
     background: var(--tg);
     color: #FFFFFF;
     font-size: 14px;
-    box-shadow: 0 14px 32px rgba(34, 158, 217, 0.28);
+    box-shadow: var(--tg-shadow);
   }
 
   .btn-telegram:hover { background: var(--tg-hover); color: #FFFFFF; }
@@ -1801,10 +1820,10 @@
 
   /* ---- header: pills + blurred bar ------------------------------- */
   .site-header {
-    border-bottom: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line);
     background: var(--header-bg);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .nav-shell { min-height: 66px; }
@@ -1823,9 +1842,9 @@
   .primary-nav a:hover { background: var(--tint); color: var(--text); }
 
   .primary-nav a.is-active {
-    background: var(--accent-gradient-ink);
+    background: var(--accent-flat);
     color: #FFFFFF;
-    box-shadow: 0 8px 20px rgba(244, 63, 94, 0.26);
+    box-shadow: var(--accent-shadow);
   }
 
   .search {
@@ -1951,7 +1970,7 @@
     width: 5px;
     height: 5px;
     background: #FFFFFF;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    box-shadow: none;
   }
 
   .hero-actions {
@@ -1965,15 +1984,15 @@
     height: 44px;
     padding: 0 1.15rem;
     border-radius: 999px;
-    background: var(--accent-gradient-ink);
+    background: var(--accent-flat);
     color: #FFFFFF;
     font-family: var(--font-body);
     font-size: 13.5px;
     font-weight: 600;
-    box-shadow: 0 12px 26px rgba(244, 63, 94, 0.3);
+    box-shadow: var(--accent-shadow);
   }
 
-  .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  .btn-primary:hover { transform: translateY(-1px); background: var(--accent-flat-hover); }
 
   .btn-ghost {
     height: 44px;
@@ -2016,7 +2035,7 @@
     border-color: transparent;
     background: var(--chip-active-bg);
     color: var(--chip-active-text);
-    box-shadow: 0 8px 20px rgba(244, 63, 94, 0.25);
+    box-shadow: var(--accent-shadow);
   }
 
   .chip.is-active .chip__icon { opacity: 1; }
@@ -2533,5 +2552,112 @@
   .nav-drawer.is-open .drawer-icon {
     animation-name: drawer-icon-fade;
     animation-duration: 200ms;
+  }
+}
+
+/* ================================================================
+   VISUAL POLISH — flat accent, Montserrat headings, calmer cards
+   Kept last on purpose: it refines colours, type and small transforms,
+   plus the requested two-column mobile grid. No behaviour is added.
+   ================================================================ */
+
+/* Section headings (Shorts / Movies / Latest / Full library / category
+   titles) use Montserrat 600 with normal tracking; body, card titles
+   and buttons stay on Inter. */
+.section-head h1,
+.section-head h2,
+.compact-section-head h1,
+.compact-section-head h2,
+.home-page .compact-section-head h1,
+.home-page .compact-section-head h2,
+.upnext__head h2,
+.follow h2,
+.telegram-cta h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+/* Flat accent for active tabs / drawer rows: no gradient, no glow. */
+.tabbar a.is-active,
+.home-page .tabbar a.is-active,
+.drawer-links a.is-active {
+  background: var(--accent-flat);
+  color: #FFFFFF;
+  box-shadow: var(--accent-shadow);
+}
+.tabbar a.is-active .icon,
+.home-page .tabbar a.is-active .icon,
+.drawer-links a.is-active .drawer-icon {
+  color: #FFFFFF;
+}
+
+/* Card titles: Inter, relaxed tracking, up to two lines then ellipsis. */
+.card__title,
+.home-page .video-card .card__title,
+.masonry-card .card__title,
+.watch-page .watch__related .masonry-card .card__title {
+  font-family: var(--font-body);
+  letter-spacing: -0.005em;
+  word-spacing: 0.02em;
+  line-height: 1.4;
+}
+.card__title a,
+.card__title button,
+.home-page .video-card .card__title a,
+.masonry-card .card__title a,
+.masonry-card .card__title button,
+.watch-page .watch__related .masonry-card .card__title a {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  text-overflow: ellipsis;
+  font-family: var(--font-body);
+  letter-spacing: -0.005em;
+  word-spacing: 0.02em;
+  line-height: 1.4;
+}
+.home-page .video-card .card__title,
+.masonry-card .card__title { white-space: normal; }
+
+/* The play circle is a decorative overlay, not a control: hide it on every
+   grid/list thumbnail. The duration and "Short" badges are untouched. */
+.media-card .poster__play,
+.watch-page .watch__related .poster__play { display: none; }
+
+/* One consistent card radius and a transform-only tap press. */
+.poster,
+.poster--vertical,
+.home-page .video-card .poster,
+.home-page .grid-shorts .video-card .poster,
+.home-page .movie-card .poster,
+.masonry-card .poster,
+.watch-page .watch__related .masonry-card .poster {
+  border-radius: var(--card-radius);
+}
+.media-card { transition: transform 140ms ease; }
+.media-card:active { transform: scale(0.98); }
+
+/* Latest section and Movies page: two horizontal-ratio cards per row on
+   phones instead of one wide card with empty space beside the thumbnail. */
+@media (max-width: 759px) {
+  .home-page .grid-latest {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .home-page .grid-latest .movie-card {
+    display: block;
+    min-width: 0;
+  }
+  .home-page .grid-latest .movie-card .poster {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+  .home-page .grid-latest .movie-card .card__body {
+    margin-top: 0.4rem;
+    padding: 0;
   }
 }
