@@ -64,16 +64,13 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <aside class="nav-drawer" id="site-drawer" aria-label="Main menu" aria-hidden="true" inert>
   <div class="drawer-head">
-    <a class="brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
+    <a class="brand drawer-mark" href="/" aria-label="BootyMansion home"><img src="/assets/apple-touch-icon.png" alt="" width="34" height="34"></a>
     <button class="icon-btn drawer-close" type="button" aria-label="Close menu"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
   </div>
   <nav class="drawer-links" aria-label="Main navigation">
-    <a href="/" data-view-link="home">Home</a>
-    <a href="/?view=shorts" data-view-link="shorts">Shorts</a>
-    <a href="/?view=movies" data-view-link="movies">Movies</a>
-    <a href="/?view=library" data-view-link="library">Library</a>
-    <button class="drawer-categories-toggle" id="drawer-categories-toggle" type="button" aria-expanded="false" aria-controls="drawer-categories-panel">
-      <span>Categories</span>
+    <button class="drawer-categories-toggle" id="drawer-categories-toggle" type="button" aria-expanded="false" aria-controls="drawer-categories-panel" style="--icon-step: 0">
+      <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>
+      <span class="drawer-label">Categories</span>
       <svg class="icon drawer-categories-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
     </button>
     <div class="drawer-categories-panel" id="drawer-categories-panel" aria-hidden="true" inert>
@@ -86,10 +83,26 @@
         <p class="drawer-categories-empty" id="drawer-categories-empty" hidden>No categories found</p>
       </div>
     </div>
+    <a href="/" data-view-link="home" style="--icon-step: 1">
+      <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"></path></svg>
+      <span class="drawer-label">Home</span>
+    </a>
+    <a href="/?view=shorts" data-view-link="shorts" style="--icon-step: 2">
+      <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
+      <span class="drawer-label">Shorts</span>
+    </a>
+    <a href="/?view=movies" data-view-link="movies" style="--icon-step: 3">
+      <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path></svg>
+      <span class="drawer-label">Movies</span>
+    </a>
+    <a href="/?view=library" data-view-link="library" style="--icon-step: 4">
+      <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h9a2 2 0 0 1 2 2v11h-9a2 2 0 0 1-2-2Z"></path><path d="M15.5 8.5h3a1 1 0 0 1 1 1v9h-4Z"></path></svg>
+      <span class="drawer-label">Library</span>
+    </a>
   </nav>
-  <a class="drawer-telegram" data-telegram href="#telegram">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-    Telegram
+  <a class="drawer-telegram" data-telegram href="#telegram" style="--icon-step: 5">
+    <svg class="icon drawer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+    <span class="drawer-label">Telegram</span>
   </a>
 </aside>`;
 
@@ -145,7 +158,10 @@
       link.className = "drawer-category";
       link.href = "/?category=" + encodeURIComponent(label);
       link.dataset.navCategory = label;
-      link.textContent = label;
+      const text = document.createElement("span");
+      text.className = "drawer-label";
+      text.textContent = label;
+      link.appendChild(text);
       items.appendChild(link);
     });
     list.replaceChildren(items);
@@ -173,7 +189,7 @@
   function open() {
     toggle.setAttribute("aria-expanded", "true");
     toggle.setAttribute("aria-label", "Close menu");
-    drawer.classList.add("is-open");
+    drawer.classList.add("is-open", "is-animating");
     drawer.setAttribute("aria-hidden", "false");
     drawer.inert = false;
     overlay.classList.add("is-open");
@@ -185,7 +201,7 @@
   function close() {
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-label", "Open menu");
-    drawer.classList.remove("is-open");
+    drawer.classList.remove("is-open", "is-animating");
     drawer.setAttribute("aria-hidden", "true");
     drawer.inert = true;
     overlay.classList.remove("is-open");
@@ -217,6 +233,12 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") close();
   });
+
+  /* Drop the will-change hint as soon as the one-shot spin is over. Telegram
+     has the longest stagger delay, so its animationend means all icons are
+     done. One listener only — the animation itself is pure CSS. */
+  telegramLink.querySelector(".drawer-icon")
+    ?.addEventListener("animationend", () => drawer.classList.remove("is-animating"));
 
   window.SiteNav = Object.freeze({
     setCategories(values) {
