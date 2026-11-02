@@ -58,6 +58,7 @@
   <!-- The same stylesheet as the home page, so a card looks the same here. -->
   <link rel="stylesheet" href="/assets/preloader.css">
   <script src="/assets/video-rules.js"></script>
+  <script defer src="/assets/site-nav.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
   <link rel="stylesheet" href="/assets/watch.css">
 </head>
@@ -67,18 +68,8 @@
   <script src="/assets/age-gate.js"></script>
   <script src="/assets/preloader.js"></script>
 
-  <header class="site-header">
-    <div class="shell nav-shell">
-      <a class="brand" href="/" aria-label="BootyMansion home">
-        <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
-      </a>
-
-      <a class="watch-back" href="/">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
-        <span>Back to the vault</span>
-      </a>
-    </div>
-  </header>
+  <!-- The shared header/drawer is built by assets/site-nav.js on every page. -->
+  <div id="site-nav-root"></div>
 
   <main id="main" class="shell watch">
     <div class="watch__player-wrap">
@@ -122,7 +113,7 @@
   <footer class="site-footer">
     <div class="shell footer-inner">
       <div class="footer-top">
-        <a class="brand" href="/" aria-label="Back to the vault">
+        <a class="brand" href="/" aria-label="BootyMansion home">
           <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
         </a>
 

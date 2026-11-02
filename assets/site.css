@@ -2180,7 +2180,7 @@
   .home-page .site-header .nav-shell { min-height: 62px; gap: 0.9rem; }
 }
 
-.home-page .site-header .menu-toggle { display: grid !important; flex: 0 0 auto; width: 36px; height: 36px; }
+.site-header .menu-toggle { display: grid !important; flex: 0 0 auto; width: 36px; height: 36px; }
 .home-page .site-header .brand-logo { --logo-h: 28px; }
 .home-page .site-header .search--desktop { display: none; }
 .home-page .site-header .search-toggle { display: grid; width: 36px; height: 36px; }
@@ -2361,4 +2361,91 @@
 
 @media (prefers-reduced-motion: reduce) {
   .nav-drawer, .drawer-overlay { transition-duration: 0.01ms; }
+}
+
+/* ============ SHARED DRAWER: COLLAPSIBLE CATEGORIES ============ */
+/* "Categories" is one row alongside Home / Shorts / Movies / Library. */
+.drawer-categories-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.drawer-categories-toggle:hover { background: var(--tint); color: var(--text); }
+.drawer-categories-chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  transition: transform 240ms ease;
+}
+.drawer-categories-toggle[aria-expanded="true"] .drawer-categories-chevron { transform: rotate(180deg); }
+
+/* 0fr -> 1fr animates to the content's own height, so the list opens smoothly. */
+.drawer-categories-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 260ms ease, opacity 200ms ease;
+}
+.drawer-categories-panel.is-expanded { grid-template-rows: 1fr; opacity: 1; }
+.drawer-categories-panel__inner {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  /* clip does not create a scroll container, so the search can stay pinned
+     to the drawer while the list (or the drawer itself) scrolls. */
+  overflow: clip;
+}
+
+/* The search box stays above the list; only the list itself scrolls. */
+.drawer-categories-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+.drawer-categories-search__icon { display: grid; place-items: center; color: var(--quiet); }
+.drawer-categories-search__icon .icon { width: 16px; height: 16px; }
+.drawer-categories-search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  outline: 0;
+}
+.drawer-categories-search input::placeholder { color: var(--quiet); }
+.drawer-categories-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(46vh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.drawer-categories-empty { margin: 0; padding: 0.65rem 0.8rem; color: var(--quiet); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-categories-panel, .drawer-categories-chevron { transition-duration: 0.01ms; }
 }
