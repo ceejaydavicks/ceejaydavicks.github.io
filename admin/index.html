@@ -301,7 +301,8 @@
       background: var(--panel);
     }
 
-    .video-row.is-featured { border-color: rgba(250, 204, 21, 0.45); }
+    .pin-mark { display: inline-grid; width: 15px; height: 15px; place-items: center; color: #FBBF24; vertical-align: -2px; }
+    .pin-mark .icon { width: 14px; height: 14px; }
 
     @media (min-width: 720px) {
       .video-row { grid-template-columns: 132px minmax(0, 1fr) auto; align-items: center; }
@@ -323,6 +324,7 @@
     .video-thumb--vertical { aspect-ratio: 9 / 16; }
 
     .video-main { min-width: 0; }
+    .video-title-row { display: flex; align-items: center; gap: 0.4rem; }
 
     .video-title {
       margin: 0;
@@ -556,11 +558,6 @@
           <span class="count" id="video-count"></span>
           <button class="btn btn--ghost btn--small" type="button" id="detect-durations">Detect missing durations</button>
           <button class="btn" type="button" id="add-video">+ Add video</button>
-        </div>
-
-        <div class="banner banner--warn" id="featured-banner" hidden>
-          <span>No featured video pinned.</span>
-          <span>The newest release is shown on the home page until you pin one.</span>
         </div>
 
         <div class="video-list" id="video-list"></div>
@@ -907,18 +904,11 @@
       $("#video-count").textContent = `${shown.length} of ${videos.length} video${videos.length === 1 ? "" : "s"}`;
       $("#video-empty").hidden = shown.length > 0;
 
-      const featured = videos.find((video) => video.featured);
-      const banner = $("#featured-banner");
-      if (featured) {
-        banner.hidden = true;
-      } else {
-        banner.hidden = false;
-      }
-
       shown.forEach((video) => {
         const row = el("article", "video-row");
         row.dataset.id = String(video.id);
-        if (video.featured) row.classList.add("is-featured");
+        const pinned = Boolean(video.pinned || video.featured);
+        if (pinned) row.classList.add("is-pinned");
 
         const vertical = video.orientation === "vertical";
         const img = el("img", vertical ? "video-thumb video-thumb--vertical" : "video-thumb");
@@ -934,7 +924,16 @@
         if (!video.thumbnail_url) attemptRowThumbnail(video, img);
 
         const main = el("div", "video-main");
-        main.append(el("h3", "video-title", video.title));
+        const titleRow = el("div", "video-title-row");
+        titleRow.append(el("h3", "video-title", video.title));
+        if (pinned) {
+          const pin = el("span", "pin-mark");
+          pin.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-3 1-4 4v5l-2 2-2-6-5-5 2-2h5l4-4Z"></path><path d="m5 19-2 2"></path></svg>';
+          pin.setAttribute("aria-label", "Pinned first in the public feed");
+          pin.title = "Pinned first in the public feed";
+          titleRow.append(pin);
+        }
+        main.append(titleRow);
 
         const metaBits = [
           video.creator,
@@ -945,7 +944,6 @@
         main.append(el("p", "video-meta", metaBits.join(" · ")));
 
         const badges = el("div", "badges");
-        if (video.featured) badges.append(el("span", "badge badge--star", "★ Featured"));
         if (isShortVideo(video)) badges.append(el("span", "badge badge--on", "Short"));
         if (!video.video_url && !video.embed_url) badges.append(el("span", "badge badge--draft", "Draft"));
         if (!video.video_url && video.embed_url) badges.append(el("span", "badge", "Embed"));
@@ -956,11 +954,7 @@
         const actions = el("div", "row-actions");
         actions.append(button("Edit", "edit"));
         actions.append(button("Edit preview", "preview"));
-        actions.append(
-          video.featured
-            ? button("Unfeature", "feature", "btn--ghost btn--star")
-            : button("Set as featured", "feature", "btn--ghost btn--star")
-        );
+        actions.append(button(pinned ? "Unpin" : "Pin first", "pin", "btn--ghost btn--star"));
         actions.append(button("Delete", "delete", "btn--danger"));
         main.append(actions);
 
@@ -977,14 +971,14 @@
       });
     }
 
-    async function toggleFeatured(id) {
+    async function togglePinned(id) {
       const video = state.videos.find((item) => String(item.id) === String(id));
       if (!video) return;
 
-      const next = !video.featured;
+      const next = !(video.pinned || video.featured);
       try {
         await api(`/api/videos/${id}`, { method: "PATCH", body: { featured: next } });
-        toast(next ? `“${video.title}” is now the featured video` : "Featured video cleared");
+        toast(next ? `“${video.title}” is pinned first in the feed` : `“${video.title}” is unpinned`);
         await loadVideos();
       } catch (error) {
         if (error.message !== "Unauthorized") toast(error.message, true);
@@ -1658,8 +1652,8 @@
       if (action === "edit" || action === "preview") {
         const video = state.videos.find((item) => String(item.id) === String(id));
         if (video) openEditor(video);
-      } else if (action === "feature") {
-        toggleFeatured(id);
+      } else if (action === "pin") {
+        togglePinned(id);
       } else if (action === "delete") {
         removeVideo(id);
       }
