@@ -527,17 +527,21 @@
     };
 
     /* ================================================================
-       HOME FEED RESHUFFLE
+       FEED RESHUFFLE (home shelves + the Shorts page)
        ----------------------------------------------------------------
-       Only the unfiltered home shelves (Shorts + Latest/Movies) are
-       shuffled. A random seed is created on every fresh home visit and
-       kept in sessionStorage; the same seed drives both shelves and every
-       infinite-scroll page, so the order cannot change while browsing.
-       Back/forward and bfcache restores reuse that seed and the saved
-       scroll position instead of reshuffling.
+       Only the unfiltered home shelves (Shorts + Latest/Movies) and the
+       unfiltered Shorts page are shuffled. A random seed is created on
+       every fresh visit to either page and kept in sessionStorage; the
+       same seed drives every infinite-scroll page, so the order cannot
+       change while browsing. Each view owns its own pair of keys so a
+       visit to the Shorts page cannot overwrite the home seed (which
+       would reshuffle home on Back). Back/forward and bfcache restores
+       reuse the seed and the saved scroll position.
        ================================================================ */
     const SEED_KEY = "bootymansion.home.shuffle.seed";
     const FEED_KEY = "bootymansion.home.feed";
+    const SHORTS_SEED_KEY = "bootymansion.shorts.shuffle.seed";
+    const SHORTS_FEED_KEY = "bootymansion.shorts.feed";
     const navEntry = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
     const cameFromHistory = Boolean(navEntry && navEntry.type === "back_forward");
 
@@ -550,17 +554,17 @@
       return (Math.floor(Math.random() * 4294967296) >>> 0) || 0x6d2b79f5;
     }
 
-    function storedSeed() {
+    function storedSeed(key) {
       try {
-        const value = Number(sessionStorage.getItem(SEED_KEY));
+        const value = Number(sessionStorage.getItem(key));
         return Number.isFinite(value) && value > 0 ? value >>> 0 : 0;
       } catch (error) {
         return 0;
       }
     }
 
-    function saveSeed(seed) {
-      try { sessionStorage.setItem(SEED_KEY, String(seed)); } catch (error) { /* private mode */ }
+    function saveSeed(key, seed) {
+      try { sessionStorage.setItem(key, String(seed)); } catch (error) { /* private mode */ }
     }
 
     /* mulberry32: a small deterministic PRNG for a 32-bit seed. */
@@ -628,6 +632,8 @@
     let homeSeed = createShuffleSeed();
     let homeShorts = SHORTS;
     let homeLatest = HOME_LATEST;
+    let shortsSeed = createShuffleSeed();
+    let shortsFeed = SHORTS;
 
     function rebuildHomeOrder() {
       /* Two independent streams keep Shorts and Movies shuffled separately. */
@@ -635,37 +641,53 @@
       homeLatest = shuffleShelf(HOME_LATEST, seededRandom(homeSeed));
     }
 
-    function readFeedState() {
+    function rebuildShortsOrder() {
+      /* The Shorts page uses the exact same shuffleShelf/Fisher-Yates engine,
+         over the whole SHORTS list rather than the home page's first eight. */
+      shortsFeed = shuffleShelf(SHORTS, seededRandom(shortsSeed));
+    }
+
+    function readFeedState(key) {
       try {
-        const saved = JSON.parse(sessionStorage.getItem(FEED_KEY) || "null");
+        const saved = JSON.parse(sessionStorage.getItem(key) || "null");
         return saved && typeof saved === "object" ? saved : null;
       } catch (error) {
         return null;
       }
     }
 
-    function saveFeedState(cursor, scrollY) {
+    function saveFeedState(key, seed, cursor, scrollY) {
       try {
-        sessionStorage.setItem(FEED_KEY, JSON.stringify({
-          seed: homeSeed,
+        sessionStorage.setItem(key, JSON.stringify({
+          seed,
           cursor: Number(cursor) || 0,
           scrollY: Math.max(0, Number(scrollY) || 0)
         }));
       } catch (error) { /* private mode */ }
     }
 
+    const isFilterActive = () => state.chip !== "All" || Boolean(state.query.trim());
+
     if (state.view === "home") {
-      if (cameFromHistory) homeSeed = storedSeed() || homeSeed;
-      saveSeed(homeSeed);
-      if (!cameFromHistory) saveFeedState(0, 0);
+      if (cameFromHistory) homeSeed = storedSeed(SEED_KEY) || homeSeed;
+      saveSeed(SEED_KEY, homeSeed);
+      if (!cameFromHistory) saveFeedState(FEED_KEY, homeSeed, 0, 0);
       rebuildHomeOrder();
     }
-    const savedFeed = state.view === "home" && cameFromHistory ? readFeedState() : null;
+    const savedFeed = state.view === "home" && cameFromHistory ? readFeedState(FEED_KEY) : null;
 
-    function restoreHomeFeed(saved) {
-      if (!saved || saved.seed !== homeSeed) return;
-      if (state.chip !== "All" || state.query.trim()) return;
-      const target = Math.min(Number(saved.cursor) || 0, homeLatest.length);
+    if (state.view === "shorts") {
+      if (cameFromHistory) shortsSeed = storedSeed(SHORTS_SEED_KEY) || shortsSeed;
+      saveSeed(SHORTS_SEED_KEY, shortsSeed);
+      if (!cameFromHistory) saveFeedState(SHORTS_FEED_KEY, shortsSeed, 0, 0);
+      rebuildShortsOrder();
+    }
+    const savedShortsFeed = state.view === "shorts" && cameFromHistory ? readFeedState(SHORTS_FEED_KEY) : null;
+
+    function restoreFeed(saved, seed, total) {
+      if (!saved || saved.seed !== seed) return;
+      if (isFilterActive()) return;
+      const target = Math.min(Number(saved.cursor) || 0, total);
       let guard = 0;
       while (pager && pager.cursor < target && guard < 100) {
         loadNextPage();
@@ -687,9 +709,8 @@
       window.setTimeout(jump, 400);
     }
 
-    function setupHomeFeedPersistence() {
-      if (state.view !== "home") return;
-      const remember = () => saveFeedState(pager ? pager.cursor : 0, window.scrollY);
+    function setupFeedPersistence(feedKey, getSeed) {
+      const remember = () => saveFeedState(feedKey, getSeed(), pager ? pager.cursor : 0, window.scrollY);
       window.addEventListener("pagehide", remember);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") remember();
@@ -715,8 +736,8 @@
       state.query = "";
       syncSearchInputs("");
       homeSeed = createShuffleSeed();
-      saveSeed(homeSeed);
-      saveFeedState(0, 0);
+      saveSeed(SEED_KEY, homeSeed);
+      saveFeedState(FEED_KEY, homeSeed, 0, 0);
       rebuildHomeOrder();
       renderPage();
     }
@@ -1254,7 +1275,10 @@
       }
 
       banner.hidden = true;
-      const items = state.view === "movies" ? MOVIES : state.view === "shorts" ? SHORTS : PINNED_FIRST;
+      /* A chip or search keeps the Shorts page newest-first and unshuffled. */
+      const items = state.view === "movies" ? MOVIES
+        : state.view === "shorts" ? (isFilterActive() ? SHORTS : shortsFeed)
+        : PINNED_FIRST;
       const title = state.view === "library" ? "Full library" : state.view === "movies" ? "Movies" : "Shorts";
       $("#catalogue-title").textContent = title;
       if (state.query.trim()) {
@@ -1504,8 +1528,10 @@
     setupSearch();
     setupEvents();
     renderPage();
-    setupHomeFeedPersistence();
-    if (state.view === "home" && cameFromHistory) restoreHomeFeed(savedFeed);
+    if (state.view === "home") setupFeedPersistence(FEED_KEY, () => homeSeed);
+    if (state.view === "shorts") setupFeedPersistence(SHORTS_FEED_KEY, () => shortsSeed);
+    if (state.view === "home" && cameFromHistory) restoreFeed(savedFeed, homeSeed, homeLatest.length);
+    if (state.view === "shorts" && cameFromHistory) restoreFeed(savedShortsFeed, shortsSeed, shortsFeed.length);
 
   </script>
 </body>
