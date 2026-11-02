@@ -11,6 +11,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 
+  <script src="/assets/video-rules.js"></script>
   <!-- Same theme as the site: the saved choice, else the device setting. -->
   <script>
     (function () {
@@ -281,6 +282,8 @@
     }
 
     .banner--warn { border-color: rgba(250, 204, 21, 0.4); color: var(--warn-text); }
+    .duration-required { margin: 0.35rem 0 0; color: #fb7185; font-size: 12px; font-weight: 700; }
+    .duration-required[hidden] { display: none; }
     .banner--ok { border-color: rgba(74, 222, 128, 0.35); }
     .banner strong { color: var(--text); font-weight: 600; }
     .banner .btn { margin-left: auto; }
@@ -548,9 +551,10 @@
           <div class="filters" role="group" aria-label="Filter videos by length">
             <button class="filter" type="button" data-kind="all" aria-pressed="true">All</button>
             <button class="filter" type="button" data-kind="shorts" aria-pressed="false">Shorts</button>
-            <button class="filter" type="button" data-kind="regular" aria-pressed="false">Regular</button>
+            <button class="filter" type="button" data-kind="regular" aria-pressed="false">Movies</button>
           </div>
           <span class="count" id="video-count"></span>
+          <button class="btn btn--ghost btn--small" type="button" id="detect-durations">Detect missing durations</button>
           <button class="btn" type="button" id="add-video">+ Add video</button>
         </div>
 
@@ -664,7 +668,7 @@
           <div class="thumb-preview" id="thumb-preview" hidden>
             <img id="thumb-img" alt="">
             <div class="thumb-preview__body">
-              <button class="btn btn--ghost btn--small" type="button" id="regenerate-button">Regenerate</button>
+              <button class="btn btn--ghost btn--small" type="button" id="regenerate-button">Regenerate preview</button>
               <label class="moment" for="f-moment">
                 <span>Moment</span>
                 <input id="f-moment" type="range" min="0" max="30" step="0.5" value="1">
@@ -681,7 +685,8 @@
           <div class="field">
             <label for="f-duration">Duration</label>
             <input id="f-duration" type="text" maxlength="16" placeholder="12:48 or 768">
-            <p class="hint" id="duration-hint">Enter mm:ss (or plain seconds). Under 60 seconds the video is filed as a <strong>Short</strong>; 60 or more keeps it a regular video. Filled in automatically for uploaded files — type it yourself when an embed cannot report its length.</p>
+            <p class="duration-required" id="duration-required" role="alert" hidden>Duration required — this embed has no readable duration. Enter it above.</p>
+            <p class="hint" id="duration-hint">Enter mm:ss (or plain seconds). Shorts are 60 seconds or less; longer or unknown videos are Movies. Filled in automatically for uploaded files.</p>
           </div>
           <div class="field">
             <label for="f-views">Views label</label>
@@ -738,6 +743,7 @@
       filter: "",
       kind: "all",
       settings: null,
+      thumbnailAttempts: new Set(),
       /* "manual" for a picture the admin uploaded, "auto" for a frame that was
          taken from the video. A manual picture always wins. */
       thumbSource: ""
@@ -833,8 +839,8 @@
     }
 
     function isShortVideo(video) {
-      const seconds = Number(video.duration_seconds) || 0;
-      return seconds > 0 && seconds < 60;
+      const seconds = window.VideoRules.seconds(video.duration_seconds);
+      return window.VideoRules.isShort(seconds || video.duration);
     }
 
     function tagList(video) {
@@ -915,15 +921,17 @@
         if (video.featured) row.classList.add("is-featured");
 
         const vertical = video.orientation === "vertical";
-        if (video.thumbnail_url) {
-          const img = el("img", vertical ? "video-thumb video-thumb--vertical" : "video-thumb");
-          img.src = video.thumbnail_url;
-          img.alt = "";
-          img.loading = "lazy";
-          row.append(img);
-        } else {
-          row.append(el("div", vertical ? "video-thumb video-thumb--vertical" : "video-thumb", "No image"));
-        }
+        const img = el("img", vertical ? "video-thumb video-thumb--vertical" : "video-thumb");
+        img.alt = `${video.title} preview`;
+        img.loading = "lazy";
+        img.src = video.thumbnail_url || "/assets/embed-placeholder.webp";
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = "/assets/embed-placeholder.webp";
+          attemptRowThumbnail(video, img);
+        };
+        row.append(img);
+        if (!video.thumbnail_url) attemptRowThumbnail(video, img);
 
         const main = el("div", "video-main");
         main.append(el("h3", "video-title", video.title));
@@ -947,6 +955,7 @@
 
         const actions = el("div", "row-actions");
         actions.append(button("Edit", "edit"));
+        actions.append(button("Edit preview", "preview"));
         actions.append(
           video.featured
             ? button("Unfeature", "feature", "btn--ghost btn--star")
@@ -1071,16 +1080,18 @@
 
     function updateDurationHint() {
       const node = $("#duration-hint");
-      if (!node) return;
       const seconds = durationToSeconds($("#f-duration").value);
-      const base = "Enter mm:ss (or plain seconds). Under 60 seconds the video is filed as a Short; 60 or more keeps it a regular video.";
-      document.querySelectorAll("[data-duration-state]").forEach((node) => node.remove());
+      const embedMissing = Boolean($("#f-embed").value.trim()) && !seconds;
+      const warning = $("#duration-required");
+      if (warning) warning.hidden = !embedMissing;
+      $("#f-duration").setAttribute("aria-invalid", String(embedMissing));
+      if (!node) return;
+      node.querySelectorAll("[data-duration-state]").forEach((item) => item.remove());
       if (!seconds) return;
-      const state = document.createElement("span");
-      state.dataset.durationState = "on";
-      state.textContent = seconds < 60 ? ` → ${seconds}s · Short` : ` → ${seconds}s · regular video`;
-      state.dataset.short = seconds < 60 ? "yes" : "no";
-      node.append(state);
+      const stateLabel = document.createElement("span");
+      stateLabel.dataset.durationState = "on";
+      stateLabel.textContent = ` → ${seconds}s · ${window.VideoRules.isShort(seconds) ? "Short" : "Movie"}`;
+      node.append(stateLabel);
     }
 
     function collectForm() {
@@ -1134,17 +1145,18 @@
       const image = $("#thumb-img");
       if (!preview || !image) return;
 
-      if (!url) {
+      const source = $("#f-video").value.trim();
+      if (!url && !source) {
         preview.hidden = true;
         return;
       }
 
-      image.src = url;
+      image.onerror = () => { image.onerror = null; image.src = "/assets/embed-placeholder.webp"; };
+      image.src = url || "/assets/embed-placeholder.webp";
       preview.hidden = false;
 
       /* A frame can only be taken from a file that is on this site. */
-      const source = $("#f-video").value.trim();
-      const canGrab = Boolean(source) && !/^https?:/i.test(source);
+      const canGrab = Boolean(source);
       const button = $("#regenerate-button");
       const hint = $("#regenerate-hint");
       if (button) {
@@ -1222,6 +1234,13 @@
         video.muted = true;
         video.defaultMuted = true;
         video.playsInline = true;
+        if (typeof source === "string") {
+          try {
+            if (new URL(url, window.location.href).origin !== window.location.origin) video.crossOrigin = "anonymous";
+          } catch (error) {
+            // Keep the browser's default for unusual media URLs.
+          }
+        }
 
         video.addEventListener("error", () => {
           window.clearTimeout(fallback);
@@ -1294,6 +1313,99 @@
       return { url, width: result.width, height: result.height };
     }
 
+
+    function probeVideoDuration(source, timeoutMs = 10000) {
+      return new Promise((resolve) => {
+        const video = document.createElement("video");
+        let settled = false;
+        const finish = (seconds) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timer);
+          video.removeAttribute("src");
+          video.load();
+          resolve(Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds) : 0);
+        };
+        const timer = window.setTimeout(() => finish(0), timeoutMs);
+        video.preload = "metadata";
+        video.muted = true;
+        video.playsInline = true;
+        video.addEventListener("loadedmetadata", () => {
+          let seconds = Number.isFinite(video.duration) ? video.duration : 0;
+          if (!seconds && video.seekable && video.seekable.length) seconds = video.seekable.end(video.seekable.length - 1);
+          finish(seconds);
+        }, { once: true });
+        video.addEventListener("error", () => finish(0), { once: true });
+        video.src = source;
+      });
+    }
+
+    async function detectMissingDurations() {
+      const button = $("#detect-durations");
+      const missing = state.videos.filter((video) =>
+        !durationToSeconds(video.duration_seconds || video.duration) && video.video_url
+      );
+      if (!missing.length) {
+        toast("No readable video files are missing durations");
+        return;
+      }
+
+      button.disabled = true;
+      let detected = 0;
+      let checked = 0;
+      try {
+        for (const video of missing) {
+          checked += 1;
+          button.textContent = `Detecting ${checked}/${missing.length}…`;
+          const seconds = await probeVideoDuration(video.video_url);
+          if (!seconds) continue;
+          const duration = secondsToLabel(seconds);
+          const result = await api(`/api/videos/${video.id}`, {
+            method: "PATCH",
+            body: { duration, duration_seconds: seconds }
+          });
+          Object.assign(video, result.video || { duration, duration_seconds: seconds });
+          detected += 1;
+        }
+        renderVideos();
+        toast(detected ? `Detected durations for ${detected} video${detected === 1 ? "" : "s"}` : "No missing durations could be read from the video files");
+      } catch (error) {
+        if (error.message !== "Unauthorized") toast(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = "Detect missing durations";
+      }
+    }
+
+    async function detectFormVideoDuration() {
+      if (durationToSeconds($("#f-duration").value)) return;
+      const source = $("#f-video").value.trim();
+      if (!source) return;
+      const seconds = await probeVideoDuration(source, 8000);
+      if (!seconds || durationToSeconds($("#f-duration").value)) return;
+      $("#f-duration").value = secondsToLabel(seconds);
+      updateDurationHint();
+      toast("Duration detected from video metadata");
+    }
+
+    async function attemptRowThumbnail(video, image) {
+      const key = String(video.id);
+      if (state.thumbnailAttempts.has(key) || !video.video_url) return;
+      state.thumbnailAttempts.add(key);
+      try {
+        const made = await makeAutoThumbnail(video.video_url, 0.5);
+        image.src = made.url;
+        const result = await api(`/api/videos/${video.id}`, {
+          method: "PATCH",
+          body: { thumbnail_url: made.url, thumb_source: "auto" }
+        });
+        Object.assign(video, result.video || { thumbnail_url: made.url, thumb_source: "auto" });
+      } catch (error) {
+        image.onerror = null;
+        image.src = "/assets/embed-placeholder.webp";
+      }
+    }
+
     async function regenerateThumbnail() {
       const button = $("#regenerate-button");
       const hint = $("#regenerate-hint");
@@ -1315,6 +1427,15 @@
         state.thumbSource = "auto";
         refreshThumbPreview();
         $("#upload-hint").textContent = "A frame was taken from the video and stored in R2.";
+        if (state.editingId) {
+          const result = await api(`/api/videos/${state.editingId}`, {
+            method: "PATCH",
+            body: { thumbnail_url: made.url, thumb_source: "auto" }
+          });
+          const record = state.videos.find((item) => String(item.id) === String(state.editingId));
+          if (record) Object.assign(record, result.video || { thumbnail_url: made.url, thumb_source: "auto" });
+          renderVideos();
+        }
         toast("New thumbnail saved");
       } catch (error) {
         hint.textContent = error.message;
@@ -1526,6 +1647,7 @@
     });
 
     $("#add-video").addEventListener("click", () => openEditor());
+    $("#detect-durations").addEventListener("click", detectMissingDurations);
 
     $("#video-list").addEventListener("click", (event) => {
       const button = event.target.closest("button[data-action]");
@@ -1533,7 +1655,7 @@
       const id = button.dataset.id;
       const action = button.dataset.action;
 
-      if (action === "edit") {
+      if (action === "edit" || action === "preview") {
         const video = state.videos.find((item) => String(item.id) === String(id));
         if (video) openEditor(video);
       } else if (action === "feature") {
@@ -1543,10 +1665,13 @@
       }
     });
 
+    $("#f-embed").addEventListener("input", updateDurationHint);
     $("#f-embed").addEventListener("blur", () => {
       const normalized = toEmbedUrl($("#f-embed").value);
       if (normalized && normalized !== $("#f-embed").value) $("#f-embed").value = normalized;
+      updateDurationHint();
     });
+    $("#f-video").addEventListener("blur", detectFormVideoDuration);
 
     $("#editor-close").addEventListener("click", () => editor.close());
     $("#editor-cancel").addEventListener("click", () => editor.close());
@@ -1585,6 +1710,13 @@
 
     $("#editor-form").addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (!durationToSeconds($("#f-duration").value) && $("#f-video").value.trim()) {
+        const seconds = await probeVideoDuration($("#f-video").value.trim(), 8000);
+        if (seconds && !durationToSeconds($("#f-duration").value)) {
+          $("#f-duration").value = secondsToLabel(seconds);
+          updateDurationHint();
+        }
+      }
       const body = collectForm();
       if (!body.title) {
         toast("A title is required", true);

@@ -90,11 +90,10 @@
       </a>
 
       <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
-        <a href="#top" data-nav class="is-active" aria-current="page">Home</a>
-        <a href="#trending" data-nav>Recommended</a>
-        <a href="#shorts" data-nav>Shorts</a>
-        <a href="#feed" data-nav>Feed</a>
-        <a href="#follow" data-nav>Follow</a>
+        <a href="/" data-view-link="home">Home</a>
+        <a href="/?view=movies" data-view-link="movies">Movies</a>
+        <a href="/?view=shorts" data-view-link="shorts">Shorts</a>
+        <a href="/?view=library" data-view-link="library">Library</a>
         <button class="nav-theme" type="button" data-theme-toggle aria-label="Switch to light mode">
           <span class="nav-theme__icon" aria-hidden="true">
             <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
@@ -206,7 +205,7 @@
         <div class="upnext">
           <div class="upnext__head">
             <h2 id="upnext-title">Up next</h2>
-            <button class="link-btn" type="button" data-show-all>See all →</button>
+            <a class="link-btn" href="/?view=library">See all →</a>
           </div>
           <div class="upnext__list" id="up-next-list"></div>
         </div>
@@ -219,7 +218,7 @@
     <!-- Search / filter results -->
     <section class="results" id="results" aria-labelledby="results-title" hidden>
       <div class="results__head">
-        <h2 id="results-title">Results<span class="results__count" id="results-count" aria-live="polite"></span></h2>
+        <h2 id="results-title">Results</h2>
         <button class="link-btn" type="button" data-clear>Clear filter ✕</button>
       </div>
       <div class="grid-feed" id="results-grid"></div>
@@ -239,7 +238,7 @@
           <button class="row-arrow" type="button" data-scroll-shorts aria-label="Scroll Shorts">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
           </button>
-          <button class="link-btn" type="button" data-show-all>View all →</button>
+          <a class="link-btn" href="/?view=library">View all →</a>
         </div>
       </div>
       <div class="grid-shorts" id="shorts-grid"></div>
@@ -259,7 +258,7 @@
           </div>
           <p id="trending-note">Picked from the whole library</p>
         </div>
-        <button class="link-btn" type="button" data-show-all>View all →</button>
+        <a class="link-btn" href="/?view=library">View all →</a>
       </div>
 
       <div class="grid-trending" id="trending-grid"></div>
@@ -275,7 +274,7 @@
           </div>
           <p id="feed-note">Fresh uploads in every format</p>
         </div>
-        <button class="link-btn" type="button" data-show-all>View all →</button>
+        <a class="link-btn" href="/?view=library">View all →</a>
       </div>
       <div class="grid-feed" id="feed-grid"></div>
     </section>
@@ -319,27 +318,23 @@
   </main>
 
   <!-- ================= MOBILE TAB BAR =================
-       Shown below 1024px only. Every tab points at a real section of this page. -->
+       The same four duration-based catalogue views as the top navigation. -->
   <nav class="tabbar" aria-label="Quick navigation">
-    <a href="#top" data-nav data-tab="home">
+    <a href="/" data-view-link="home" data-tab="home">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"></path></svg>
       <span>Home</span>
     </a>
-    <a href="#trending" data-nav data-tab="movies">
+    <a href="/?view=movies" data-view-link="movies" data-tab="movies">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path></svg>
       <span>Movies</span>
     </a>
-    <a href="#shorts" data-nav data-tab="shorts">
+    <a href="/?view=shorts" data-view-link="shorts" data-tab="shorts">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
       <span>Shorts</span>
     </a>
-    <a href="#feed" data-nav data-tab="library">
+    <a href="/?view=library" data-view-link="library" data-tab="library">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h9a2 2 0 0 1 2 2v11h-9a2 2 0 0 1-2-2Z"></path><path d="M15.5 8.5h3a1 1 0 0 1 1 1v9h-4Z"></path></svg>
       <span>Library</span>
-    </a>
-    <a href="#follow" data-nav data-tab="profile">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path></svg>
-      <span>Profile</span>
     </a>
   </nav>
 
@@ -702,7 +697,9 @@
 
     const byId = (id) => VIDEOS.find((video) => video.id === id) || null;
 
-    const isShort = (video) => window.VideoRules.isShort(video.durationSeconds);
+    const videoKind = (video) => window.VideoRules.kind(video.durationSeconds);
+    const isShort = (video) => videoKind(video) === "short";
+    const isMovie = (video) => videoKind(video) === "movie";
 
     /* ================================================================
        HOW RECENT IS A VIDEO
@@ -768,7 +765,8 @@
       /* Shorts are their own shelf: the length decides, so they are kept out
          of every regular section instead of being repeated there. */
       const shorts = VIDEOS.filter(isShort);
-      const regulars = VIDEOS.filter((video) => !isShort(video));
+      const movies = VIDEOS.filter(isMovie);
+      const regulars = movies.length ? movies : shorts;
 
       /* Only the pinned video is featured — there is exactly one of them, and
          a new upload never takes that place on its own. Without a pinned
@@ -780,6 +778,7 @@
       // A Short that already leads the page is not repeated on the shelf.
       const shelf = shorts.filter((video) => video !== featured);
       LAYOUT.shorts = shelf.slice(0, 12);
+      LAYOUT.movies = movies;
       LAYOUT.shortsMode = "vertical";
 
       /* Everything else, pinned rows first, then the rest of the library. A
@@ -800,7 +799,12 @@
       LAYOUT.feed = remaining.slice(trendingCount, trendingCount + 6);
     })();
 
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    const validViews = new Set(["home", "movies", "shorts", "library"]);
+    const view = validViews.has(requestedView) ? requestedView : "home";
+
     const state = {
+      view,
       query: "",
       category: "All",
       showAll: false,
@@ -1501,8 +1505,11 @@
        ================================================================ */
     function matchesFilter(video) {
       const query = state.query.trim().toLowerCase();
-      const inCategory =
-        state.category === "All" ||
+      const inView = state.view === "movies" ? isMovie(video) :
+        state.view === "shorts" ? isShort(video) : true;
+      if (!inView) return false;
+
+      const inCategory = state.category === "All" ||
         (state.category === "Shorts" ? isShort(video) : video.category === state.category);
       if (!inCategory) return false;
       if (!query) return true;
@@ -1514,7 +1521,7 @@
       return haystack.includes(query);
     }
 
-    const filtering = () => Boolean(state.query.trim()) || state.category !== "All" || state.showAll;
+    const filtering = () => state.view !== "home" || Boolean(state.query.trim()) || state.category !== "All" || state.showAll;
 
     const sectionAvailability = {
       shorts: LAYOUT.shorts.length > 0,
@@ -1563,6 +1570,10 @@
 
     function renderChips() {
       const bar = $("#chips");
+      if (state.view !== "home") {
+        bar.hidden = true;
+        return;
+      }
       const labels = ["All", ...categories];
       if (hasShorts) labels.push("Shorts");
 
@@ -1586,12 +1597,38 @@
       });
     }
 
+    const HOME_VIEW_IDS = ["top", "chips", "shorts", "ad-banner", "trending", "feed", "library-empty", "telegram", "follow"];
+
+    function setActiveView(viewName) {
+      document.querySelectorAll("[data-view-link]").forEach((link) => {
+        const active = link.dataset.viewLink === viewName;
+        link.classList.toggle("is-active", active);
+        if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+
+    function applyViewShell() {
+      const home = state.view === "home";
+      HOME_VIEW_IDS.forEach((id) => {
+        const node = document.getElementById(id);
+        if (node) node.hidden = !home;
+      });
+      setActiveView(state.view);
+    }
+
     function renderResults({ scroll = false } = {}) {
       const results = $("#results");
       const grid = $("#results-grid");
       const title = $("#results-title");
-      const count = $("#results-count");
 
+      applyViewShell();
+      if (state.view === "home" && filtering()) {
+        ["shorts", "trending", "feed"].forEach((id) => {
+          const section = document.getElementById(id);
+          if (section) section.hidden = true;
+        });
+      }
       if (!filtering()) {
         results.hidden = true;
         Object.entries(sectionAvailability).forEach(([id, available]) => {
@@ -1602,28 +1639,24 @@
       }
 
       const items = VIDEOS.filter(matchesFilter);
+      if (state.query.trim()) title.textContent = `Results for “${state.query.trim()}”`;
+      else if (state.view === "library") title.textContent = "Full library";
+      else if (state.view === "movies") title.textContent = "Movies";
+      else if (state.view === "shorts") title.textContent = "Shorts";
+      else title.textContent = state.category === "All" ? "Results" : state.category;
 
-      if (state.query.trim()) title.firstChild.textContent = `Results for “${state.query.trim()}”`;
-      else if (state.showAll) title.firstChild.textContent = "Full library";
-      else title.firstChild.textContent = state.category;
-
-      count.textContent = `${items.length} video${plural(items.length)}`;
       grid.replaceChildren();
-
       if (!items.length) {
         grid._masonryCards = null;
         const empty = document.createElement("p");
         empty.className = "empty-card";
-        empty.textContent = "Nothing matched that search. Try a different word or clear the filter.";
+        empty.textContent = state.query.trim()
+          ? "Nothing matched that search. Try a different word or clear the filter."
+          : `No ${state.view === "shorts" ? "Shorts" : state.view === "movies" ? "Movies" : "videos"} yet.`;
         grid.append(empty);
       } else {
         fillGrid(grid, items);
       }
-
-      ["shorts", "trending", "feed"].forEach((id) => {
-        const section = document.getElementById(id);
-        if (section) section.hidden = true;
-      });
 
       results.hidden = false;
       scheduleMasonryReflow();
@@ -1636,9 +1669,8 @@
       const feed = $("#feed");
 
       if (LAYOUT.shorts.length) {
-        const count = LAYOUT.shorts.length;
         $("#shorts-title").textContent = "Shorts";
-        $("#shorts-note").textContent = `${count} clip${plural(count)} under a minute`;
+        $("#shorts-note").textContent = "Under a minute, straight to the point";
         fillGrid($("#shorts-grid"), LAYOUT.shorts, { variant: "vertical" });
       }
       shorts.hidden = !sectionAvailability.shorts;
@@ -1859,21 +1891,6 @@
       });
     }
 
-    function scrollToSection(id) {
-      const section = document.getElementById(id);
-      if (!section) return;
-
-      // If a section is empty (or currently filtered away), open the full library instead.
-      if (section.hidden) {
-        state.showAll = true;
-        state.category = "All";
-        state.query = "";
-        syncSearchInputs("");
-        renderChips();
-        renderResults({ scroll: true });
-      }
-    }
-
     /* ================================================================
        EVENTS
        ================================================================ */
@@ -1905,16 +1922,6 @@
         if (chip) {
           state.category = chip.dataset.cat;
           state.showAll = false;
-          renderChips();
-          renderResults({ scroll: true });
-          return;
-        }
-
-        if (target.closest("[data-show-all]")) {
-          state.category = "All";
-          state.showAll = true;
-          state.query = "";
-          syncSearchInputs("");
           renderChips();
           renderResults({ scroll: true });
           return;
@@ -1962,63 +1969,10 @@
         }
       });
 
-      document.querySelectorAll("[data-nav]").forEach((link) => {
-        link.addEventListener("click", (event) => {
-          const id = link.getAttribute("href").slice(1);
-          closeMenu();
-          setActiveNav(id);
-          if (id === "top") return;
-          event.preventDefault();
-          const section = document.getElementById(id);
-          if (!section) return;
-          if (section.hidden) {
-            scrollToSection(id);
-          } else {
-            section.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        });
-      });
     }
 
-    /* ---- active nav pill / tab -------------------------------------
-       The header pills and the mobile tab bar both use data-nav, so one
-       observer keeps the two in step with whatever section is on screen. */
-    function setActiveNav(id) {
-      document.querySelectorAll("[data-nav]").forEach((link) => {
-        const on = link.getAttribute("href") === `#${id}`;
-        link.classList.toggle("is-active", on);
-        if (on) link.setAttribute("aria-current", "page");
-        else link.removeAttribute("aria-current");
-      });
-    }
-
-    (function watchActiveNav() {
-      const targets = ["top", "trending", "shorts", "feed", "follow"]
-        .map((id) => document.getElementById(id))
-        .filter(Boolean);
-      if (!("IntersectionObserver" in window) || !targets.length) return;
-
-      const ratios = new Map();
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            ratios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
-          });
-          let best = "";
-          let bestRatio = 0;
-          ratios.forEach((ratio, id) => {
-            if (ratio > bestRatio) {
-              bestRatio = ratio;
-              best = id;
-            }
-          });
-          if (best) setActiveNav(best);
-        },
-        { rootMargin: "-90px 0px -55% 0px", threshold: [0.15, 0.4, 0.75] }
-      );
-
-      targets.forEach((node) => observer.observe(node));
-    })();
+    /* Top navigation and mobile tabs share the current type-filtered view. */
+    setActiveView(state.view);
 
     /* ================================================================
        THEME (dark default, saved choice, device preference on first visit)
