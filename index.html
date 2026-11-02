@@ -44,15 +44,15 @@
 
   <!-- SITE NAME: visible branding, SEO title and meta copy all follow SITE_NAME in the script below. -->
   <title>BootyMansion | Curated Video Entertainment</title>
-  <meta name="description" content="BootyMansion is a sleek home for curated video entertainment, featured releases, and exclusive picks.">
+  <meta name="description" content="BootyMansion is a home for curated Movies, Shorts, and video picks.">
   <meta name="author" content="BootyMansion">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="BootyMansion">
   <meta property="og:title" content="BootyMansion | Curated Video Entertainment">
-  <meta property="og:description" content="Discover featured releases and the latest video picks at BootyMansion.">
+  <meta property="og:description" content="Explore Movies, Shorts, and the latest videos at BootyMansion.">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="BootyMansion | Curated Video Entertainment">
-  <meta name="twitter:description" content="Discover featured releases and the latest video picks at BootyMansion.">
+  <meta name="twitter:description" content="Explore Movies, Shorts, and the latest videos at BootyMansion.">
 
   <!-- One remote font request, swap-in so text never waits on it. Falls back to system fonts offline. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +72,7 @@
   <script src="/assets/video-rules.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
 </head>
-<body>
+<body class="home-page">
   <!-- AGE GATE: runs before any content is parsed, so a locked page never
        flashes. Screen-reader/keyboard/scroll handling lives in the script. -->
   <script src="./assets/age-gate.js"></script>
@@ -82,298 +82,113 @@
   <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- ================= HEADER ================= -->
+  <!-- ================= SLIM TOP BAR ================= -->
   <header class="site-header">
     <div class="shell nav-shell">
+      <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-drawer">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
       <a class="brand" href="/" aria-label="BootyMansion home">
         <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
       </a>
-
-      <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
-        <a href="#top" data-nav class="is-active" aria-current="page">Home</a>
-        <a href="#trending" data-nav>Recommended</a>
-        <a href="#shorts" data-nav>Shorts</a>
-        <a href="#feed" data-nav>Feed</a>
-        <a href="#follow" data-nav>Follow</a>
-        <button class="nav-theme" type="button" data-theme-toggle aria-label="Switch to light mode">
-          <span class="nav-theme__icon" aria-hidden="true">
-            <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
-            <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
-          </span>
-          <span data-theme-action-label>Switch to light mode</span>
-        </button>
-      </nav>
-
-      <div class="nav-actions">
-        <label class="search search--desktop" for="search-input">
-          <span class="search__icon" aria-hidden="true">
-            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
-          </span>
-          <input id="search-input" type="search" placeholder="Search videos, creators…" autocomplete="off" spellcheck="false" aria-label="Search videos and creators">
-        </label>
-
-        <button class="icon-btn search-toggle" type="button" aria-label="Open search" aria-expanded="false" aria-controls="search-mobile">
-          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
-        </button>
-
-        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode">
-          <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
-          <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
-        </button>
-
-        <a class="btn btn-telegram-nav" data-telegram href="#telegram">
-          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-          <span class="telegram-label">Telegram</span>
-        </a>
-
-        <button class="icon-btn menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-nav">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
-        </button>
-      </div>
+      <label class="search search--desktop" for="search-input">
+        <span class="search__icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg></span>
+        <input id="search-input" type="search" placeholder="Search videos…" autocomplete="off" spellcheck="false" aria-label="Search videos">
+      </label>
+      <button class="icon-btn search-toggle" type="button" aria-label="Open search" aria-expanded="false" aria-controls="search-mobile">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
+      </button>
+      <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode">
+        <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l1.6 1.6"></path></svg>
+        <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
+      </button>
+      <a class="btn btn-telegram-nav btn-telegram-icon" data-telegram href="#telegram" aria-label="Open Telegram" title="Telegram">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+      </a>
     </div>
-
     <div class="shell search-mobile" id="search-mobile" hidden>
       <label class="search" for="search-input-mobile">
-        <span class="search__icon" aria-hidden="true">
-          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
-        </span>
-        <input id="search-input-mobile" type="search" placeholder="Search videos, creators…" autocomplete="off" spellcheck="false" aria-label="Search videos and creators">
+        <span class="search__icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg></span>
+        <input id="search-input-mobile" type="search" placeholder="Search videos…" autocomplete="off" spellcheck="false" aria-label="Search videos">
       </label>
     </div>
   </header>
 
-  <!-- ================= MAIN ================= -->
-  <main id="main" class="shell">
-    <!-- Featured video + Up next -->
-    <section class="hero" id="top" aria-labelledby="featured-title">
-      <div class="hero-stage">
-        <div class="hero-stage__inner">
-          <div class="hero-player">
-            <div class="video-frame video-frame--player" id="featured-player" aria-live="polite">
-              <noscript><p class="player-empty"><strong>Enable JavaScript</strong>to load the featured video.</p></noscript>
-            </div>
-          </div>
-        </div>
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <aside class="nav-drawer" id="site-drawer" aria-label="Main menu" aria-hidden="true" inert>
+    <div class="drawer-head">
+      <a class="brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
+      <button class="icon-btn drawer-close" type="button" aria-label="Close menu"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+    </div>
+    <nav class="drawer-links" aria-label="Main navigation">
+      <a href="/" data-view-link="home">Home</a>
+      <a href="/?view=shorts" data-view-link="shorts">Shorts</a>
+      <a href="/?view=movies" data-view-link="movies">Movies</a>
+      <a href="/?view=library" data-view-link="library">Library</a>
+    </nav>
+    <h2 class="drawer-title">Categories</h2>
+    <nav class="drawer-categories" id="drawer-categories" aria-label="Video categories"></nav>
+    <a class="drawer-telegram" data-telegram href="#telegram">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+      Telegram
+    </a>
+  </aside>
+
+  <!-- Categories are generated from the tags on the catalogue. -->
+  <div class="shell chips-shell" hidden>
+    <div class="chips" id="chips" role="group" aria-label="Filter videos by category"></div>
+  </div>
+
+  <!-- ================= CONTENT-FIRST VIDEO FEED ================= -->
+  <main id="main" class="shell site-main">
+    <section class="section home-section" id="shorts-section" aria-labelledby="shorts-title" hidden>
+      <div class="section-head compact-section-head">
+        <h1 id="shorts-title">Shorts</h1>
+        <a class="link-btn" href="/?view=shorts">View all <span aria-hidden="true">→</span></a>
       </div>
-
-      <aside class="hero-meta">
-        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Featured today</p>
-        <h1 class="hero-title" id="featured-title">Loading the vault…</h1>
-        <p class="hero-sub" id="featured-sub" hidden></p>
-        <div class="creator" id="hero-creator" hidden></div>
-        <div class="hero-stats" id="hero-stats"></div>
-
-        <div class="hero-actions">
-          <button class="btn btn-primary" type="button" data-hero-play>
-            <svg class="icon icon--fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z"></path></svg>
-            <span>Watch Now</span>
-          </button>
-          <button class="btn btn-ghost" type="button" data-act="save" aria-pressed="false">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
-            <span>Add to Watchlist</span>
-          </button>
-        </div>
-
-        <div class="hero-rail" aria-label="Video actions">
-          <button class="rail-btn" type="button" data-act="save" aria-pressed="false">
-            <span class="rail-btn__icon" aria-hidden="true">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z"></path></svg>
-            </span>
-            <span>Save</span>
-          </button>
-          <button class="rail-btn" type="button" data-act="share">
-            <span class="rail-btn__icon" aria-hidden="true">
-              <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.6"></circle><circle cx="6" cy="12" r="2.6"></circle><circle cx="18" cy="19" r="2.6"></circle><path d="m8.3 10.7 7.4-4.2M8.3 13.3l7.4 4.2"></path></svg>
-            </span>
-            <span>Share</span>
-          </button>
-          <a class="rail-btn" id="rail-open" data-act="open" href="#" target="_blank" rel="noopener noreferrer">
-            <span class="rail-btn__icon" aria-hidden="true">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6"></path><path d="M20 4 11 13"></path><path d="M18 14v5.5H4.5V6H10"></path></svg>
-            </span>
-            <span>Open</span>
-          </a>
-          <a class="rail-btn" data-telegram href="#telegram">
-            <span class="rail-btn__icon" aria-hidden="true">
-              <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-            </span>
-            <span>Telegram</span>
-          </a>
-        </div>
-      </aside>
-
-      <aside class="hero-upnext" aria-labelledby="upnext-title">
-        <div class="upnext">
-          <div class="upnext__head">
-            <h2 id="upnext-title">Up next</h2>
-            <button class="link-btn" type="button" data-show-all>See all →</button>
-          </div>
-          <div class="upnext__list" id="up-next-list"></div>
-        </div>
-      </aside>
+      <div class="grid-shorts masonry-grid" id="shorts-grid"></div>
     </section>
 
-    <!-- Category chips -->
-    <div class="chips" id="chips" role="group" aria-label="Filter videos by category" hidden></div>
+    <div class="ad-slot shell-ad" id="ad-banner" hidden></div>
 
-    <!-- Search / filter results -->
-    <section class="results" id="results" aria-labelledby="results-title" hidden>
-      <div class="results__head">
-        <h2 id="results-title">Results<span class="results__count" id="results-count" aria-live="polite"></span></h2>
-        <button class="link-btn" type="button" data-clear>Clear filter ✕</button>
-      </div>
-      <div class="grid-feed" id="results-grid"></div>
+    <section class="section home-section" id="latest-section" aria-labelledby="latest-title" hidden>
+      <div class="section-head compact-section-head"><h2 id="latest-title">Latest</h2></div>
+      <div class="grid-latest" id="latest-grid"></div>
     </section>
 
-    <!-- Vertical Shorts -->
-    <section class="section" id="shorts" aria-labelledby="shorts-title" hidden>
-      <div class="section-head">
-        <div>
-          <div class="section-head__title">
-            <svg class="icon" viewBox="0 0 24 24"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
-            <h2 id="shorts-title">Shorts</h2>
-          </div>
-          <p id="shorts-note">Under a minute, straight to the point</p>
-        </div>
-        <div class="section-head__actions">
-          <button class="row-arrow" type="button" data-scroll-shorts aria-label="Scroll Shorts">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
-          </button>
-          <button class="link-btn" type="button" data-show-all>View all →</button>
-        </div>
+    <section class="section" id="filtered-section" aria-labelledby="filtered-title" hidden>
+      <div class="section-head compact-section-head">
+        <h1 id="filtered-title">Videos</h1>
+        <button class="link-btn" type="button" data-clear-filter>Clear filter</button>
       </div>
-      <div class="grid-shorts" id="shorts-grid"></div>
+      <div class="grid-filtered masonry-grid" id="filtered-grid"></div>
     </section>
 
-    <!-- AD SLOT (a): responsive banner — 300x250 on phones, 728x90 on desktop.
-         Built from AD_CONFIG.banner in the script; removed entirely when empty. -->
-    <div class="ad-slot" id="ad-banner" hidden></div>
-
-    <!-- Trending Now -->
-    <section class="section" id="trending" aria-labelledby="trending-title" hidden>
-      <div class="section-head">
-        <div>
-          <div class="section-head__title">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3c3.6 3 5.6 5.6 5.6 8.6a5.6 5.6 0 0 1-11.2 0C6.4 8.6 8.4 6 12 3Z"></path></svg>
-            <h2 id="trending-title">Recommended for you</h2>
-          </div>
-          <p id="trending-note">Picked from the whole library</p>
-        </div>
-        <button class="link-btn" type="button" data-show-all>View all →</button>
-      </div>
-
-      <div class="grid-trending" id="trending-grid"></div>
+    <section class="section" id="catalogue-section" aria-labelledby="catalogue-title" hidden>
+      <div class="section-head compact-section-head"><h1 id="catalogue-title"></h1></div>
+      <div id="catalogue-grid" class="grid-filtered masonry-grid"></div>
     </section>
 
-    <!-- Mixed Feed -->
-    <section class="section" id="feed" aria-labelledby="feed-title" hidden>
-      <div class="section-head">
-        <div>
-          <div class="section-head__title">
-            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 1.9"></path></svg>
-            <h2 id="feed-title">Mixed Feed</h2>
-          </div>
-          <p id="feed-note">Fresh uploads in every format</p>
-        </div>
-        <button class="link-btn" type="button" data-show-all>View all →</button>
-      </div>
-      <div class="grid-feed" id="feed-grid"></div>
-    </section>
-
-    <!-- Shown when the library is empty (the admin has no published videos yet) -->
-    <section class="section" id="library-empty" aria-labelledby="library-empty-title" hidden>
-      <div class="empty-library">
-        <strong id="library-empty-title">The library opens soon.</strong>
-        <p>Fresh releases are added every week. Follow the Telegram channel and you will be the first to see the next drop.</p>
-        <a class="btn btn-telegram" data-telegram href="#telegram">
-          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-          Join on Telegram
-        </a>
-      </div>
-    </section>
-
-    <!-- Telegram call to action -->
-    <section class="telegram-cta" id="telegram" aria-labelledby="telegram-title">
-      <div class="telegram-cta__inner">
-        <span class="banner-age" aria-hidden="true">18+</span>
-        <div class="telegram-cta__copy">
-          <h2 id="telegram-title">18+ only</h2>
-          <p>This website contains content for adults only. By continuing you confirm you are 18 years or older — and join the channel for early drops and weekly picks.</p>
-        </div>
-        <a class="btn btn-telegram" data-telegram href="#telegram">
-          <svg class="icon" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-          Join on Telegram
-          <svg class="icon banner-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"></path><path d="m12 5 7 7-7 7"></path></svg>
-        </a>
-      </div>
-    </section>
-
-    <!-- Follow / social links -->
-    <section class="follow" id="follow" aria-labelledby="follow-title">
-      <div>
-        <h2 id="follow-title">Follow the story.</h2>
-        <p>New drops and updates, wherever you like to scroll.</p>
-      </div>
-      <nav id="social-links" class="social-links" aria-label="Social media links"></nav>
-    </section>
+    <p class="catalogue-empty" id="catalogue-empty" hidden>No videos found.</p>
+    <div class="load-sentinel" id="load-sentinel" aria-hidden="true" hidden></div>
   </main>
 
-  <!-- ================= MOBILE TAB BAR =================
-       Shown below 1024px only. Every tab points at a real section of this page. -->
+  <!-- ================= MOBILE TAB BAR ================= -->
   <nav class="tabbar" aria-label="Quick navigation">
-    <a href="#top" data-nav data-tab="home">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"></path></svg>
-      <span>Home</span>
-    </a>
-    <a href="#trending" data-nav data-tab="movies">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path></svg>
-      <span>Movies</span>
-    </a>
-    <a href="#shorts" data-nav data-tab="shorts">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg>
-      <span>Shorts</span>
-    </a>
-    <a href="#feed" data-nav data-tab="library">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h9a2 2 0 0 1 2 2v11h-9a2 2 0 0 1-2-2Z"></path><path d="M15.5 8.5h3a1 1 0 0 1 1 1v9h-4Z"></path></svg>
-      <span>Library</span>
-    </a>
-    <a href="#follow" data-nav data-tab="profile">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path></svg>
-      <span>Profile</span>
-    </a>
+    <a href="/" data-view-link="home" data-tab="home"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"></path></svg><span>Home</span></a>
+    <a href="/?view=shorts" data-view-link="shorts" data-tab="shorts"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z"></path></svg><span>Shorts</span></a>
+    <a href="/?view=movies" data-view-link="movies" data-tab="movies"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path></svg><span>Movies</span></a>
+    <a href="/?view=library" data-view-link="library" data-tab="library"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h9a2 2 0 0 1 2 2v11h-9a2 2 0 0 1-2-2Z"></path><path d="M15.5 8.5h3a1 1 0 0 1 1 1v9h-4Z"></path></svg><span>Library</span></a>
   </nav>
 
-  <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
     <div class="shell footer-inner">
-      <div class="footer-top">
-        <a class="brand" href="/" aria-label="BootyMansion home">
-          <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
-        </a>
-
-        <nav class="footer-links" aria-label="Footer navigation">
-          <a href="#top">Home</a>
-          <a href="#trending">Trending</a>
-          <a href="#shorts">Shorts</a>
-          <a href="#feed">Feed</a>
-          <a href="#follow">Follow</a>
-          <a data-telegram href="#telegram">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-            Telegram
-          </a>
-        </nav>
-
-        <span class="footer-badge">18+ only</span>
-      </div>
-
-      <div class="footer-bottom">
-        <p>© <span id="current-year">2026</span> <span data-site-name>BootyMansion</span>. All rights reserved.</p>
-        <nav class="footer-legal" aria-label="Legal">
-          <a href="./terms.html">Terms</a>
-          <a href="./privacy.html">Privacy</a>
-          <a href="./compliance.html">18 U.S.C. 2257 / Compliance</a>
-        </nav>
-      </div>
+      <a class="brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
+      <nav class="footer-legal" aria-label="Legal links">
+        <a href="./terms.html">Terms</a><a href="./privacy.html">Privacy</a><a href="./compliance.html">2257</a>
+      </nav>
+      <span class="footer-badge">18+ only</span>
+      <a class="footer-telegram" data-telegram href="#telegram"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg><span>Telegram</span></a>
     </div>
   </footer>
 
@@ -395,7 +210,7 @@
     // ADVERTISING — one config object drives every ad slot on the page.
     // Paste the ad snippet (Adsterra or any network) as a string. A slot with an
     // empty `code` is removed completely: no placeholder box, no reserved space.
-    //   banner    – responsive banner between Shorts and Trending (300x250 on
+    //   banner    – responsive banner between Shorts and Latest (300x250 on
     //               phones, 728x90 on desktop).
     //   native    – one native card inside the feed, after every `every` videos.
     //   smartlink – the single "Sponsored" card in the feed; set `url` for a
@@ -416,15 +231,6 @@
         code: ""
       }
     };
-
-    // Social links: replace each placeholder with your real profile URL.
-    const socialLinks = [
-      { name: "YouTube", key: "youtube", url: "https://www.youtube.com/@YOUR_CHANNEL" },
-      { name: "Instagram", key: "instagram", url: "https://www.instagram.com/YOUR_HANDLE/" },
-      { name: "TikTok", key: "tiktok", url: "https://www.tiktok.com/@YOUR_HANDLE" },
-      { name: "X / Twitter", key: "x", url: "https://x.com/YOUR_HANDLE" },
-      { name: "Facebook", key: "facebook", url: "https://www.facebook.com/YOUR_PAGE" }
-    ];
 
     /* ================================================================
        ICONS (inline SVG — no icon-library download)
@@ -677,6 +483,7 @@
         duration: clean(video.duration) || formatDuration(Number(video.durationSeconds)),
         durationSeconds: window.VideoRules.seconds(video.durationSeconds) || window.VideoRules.seconds(video.duration),
         posted: clean(video.posted || video.ago),
+        createdAt: clean(video.createdAt || video.created_at),
         category: clean(video.category),
         tag: clean(video.tag),
         tags: Array.isArray(video.tags) ? video.tags.map((tag) => clean(tag)).filter(Boolean) : [],
@@ -700,9 +507,9 @@
 
     const VIDEOS = siteVideos.map(normalizeVideo).filter(Boolean);
 
-    const byId = (id) => VIDEOS.find((video) => video.id === id) || null;
-
-    const isShort = (video) => window.VideoRules.isShort(video.durationSeconds);
+    const videoKind = (video) => window.VideoRules.kind(video.durationSeconds);
+    const isShort = (video) => videoKind(video) === "short";
+    const isMovie = (video) => videoKind(video) === "movie";
 
     /* ================================================================
        HOW RECENT IS A VIDEO
@@ -739,72 +546,28 @@
       return Number.isNaN(stamp) ? 0 : stamp;
     }
 
-    const categories = [...new Set(VIDEOS.map((video) => video.category).filter(Boolean))];
-    const hasShorts = VIDEOS.some(isShort);
+    function videoTags(video) {
+      return [...new Set([...(video.tags || []), video.tag].map((tag) => clean(tag)).filter(Boolean))];
+    }
 
-    /* ================================================================
-       UP NEXT — the newest releases other than the one on stage
-       ----------------------------------------------------------------
-       Shorts are welcome here: most of this catalogue is under a minute,
-       so a rail that only knew about long releases would sit empty.
-       The list is sorted by age (created_at, or the "3 days ago" label)
-       and falls back to the catalogue order for rows without a date.
-       ================================================================ */
-    const UP_NEXT_COUNT = 4;
-
+    const categories = [...new Set(VIDEOS.flatMap(videoTags).filter((tag) => !/^(all|shorts|movies)$/i.test(tag)))];
     const BY_RECENCY = VIDEOS
       .map((video, index) => ({ video, index, at: videoPublishedAt(video) }))
       .sort((a, b) => (b.at - a.at) || (a.index - b.index))
       .map((entry) => entry.video);
+    const PINNED_FIRST = BY_RECENCY.slice().sort((a, b) => Number(Boolean(b.pinned || b.featured)) - Number(Boolean(a.pinned || a.featured)));
+    const MOVIES = PINNED_FIRST.filter(isMovie);
+    const SHORTS = PINNED_FIRST.filter(isShort);
+    const HOME_LATEST = MOVIES.length ? MOVIES : PINNED_FIRST;
 
-    /* ================================================================
-       LAYOUT — real videos, distributed once, no invented content
-       ================================================================ */
-    const LAYOUT = { featured: VIDEOS[0] || null, shorts: [], trending: [], feed: [], shortsMode: "vertical" };
-
-    (function buildLayout() {
-      if (!VIDEOS.length) return;
-
-      /* Shorts are their own shelf: the length decides, so they are kept out
-         of every regular section instead of being repeated there. */
-      const shorts = VIDEOS.filter(isShort);
-      const regulars = VIDEOS.filter((video) => !isShort(video));
-
-      /* Only the pinned video is featured — there is exactly one of them, and
-         a new upload never takes that place on its own. Without a pinned
-         video the newest release leads the page for the time being. */
-      const pinned = VIDEOS.find((video) => video.featured) || null;
-      LAYOUT.featured = pinned || BY_RECENCY[0] || VIDEOS[0];
-      const featured = LAYOUT.featured;
-
-      // A Short that already leads the page is not repeated on the shelf.
-      const shelf = shorts.filter((video) => video !== featured);
-      LAYOUT.shorts = shelf.slice(0, 12);
-      LAYOUT.shortsMode = "vertical";
-
-      /* Everything else, pinned rows first, then the rest of the library. A
-         Short keeps to its own shelf and is not repeated in a regular
-         section. */
-      const pool = regulars.filter((video) => video !== featured);
-      const pinnedRows = pool.filter((video) => video.pinned);
-      const rest = pool.filter((video) => !video.pinned);
-      pool.length = 0;
-      pool.push(...pinnedRows, ...rest);
-
-      const remaining = pool;
-      const trendingCount = remaining.length > 8
-        ? 8
-        : Math.min(remaining.length, Math.max(4, Math.ceil(remaining.length / 2)));
-
-      LAYOUT.trending = remaining.slice(0, trendingCount);
-      LAYOUT.feed = remaining.slice(trendingCount, trendingCount + 6);
-    })();
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    const validViews = new Set(["home", "movies", "shorts", "library"]);
+    const view = validViews.has(requestedView) ? requestedView : "home";
 
     const state = {
-      query: "",
-      category: "All",
-      showAll: false,
-      currentId: LAYOUT.featured ? LAYOUT.featured.id : null
+      view,
+      chip: "All",
+      query: ""
     };
 
     /* ================================================================
@@ -891,15 +654,6 @@
       frame.addEventListener("loadedmetadata", () => {
         applyNaturalRatio(posterNode, video, frame.videoWidth, frame.videoHeight);
         if (frame.duration > 0.6) frame.currentTime = 0.5;
-        const known = formatDuration(frame.duration);
-        if (known && !video.durationKnown) {
-          video.durationKnown = known;
-          document.querySelectorAll(`[data-duration-for="${video.id}"]`).forEach((chip) => {
-            chip.textContent = known;
-            chip.hidden = false;
-          });
-          refreshHeroStats();
-        }
       }, { once: true });
       frame.addEventListener("error", () => frame.remove(), { once: true });
 
@@ -909,85 +663,43 @@
     /* ================================================================
        POSTER / CARD MARKUP
        ================================================================ */
-    function cardMetaText(video) {
-      return [video.creator, video.views ? `${video.views} views` : "", video.posted]
-        .filter(Boolean)
-        .join(" · ");
-    }
-
-    function createPoster(video, { variant = "wide", caption = false, featured = false, eager = false } = {}) {
+    function createPoster(video, { variant = "card", eager = false } = {}) {
       const wrap = document.createElement("div");
-      wrap.className = variant === "player" ? "poster poster--player" : `poster poster--${variant}`;
-      wrap.style.setProperty("--tone", tone(Number(video.id.slice(1)) || 0));
-      // Natural aspect ratio for the masonry feed: known ratio once the media loads,
-      // otherwise a sensible default based on the declared format.
-      wrap.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
+      wrap.className = `poster poster--${variant}`;
+      wrap.style.setProperty("--tone", tone(Number(String(video.id).replace(/\D/g, "")) || 0));
+      const defaultRatio = video.ratio || (video.format === "short" ? 9 / 16 : 16 / 9);
+      wrap.style.setProperty("--ar", String(defaultRatio));
 
-      const shownDuration = video.duration || "";
-
-      const button = document.createElement("a");
-      button.className = "poster__btn";
-      button.href = watchUrl(video);
-      button.setAttribute("aria-label", `Watch ${video.title}`);
-      button.innerHTML = [
+      const duration = video.duration || (video.durationSeconds ? formatDuration(video.durationSeconds) : "—");
+      const link = document.createElement("a");
+      link.className = "poster__btn";
+      link.href = watchUrl(video);
+      link.setAttribute("aria-label", `Watch ${video.title}`);
+      link.innerHTML = [
         '<span class="poster__art" aria-hidden="true"></span>',
         '<span class="poster__shade" aria-hidden="true"></span>',
         isShort(video) ? '<span class="poster__short">Short</span>' : "",
-        `<span class="poster__dur" data-duration-for="${video.id}" ${shownDuration ? "" : "hidden"}>${esc(shownDuration)}</span>`,
-        `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`,
-        caption
-          ? `<span class="poster__caption"><span class="poster__title">${esc(video.title)}</span>${
-              cardMetaText(video) ? `<span class="poster__meta">${esc(cardMetaText(video))}</span>` : ""
-            }</span>`
-          : ""
+        `<span class="poster__dur" data-duration-for="${esc(video.id)}">${esc(duration)}</span>`,
+        `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`
       ].join("");
 
-      wrap.append(button);
-      attachMedia(button, video, { eager });
+      wrap.append(link);
+      attachMedia(link, video, { eager });
       return wrap;
     }
 
-    function createLandscapeCard(video, options = {}) {
+    function createVideoCard(video, { variant = "masonry", eager = false } = {}) {
       const card = document.createElement("article");
-      card.className = "media-card";
-
-      card.append(createPoster(video, { variant: "wide", eager: options.eager }));
-
-      const meta = cardMetaText(video) || "Tap to play";
-      const body = document.createElement("div");
-      body.className = "card__body";
-      body.innerHTML = [
-        `<span class="avatar" aria-hidden="true">${esc((video.creator || SITE_NAME).charAt(0))}</span>`,
-        `<div class="card__text">`,
-        `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
-        `<p class="card__meta">${esc(meta)}</p>`,
-        `</div>`
-      ].join("");
-      card.append(body);
-      return card;
-    }
-
-    function createMasonryCard(video) {
-      const card = document.createElement("article");
-      card.className = "media-card masonry-card";
-      card.append(createPoster(video, { variant: "masonry" }));
+      card.className = `media-card video-card ${variant === "movie" ? "movie-card" : "masonry-card"}`;
+      card.append(createPoster(video, { variant: "card", eager }));
 
       const body = document.createElement("div");
       body.className = "card__body";
       body.innerHTML = [
-        '<div class="card__text">',
         `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
-        `<p class="card__meta">${esc(video.creator || SITE_NAME)}</p>`,
-        "</div>"
+        `<p class="card__meta">${esc(video.views || "0")} views</p>`
       ].join("");
       card.append(body);
-      return card;
-    }
-
-    function createVerticalCard(video) {
-      const card = document.createElement("article");
-      card.className = "media-card";
-      card.append(createPoster(video, { variant: "vertical", caption: true }));
       return card;
     }
 
@@ -1106,232 +818,125 @@
     }
 
     /* ================================================================
-       MASONRY FEED — items drop into whichever column is shortest
+       MASONRY / NATURAL-RATIO GRIDS
        ================================================================ */
     const masonryMobile = window.matchMedia("(max-width: 767px)");
 
-    // Two columns on desktop, three on phones; the CSS handles the matching gaps.
-    function masonryColumnCount() {
-      return masonryMobile.matches ? 3 : 2;
+    function masonryColumnCount(grid) {
+      if (grid.classList.contains("grid-shorts")) return masonryMobile.matches ? 2 : 4;
+      return masonryMobile.matches ? 2 : 4;
     }
 
     function masonryGap(grid) {
       const value = parseFloat(getComputedStyle(grid).columnGap);
-      return Number.isFinite(value) ? value : 20;
+      return Number.isFinite(value) ? value : 16;
     }
 
     function estimatedCardHeight(card, columnWidth, mobile) {
-      if (card.classList.contains("sponsored-card") || card.classList.contains("ad-card")) {
-        return mobile ? 200 : 240;
-      }
+      if (card.classList.contains("sponsored-card") || card.classList.contains("ad-card")) return mobile ? 190 : 230;
       const poster = card.querySelector(".poster");
-      const known = parseFloat(poster && poster.style.getPropertyValue("--ar"));
-      // On small screens every thumbnail is cropped to 3:4, so use that ratio here too.
-      const ratio = mobile ? 3 / 4 : (Number.isFinite(known) && known > 0 ? known : 16 / 9);
-      return columnWidth / ratio + (mobile ? 24 : 66);
+      const ratio = parseFloat(poster && poster.style.getPropertyValue("--ar"));
+      return columnWidth / (Number.isFinite(ratio) && ratio > 0 ? ratio : 16 / 9) + (mobile ? 48 : 58);
     }
 
     function distributeMasonry(grid) {
       const cards = grid._masonryCards;
-      if (!grid.classList.contains("grid-feed") || !cards || !cards.length) return;
-
-      const cols = masonryColumnCount();
+      if (!grid.classList.contains("masonry-grid") || !cards || !cards.length) return;
+      const cols = masonryColumnCount(grid);
       const gap = masonryGap(grid);
       const mobile = masonryMobile.matches;
       const width = grid.clientWidth;
-      const columnWidth = width ? Math.max(80, (width - gap * (cols - 1)) / cols) : (mobile ? 110 : 460);
-
+      const columnWidth = width ? Math.max(80, (width - gap * (cols - 1)) / cols) : (mobile ? 140 : 300);
       grid.replaceChildren();
 
       const columns = [];
       const estimated = [];
-      for (let i = 0; i < cols; i += 1) {
+      for (let index = 0; index < cols; index += 1) {
         const column = document.createElement("div");
         column.className = "masonry__col";
         grid.append(column);
         columns.push(column);
         estimated.push(0);
       }
-
-      // Measure real heights while the grid is on screen; estimate when it is hidden.
       const measurable = width > 0 && grid.offsetParent !== null;
-
       cards.forEach((card) => {
         let target = 0;
-        for (let i = 1; i < cols; i += 1) {
+        for (let index = 1; index < cols; index += 1) {
           const current = measurable ? columns[target].offsetHeight : estimated[target];
-          const candidate = measurable ? columns[i].offsetHeight : estimated[i];
-          if (candidate < current) target = i;
+          const candidate = measurable ? columns[index].offsetHeight : estimated[index];
+          if (candidate < current) target = index;
         }
         columns[target].append(card);
         estimated[target] += estimatedCardHeight(card, columnWidth, mobile) + gap;
       });
-
       grid.dataset.masonryCols = String(cols);
     }
 
     let masonryTimer = 0;
-
     function scheduleMasonryReflow() {
       window.clearTimeout(masonryTimer);
       masonryTimer = window.setTimeout(() => {
-        document.querySelectorAll(".grid-feed").forEach(distributeMasonry);
-      }, 120);
+        document.querySelectorAll(".masonry-grid").forEach(distributeMasonry);
+      }, 100);
     }
 
-    // The video's own aspect ratio drives the card shape (desktop) — never cropped.
     function applyNaturalRatio(posterNode, video, width, height) {
       if (!posterNode || !width || !height) return;
       const ratio = width / height;
       if (!Number.isFinite(ratio) || ratio <= 0) return;
-
+      if (video && video.format === "short" && width >= height) return;
       const rounded = Number(ratio.toFixed(4));
       if (video) video.ratio = rounded;
       posterNode.style.setProperty("--ar", String(rounded));
-      if (posterNode.closest(".grid-feed")) scheduleMasonryReflow();
+      if (posterNode.closest(".masonry-grid")) scheduleMasonryReflow();
     }
 
     window.addEventListener("resize", scheduleMasonryReflow);
 
-    function fillGrid(grid, items, { variant = "landscape", native = false } = {}) {
-      const masonry = grid.classList.contains("grid-feed");
-      const cards = [];
+    function appendVideoBatch(grid, items, { variant = "masonry", native = false, final = false } = {}) {
+      if (!grid._masonryCards) grid._masonryCards = [];
+      const additions = [];
+      const offset = grid._videoCount || 0;
       const every = Math.max(1, Number(AD_CONFIG.native && AD_CONFIG.native.every) || 8);
-      let nativeCard = null;
 
       items.forEach((video, index) => {
-        let card;
-        if (variant === "vertical") card = createVerticalCard(video);
-        else if (masonry) card = createMasonryCard(video);
-        else card = createLandscapeCard(video);
-        cards.push(card);
-
-        // (b) One native unit, every `every` videos.
-        if (native && !nativeCard && (index + 1) % every === 0) {
-          nativeCard = createNativeAdCard();
-          if (nativeCard) cards.push(nativeCard);
+        const card = createVideoCard(video, { variant, eager: offset + index < 2 });
+        additions.push(card);
+        if (native && !grid._nativeInserted && (offset + index + 1) % every === 0) {
+          const ad = createNativeAdCard();
+          if (ad) { additions.push(ad); grid._nativeInserted = true; }
         }
       });
 
-      // A feed shorter than `every` still gets its single native unit, at the end.
-      if (native && !nativeCard && cards.length) {
-        nativeCard = createNativeAdCard();
-        if (nativeCard) cards.push(nativeCard);
+      grid._videoCount = offset + items.length;
+      if (native && final && grid._videoCount) {
+        if (!grid._nativeInserted) {
+          const ad = createNativeAdCard();
+          if (ad) { additions.push(ad); grid._nativeInserted = true; }
+        }
+        if (!grid._smartlinkInserted) {
+          const smartlink = createSmartlinkCard();
+          if (smartlink) { additions.push(smartlink); grid._smartlinkInserted = true; }
+        }
       }
 
-      // (c) The one Smartlink "Sponsored" card closes the feed.
-      if (native) {
-        const smartlinkCard = createSmartlinkCard();
-        if (smartlinkCard) cards.push(smartlinkCard);
-      }
-
-      grid._masonryCards = cards;
-
-      if (masonry) {
+      if (grid.classList.contains("masonry-grid")) {
+        grid._masonryCards.push(...additions);
         distributeMasonry(grid);
       } else {
-        grid.replaceChildren();
-        grid.append(...cards);
+        grid.append(...additions);
       }
     }
 
-    /* ================================================================
-       HERO: featured player + Up next
-       ================================================================ */
-    function refreshHeroStats() {
-      const video = byId(state.currentId);
-      const stats = $("#hero-stats");
-      if (!video || !stats) return;
-
-      const parts = [];
-      if (video.views) parts.push(`<span><b>${esc(video.views)}</b> views</span>`);
-      if (video.durationKnown) parts.push(`<span><b>${esc(video.durationKnown)}</b> runtime</span>`);
-      parts.push(`<span><b>${String(VIDEOS.indexOf(video) + 1).padStart(2, "0")}</b> / ${String(VIDEOS.length).padStart(2, "0")} in the vault</span>`);
-      stats.innerHTML = parts.join("");
+    function fillGrid(grid, items, options = {}) {
+      grid.replaceChildren();
+      grid._masonryCards = [];
+      grid._videoCount = 0;
+      grid._nativeInserted = false;
+      grid._smartlinkInserted = false;
+      appendVideoBatch(grid, items, { ...options, final: true });
     }
 
-    function renderHeroMeta(video, { playing = false } = {}) {
-      const title = $("#featured-title");
-      const sub = $("#featured-sub");
-      const creatorBox = $("#hero-creator");
-      const railOpen = $("#rail-open");
-      const actions = $(".hero-actions");
-
-      if (!video) {
-        title.textContent = "New releases are on the way";
-        sub.hidden = true;
-        creatorBox.hidden = true;
-        if (actions) actions.hidden = true;
-        $("#hero-stats").innerHTML = "";
-        if (railOpen) railOpen.setAttribute("aria-disabled", "true");
-        return;
-      }
-
-      title.textContent = video.title;
-      if (actions) actions.hidden = false;
-
-      if (video.description) {
-        sub.textContent = video.description;
-        sub.hidden = false;
-      } else {
-        sub.hidden = true;
-      }
-
-      if (video.creator) {
-        creatorBox.innerHTML = `
-          <span class="avatar" aria-hidden="true">${esc(video.creator.charAt(0))}</span>
-          <span>
-            <span class="creator__name">${esc(video.creator)} ${svg("badge")}</span>
-            <span class="creator__note">Creator</span>
-          </span>
-          <a class="hero-follow" data-telegram href="#telegram">Follow ${svg("external")}</a>`;
-        creatorBox.hidden = false;
-      } else {
-        creatorBox.hidden = true;
-      }
-
-      refreshHeroStats();
-
-      if (railOpen) {
-        railOpen.href = video.url;
-        railOpen.removeAttribute("aria-disabled");
-      }
-
-      syncSaveButtons(isSaved(video.id));
-
-      applyTelegramLinks();
-      document.title = `${video.title} · ${SITE_NAME}`;
-    }
-
-    function makeEmptyPlayer() {
-      const empty = document.createElement("div");
-      empty.className = "player-empty";
-      empty.innerHTML = `<strong>New releases are on the way.</strong>
-        <span>Follow the Telegram channel to catch the next drop.</span>`;
-      return empty;
-    }
-
-    /* The player keeps a blurred, darkened copy of the poster behind it, so a
-       vertical clip fills the frame without black bars around it. */
-    function playerBackdrop(video) {
-      if (!video || !video.thumb) return null;
-      const blur = document.createElement("img");
-      blur.className = "video-frame__blur";
-      blur.src = video.thumb;
-      blur.alt = "";
-      blur.decoding = "async";
-      blur.setAttribute("aria-hidden", "true");
-      return blur;
-    }
-
-    /* ================================================================
-       THE WATCH PAGE
-       ================================================================
-       Every card opens /watch?v=<id>: its own address, its own title and
-       its own player, so a video can be shared and the back button works.
-       The home page never swaps a card into the featured player — it shows
-       the pinned video and nothing else.
-       ================================================================ */
     function watchUrl(video) {
       if (!video) return "/";
       const id = String(video.id || "");
@@ -1339,397 +944,202 @@
       return `/watch?v=${encodeURIComponent(key)}`;
     }
 
-    function openWatch(video) {
-      if (!video) return;
-      window.location.href = watchUrl(video);
-    }
-
-    function renderFeatured() {
-      const player = $("#featured-player");
-      const video = LAYOUT.featured;
-
-      renderHeroMeta(video);
-
-      if (!video) {
-        player.replaceChildren(makeEmptyPlayer());
-        return;
-      }
-
-      const backdrop = playerBackdrop(video);
-      player.replaceChildren(
-        ...(backdrop ? [backdrop] : []),
-        createPoster(video, { variant: "player", featured: true, eager: true })
-      );
-    }
-
-    /* The four newest releases that are not the one on stage. The rail is
-       never allowed to look empty while the library holds a single other
-       video — "See all" opens the full list, but the first videos are
-       always visible without it. */
-    function upNextVideos() {
-      const onStage = state.currentId || (LAYOUT.featured ? LAYOUT.featured.id : null);
-      const picked = [];
-
-      for (const video of BY_RECENCY) {
-        if (video.id === onStage) continue;
-        picked.push(video);
-        if (picked.length >= UP_NEXT_COUNT) break;
-      }
-
-      return picked;
-    }
-
-    /* "3 days ago" becomes "3d ago" so the line fits next to the title. */
-    function compactAge(value) {
-      const raw = String(value || "").trim().toLowerCase();
-      if (!raw) return "";
-      if (raw === "today") return "today";
-      if (raw === "yesterday") return "1d ago";
-
-      const match = /^(\d+)\s*(d|day|days|w|week|weeks|m|mo|month|months)\s*ago$/.exec(raw);
-      if (!match) return raw;
-      if (match[2].charAt(0) === "d") return `${match[1]}d ago`;
-      if (match[2].charAt(0) === "w") return `${match[1]}w ago`;
-      return `${match[1]}mo ago`;
-    }
-
-    function upNextMetaText(video) {
-      return [
-        video.creator,
-        video.views ? `${video.views} views` : "",
-        compactAge(video.posted)
-      ]
-        .filter(Boolean)
-        .join(" · ") || "Tap to play";
-    }
-
-    function renderUpNext() {
-      const list = $("#up-next-list");
-      if (!list) return;
-      list.replaceChildren();
-
-      const videos = upNextVideos();
-
-      if (!videos.length) {
-        const note = document.createElement("p");
-        note.className = "upnext__empty";
-        note.innerHTML = `More releases land here automatically. Follow the
-          <a data-telegram href="#telegram">Telegram channel</a> to catch the next drop.`;
-        list.append(note);
-        return;
-      }
-
-      videos.forEach((video) => {
-        const item = document.createElement("a");
-        item.className = "upnext__item";
-        item.href = watchUrl(video);
-        item.dataset.play = video.id;
-        item.setAttribute("aria-label", `Play ${video.title}`);
-
-        const thumb = document.createElement("span");
-        thumb.className = "upnext__thumb poster";
-        thumb.style.setProperty("--tone", tone(Number(String(video.id).replace(/\D/g, "")) || 0));
-
-        const body = document.createElement("span");
-        body.className = "upnext__body";
-
-        const titleRow = document.createElement("span");
-        titleRow.className = "upnext__title-row";
-
-        const title = document.createElement("span");
-        title.className = "upnext__title";
-        title.textContent = video.title;
-        title.title = video.title;
-        titleRow.append(title);
-
-        const meta = document.createElement("span");
-        meta.className = "upnext__meta";
-        meta.textContent = upNextMetaText(video);
-        meta.title = upNextMetaText(video);
-
-        body.append(titleRow, meta);
-        item.append(thumb, body);
-
-        if (video.thumb) {
-          const image = document.createElement("img");
-          image.className = "poster__media";
-          image.alt = "";
-          image.loading = "lazy";
-          image.decoding = "async";
-          image.src = video.thumb;
-          image.addEventListener("load", () => markReady(thumb), { once: true });
-          thumb.append(image);
-        } else if (video.directUrl && !saveData()) {
-          const frame = document.createElement("video");
-          frame.className = "poster__media";
-          frame.muted = true;
-          frame.playsInline = true;
-          frame.preload = "metadata";
-          frame.setAttribute("aria-hidden", "true");
-          frame.dataset.src = `${video.directUrl}#t=1`;
-          frame.addEventListener("loadeddata", () => markReady(thumb), { once: true });
-          thumb.append(frame);
-          watchFrame(thumb, false);
-        }
-
-        const art = document.createElement("span");
-        art.className = "poster__art";
-        art.setAttribute("aria-hidden", "true");
-        thumb.prepend(art);
-
-        // The length sits on the thumbnail, so the list reads at a glance,
-        // and a clip under a minute is marked with a Short badge.
-        const dur = document.createElement("span");
-        dur.className = "poster__dur upnext__dur";
-        dur.textContent = video.duration || "";
-        if (!video.duration) dur.hidden = true;
-        thumb.append(dur);
-
-        if (isShort(video)) {
-          const badge = document.createElement("span");
-          badge.className = "upnext__short";
-          badge.textContent = "Short";
-          thumb.append(badge);
-        }
-
-        list.append(item);
-      });
-    }
-
     /* ================================================================
-       SECTIONS: chips, results, shorts, trending, feed
+       CATALOGUE FILTERS, HOME SHELVES AND INFINITE SCROLL
        ================================================================ */
+    const PAGE_SIZE = 12;
+    const chipsShell = $(".chips-shell");
+    const loadSentinel = $("#load-sentinel");
+    let pager = null;
+    let loadObserver = null;
+
+    if ("IntersectionObserver" in window) {
+      loadObserver = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadNextPage();
+      }, { rootMargin: "500px 0px" });
+    }
+
     function matchesFilter(video) {
       const query = state.query.trim().toLowerCase();
-      const inCategory =
-        state.category === "All" ||
-        (state.category === "Shorts" ? isShort(video) : video.category === state.category);
-      if (!inCategory) return false;
+      const chip = state.chip;
+      if (chip === "Shorts" && !isShort(video)) return false;
+      if (chip === "Movies" && !isMovie(video)) return false;
+      if (chip !== "All" && chip !== "Shorts" && chip !== "Movies" &&
+          !videoTags(video).some((tag) => tag.toLowerCase() === chip.toLowerCase())) return false;
       if (!query) return true;
-
-      const haystack = [video.title, video.creator, video.category, video.tag, video.description]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+      const haystack = [video.title, video.creator, video.category, video.tag, ...videoTags(video), video.description]
+        .filter(Boolean).join(" ").toLowerCase();
       return haystack.includes(query);
     }
 
-    const filtering = () => Boolean(state.query.trim()) || state.category !== "All" || state.showAll;
-
-    const sectionAvailability = {
-      shorts: LAYOUT.shorts.length > 0,
-      trending: LAYOUT.trending.length > 0,
-      feed: LAYOUT.feed.length > 0
-    };
-
-    /* Chip icons are chosen from the tag itself, so a new category in the
-       database gets a sensible glyph without anyone editing this file. */
-    const CHIP_ICONS = {
-      all: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"></rect><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"></rect><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"></rect><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"></rect>',
-      shorts: '<path d="m12 3 1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"></path>',
-      movie: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"></rect><path d="M8 5v14M16 5v14"></path>',
-      series: '<rect x="3.5" y="6" width="17" height="12" rx="2"></rect><path d="M8 21h8M12 18v3"></path>',
-      music: '<path d="M9 18V6l9-2v12"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="15.5" cy="16" r="2.5"></circle>',
-      funny: '<circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"></path>',
-      action: '<path d="M13 3 5 13.5h5L9.5 21 19 10h-5.5Z"></path>',
-      lifestyle: '<path d="M12 20s-7-4.3-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.7-7 9-7 9Z"></path>',
-      drama: '<path d="M4 5h16v11H4z"></path><path d="M9 16v3M15 16v3"></path>',
-      vertical: '<rect x="7" y="3" width="10" height="18" rx="2.5"></rect>',
-      homemade: '<path d="M4 11.5 12 5l8 6.5V20H4z"></path>',
-      telegram: '<path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path>'
-    };
-
-    function chipIconKey(label) {
-      const key = String(label || "").toLowerCase();
-      if (key === "all") return "all";
-      if (key.startsWith("short")) return "shorts";
-      if (/movie|film|cinema/.test(key)) return "movie";
-      if (/series|episode|season/.test(key)) return "series";
-      if (/music|audio|song|dj/.test(key)) return "music";
-      if (/comedy|funny|laugh|meme/.test(key)) return "funny";
-      if (/action|fight|sport/.test(key)) return "action";
-      if (/life|vlog|travel|food/.test(key)) return "lifestyle";
-      if (/drama|story/.test(key)) return "drama";
-      if (/vertical|portrait/.test(key)) return "vertical";
-      if (/home|amateur|real/.test(key)) return "homemade";
-      if (/telegram/.test(key)) return "telegram";
-      return "all";
-    }
-
-    function chipIcon(label) {
-      const body = CHIP_ICONS[chipIconKey(label)] || CHIP_ICONS.all;
-      return `<svg class="icon chip__icon" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
+    function setActiveView(viewName) {
+      document.querySelectorAll("[data-view-link]").forEach((link) => {
+        const active = link.dataset.viewLink === viewName;
+        link.classList.toggle("is-active", active);
+        if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
     }
 
     function renderChips() {
       const bar = $("#chips");
-      const labels = ["All", ...categories];
-      if (hasShorts) labels.push("Shorts");
-
-      // One chip is not a filter — hide the bar until there is something to choose.
-      if (labels.length < 2) {
-        bar.hidden = true;
-        return;
-      }
-
-      bar.hidden = false;
+      if (chipsShell) chipsShell.hidden = state.view !== "home";
+      const labels = ["All", "Shorts", "Movies", ...categories];
       bar.replaceChildren();
       labels.forEach((label) => {
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = "chip";
-        chip.dataset.cat = label;
-        chip.innerHTML = `${chipIcon(label)}<span>${esc(label)}</span>`;
-        chip.setAttribute("aria-pressed", String(state.category === label));
-        if (state.category === label) chip.classList.add("is-active");
+        chip.dataset.chip = label;
+        chip.textContent = label;
+        const active = state.chip.toLowerCase() === label.toLowerCase();
+        chip.classList.toggle("is-active", active);
+        chip.setAttribute("aria-pressed", String(active));
         bar.append(chip);
       });
     }
 
-    function renderResults({ scroll = false } = {}) {
-      const results = $("#results");
-      const grid = $("#results-grid");
-      const title = $("#results-title");
-      const count = $("#results-count");
+    function renderDrawerCategories() {
+      const list = $("#drawer-categories");
+      const title = $(".drawer-title");
+      list.replaceChildren();
+      list.hidden = categories.length === 0;
+      if (title) title.hidden = categories.length === 0;
+      categories.forEach((tag) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.drawerTag = tag;
+        button.textContent = tag;
+        list.append(button);
+      });
+    }
 
-      if (!filtering()) {
-        results.hidden = true;
-        Object.entries(sectionAvailability).forEach(([id, available]) => {
-          const section = document.getElementById(id);
-          if (section) section.hidden = !available;
+    function setGridVariant(grid, variant) {
+      grid.classList.toggle("grid-latest", variant === "movie");
+      grid.classList.toggle("grid-shorts", variant === "shorts");
+      grid.classList.toggle("masonry-grid", variant !== "movie");
+    }
+
+    function showPaginatedGrid(grid, items, { variant = "masonry", native = false } = {}) {
+      if (loadObserver && loadSentinel) loadObserver.unobserve(loadSentinel);
+      setGridVariant(grid, variant);
+      grid.replaceChildren();
+      grid._masonryCards = [];
+      grid._videoCount = 0;
+      grid._nativeInserted = false;
+      grid._smartlinkInserted = false;
+      pager = { grid, items, variant, native, cursor: 0, loading: false };
+      loadSentinel.hidden = true;
+      loadNextPage();
+    }
+
+    function loadNextPage() {
+      if (!pager || pager.loading) return;
+      pager.loading = true;
+      const next = pager.items.slice(pager.cursor, pager.cursor + PAGE_SIZE);
+      pager.cursor += next.length;
+      const final = pager.cursor >= pager.items.length;
+      if (next.length) appendVideoBatch(pager.grid, next, { variant: pager.variant, native: pager.native, final });
+      const more = pager.cursor < pager.items.length;
+      loadSentinel.hidden = !more;
+      if (more && loadObserver) loadObserver.observe(loadSentinel);
+      pager.loading = false;
+      scheduleMasonryReflow();
+      if (more && !loadObserver) window.requestAnimationFrame(checkSentinel);
+    }
+
+    function checkSentinel() {
+      if (!pager || loadSentinel.hidden || pager.loading) return;
+      if (loadSentinel.getBoundingClientRect().top <= window.innerHeight + 500) loadNextPage();
+    }
+
+    if (!loadObserver) {
+      let checkFrame = 0;
+      window.addEventListener("scroll", () => {
+        if (checkFrame) return;
+        checkFrame = window.requestAnimationFrame(() => {
+          checkFrame = 0;
+          checkSentinel();
         });
+      }, { passive: true });
+    }
+
+    function renderPage() {
+      setActiveView(state.view);
+      renderChips();
+      const shortsSection = $("#shorts-section");
+      const latestSection = $("#latest-section");
+      const filteredSection = $("#filtered-section");
+      const catalogueSection = $("#catalogue-section");
+      const empty = $("#catalogue-empty");
+      const banner = $("#ad-banner");
+      if (loadObserver && loadSentinel) loadObserver.unobserve(loadSentinel);
+      pager = null;
+      loadSentinel.hidden = true;
+      empty.hidden = true;
+      shortsSection.hidden = true;
+      latestSection.hidden = true;
+      filteredSection.hidden = true;
+      catalogueSection.hidden = true;
+
+      if (state.view === "home") {
+        const isFiltered = state.chip !== "All" || Boolean(state.query.trim());
+        if (!isFiltered) {
+          const shorts = SHORTS.slice(0, 8);
+          if (shorts.length) {
+            shortsSection.hidden = false;
+            fillGrid($("#shorts-grid"), shorts, { variant: "shorts" });
+          }
+          mountBannerAd();
+          const latest = HOME_LATEST;
+          if (latest.length) {
+            latestSection.hidden = false;
+            showPaginatedGrid($("#latest-grid"), latest, { variant: "movie", native: true });
+          }
+          if (!shorts.length && !latest.length) {
+            empty.textContent = "No videos yet.";
+            empty.hidden = false;
+          }
+          return;
+        }
+
+        banner.hidden = true;
+        const items = PINNED_FIRST.filter(matchesFilter);
+        if (!items.length) {
+          empty.textContent = "No videos match this filter.";
+          empty.hidden = false;
+          return;
+        }
+        const variant = state.chip === "Movies" ? "movie" : state.chip === "Shorts" ? "shorts" : "masonry";
+        filteredSection.hidden = false;
+        $("#filtered-title").textContent = state.query.trim() ? "Search results" : state.chip;
+        showPaginatedGrid($("#filtered-grid"), items, { variant });
         return;
       }
 
-      const items = VIDEOS.filter(matchesFilter);
-
-      if (state.query.trim()) title.firstChild.textContent = `Results for “${state.query.trim()}”`;
-      else if (state.showAll) title.firstChild.textContent = "Full library";
-      else title.firstChild.textContent = state.category;
-
-      count.textContent = `${items.length} video${plural(items.length)}`;
-      grid.replaceChildren();
-
-      if (!items.length) {
-        grid._masonryCards = null;
-        const empty = document.createElement("p");
-        empty.className = "empty-card";
-        empty.textContent = "Nothing matched that search. Try a different word or clear the filter.";
-        grid.append(empty);
-      } else {
-        fillGrid(grid, items);
-      }
-
-      ["shorts", "trending", "feed"].forEach((id) => {
-        const section = document.getElementById(id);
-        if (section) section.hidden = true;
-      });
-
-      results.hidden = false;
-      scheduleMasonryReflow();
-      if (scroll) results.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function renderSections() {
-      const shorts = $("#shorts");
-      const trending = $("#trending");
-      const feed = $("#feed");
-
-      if (LAYOUT.shorts.length) {
-        const count = LAYOUT.shorts.length;
-        $("#shorts-title").textContent = "Shorts";
-        $("#shorts-note").textContent = `${count} clip${plural(count)} under a minute`;
-        fillGrid($("#shorts-grid"), LAYOUT.shorts, { variant: "vertical" });
-      }
-      shorts.hidden = !sectionAvailability.shorts;
-
-      if (LAYOUT.trending.length) {
-        $("#trending-note").textContent = `${LAYOUT.trending.length} release${plural(LAYOUT.trending.length)} picked for you`;
-        fillGrid($("#trending-grid"), LAYOUT.trending);
-      }
-      trending.hidden = !sectionAvailability.trending;
-
-      if (LAYOUT.feed.length) {
-        $("#feed-note").textContent = "Fresh uploads, in every format";
-        fillGrid($("#feed-grid"), LAYOUT.feed, { native: true });
-      }
-      feed.hidden = !sectionAvailability.feed;
-
-      const emptyLibrary = $("#library-empty");
-      if (emptyLibrary) emptyLibrary.hidden = VIDEOS.length > 0;
-
-      scheduleMasonryReflow();
-    }
-
-    /* ================================================================
-       SAVE (local only) + SHARE
-       ================================================================ */
-    const SAVED_KEY = `saved:${SITE_NAME}`;
-
-    function savedSet() {
-      try {
-        return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"));
-      } catch (error) {
-        return new Set();
-      }
-    }
-
-    const isSaved = (id) => savedSet().has(id);
-
-    /* Both save buttons (the rail pill and the watchlist button) show the
-       same state, so they are always updated together. */
-    function syncSaveButtons(saved) {
-      document.querySelectorAll('[data-act="save"]').forEach((button) => {
-        button.classList.toggle("is-on", saved);
-        button.setAttribute("aria-pressed", String(saved));
-        const label = button.querySelector("span:last-child");
-        if (!label) return;
-        label.textContent = button.classList.contains("btn-ghost")
-          ? (saved ? "In your watchlist" : "Add to Watchlist")
-          : (saved ? "Saved" : "Save");
-      });
-    }
-
-    function toggleSave() {
-      const video = byId(state.currentId);
-      if (!video) return;
-      const saved = savedSet();
-      const nowSaved = !saved.has(video.id);
-
-      if (nowSaved) saved.add(video.id);
-      else saved.delete(video.id);
-
-      try {
-        localStorage.setItem(SAVED_KEY, JSON.stringify([...saved]));
-      } catch (error) {
-        // Private mode: saving is skipped silently.
-      }
-
-      syncSaveButtons(nowSaved);
-      toast(nowSaved ? "Saved to this device" : "Removed from saved");
-    }
-
-    async function shareCurrent() {
-      const video = byId(state.currentId);
-      if (!video) return;
-
-      const payload = { title: video.title, text: `${video.title} · ${SITE_NAME}`, url: video.url };
-
-      if (navigator.share) {
-        try {
-          await navigator.share(payload);
+      banner.hidden = true;
+      const items = state.view === "movies" ? MOVIES : state.view === "shorts" ? SHORTS : PINNED_FIRST;
+      const title = state.view === "library" ? "Full library" : state.view === "movies" ? "Movies" : "Shorts";
+      $("#catalogue-title").textContent = title;
+      if (state.query.trim()) {
+        const query = state.query.trim().toLowerCase();
+        const searchable = items.filter((video) => [video.title, video.creator, video.description, ...videoTags(video)].filter(Boolean).join(" ").toLowerCase().includes(query));
+        if (!searchable.length) {
+          empty.textContent = "No videos match your search.";
+          empty.hidden = false;
           return;
-        } catch (error) {
-          // User dismissed the sheet; fall through to copying.
         }
+        catalogueSection.hidden = false;
+        showPaginatedGrid($("#catalogue-grid"), searchable, { variant: state.view === "movies" ? "movie" : state.view === "shorts" ? "shorts" : "masonry", native: state.view === "movies" });
+        return;
       }
-
-      try {
-        await navigator.clipboard.writeText(video.url);
-        toast("Link copied");
-      } catch (error) {
-        toast("Copy the link from the address bar");
+      if (!items.length) {
+        empty.textContent = `No ${title.toLowerCase()} yet.`;
+        empty.hidden = false;
+        return;
       }
+      catalogueSection.hidden = false;
+      showPaginatedGrid($("#catalogue-grid"), items, { variant: state.view === "movies" ? "movie" : state.view === "shorts" ? "shorts" : "masonry", native: state.view === "movies" });
     }
 
     /* ================================================================
@@ -1756,29 +1166,6 @@
       });
     }
 
-    const socialIcons = {
-      youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.2 7.1a3 3 0 0 0-2.1-2.1C19.2 4.5 12 4.5 12 4.5s-7.2 0-9.1.5A3 3 0 0 0 .8 7.1 31 31 0 0 0 .3 12a31 31 0 0 0 .5 4.9 3 3 0 0 0 2.1 2.1c1.9.5 9.1.5 9.1.5s7.2 0 9.1-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.9 31 31 0 0 0-.5-4.9ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"></path></svg>',
-      instagram: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"></rect><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"></circle><circle cx="17.7" cy="6.6" r="1.1" stroke="none"></circle></svg>',
-      tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 8.2a7.7 7.7 0 0 1-4.5-1.5v7.1a6.4 6.4 0 1 1-5.5-6.3v3.7a2.8 2.8 0 1 0 1.9 2.6V2.8h3.6a4.8 4.8 0 0 0 4.5 4.3v1.1Z"></path></svg>',
-      x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 3H22l-6.8 7.8L23.2 21h-6.3L12 14.8 6.1 21H3l7.3-8.4L2.7 3h6.5l4.5 5.9L18.9 3Zm-1.1 16h1.7L8.2 4.9H6.4L17.8 19Z"></path></svg>',
-      facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4.1 1.5-4.1 4.2v2.3H7.7v3.1h2.7v8h3.2Z"></path></svg>'
-    };
-
-    function renderSocialLinks() {
-      const container = $("#social-links");
-      container.replaceChildren();
-      socialLinks.forEach((social) => {
-        const link = document.createElement("a");
-        link.className = "social-link";
-        link.href = social.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.setAttribute("aria-label", `${SITE_NAME} on ${social.name}`);
-        link.innerHTML = `${socialIcons[social.key] || ""}<span>${social.name}</span>`;
-        container.append(link);
-      });
-    }
-
     /* ================================================================
        NAV / SEARCH / MENU
        ================================================================ */
@@ -1793,51 +1180,68 @@
 
     function handleSearch(value) {
       state.query = value;
-      state.showAll = false;
       syncSearchInputs(value);
-      renderResults();
-
+      renderPage();
       clearTimeout(searchTimer);
       searchTimer = window.setTimeout(() => {
-        const resultSection = $("#results");
-        if (!state.query.trim() || !resultSection || resultSection.hidden) return;
-        // Only pull the results back into view if the visitor has scrolled past them.
-        const rect = resultSection.getBoundingClientRect();
-        if (rect.top < 0) {
-          window.scrollTo({ top: rect.top + window.scrollY - 96, behavior: "smooth" });
-        }
-      }, 450);
+        const section = state.view === "home" && state.chip === "All" && !state.query.trim()
+          ? $("#latest-section")
+          : state.view === "home" ? $("#filtered-section") : $("#catalogue-section");
+        if (!section || section.hidden) return;
+        const rect = section.getBoundingClientRect();
+        if (rect.top < 0) window.scrollTo({ top: rect.top + window.scrollY - 76, behavior: "smooth" });
+      }, 350);
     }
 
     function closeMenu() {
       const toggle = $(".menu-toggle");
-      const nav = $("#primary-nav");
-      if (!toggle || !nav) return;
+      const drawer = $("#site-drawer");
+      const overlay = $("#drawer-overlay");
+      if (!toggle || !drawer || !overlay) return;
       toggle.setAttribute("aria-expanded", "false");
-      toggle.setAttribute("aria-label", "Open navigation menu");
-      nav.classList.remove("is-open");
+      toggle.setAttribute("aria-label", "Open menu");
+      drawer.classList.remove("is-open");
+      drawer.setAttribute("aria-hidden", "true");
+      drawer.inert = true;
+      overlay.classList.remove("is-open");
+      document.body.classList.remove("drawer-open");
     }
 
     function setupMenu() {
       const toggle = $(".menu-toggle");
-      const nav = $("#primary-nav");
-      if (!toggle || !nav) return;
-
+      const drawer = $("#site-drawer");
+      const overlay = $("#drawer-overlay");
+      const open = () => {
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.setAttribute("aria-label", "Close menu");
+        drawer.classList.add("is-open");
+        drawer.setAttribute("aria-hidden", "false");
+        drawer.inert = false;
+        overlay.classList.add("is-open");
+        document.body.classList.add("drawer-open");
+      };
       toggle.addEventListener("click", () => {
-        const open = toggle.getAttribute("aria-expanded") === "true";
-        toggle.setAttribute("aria-expanded", String(!open));
-        toggle.setAttribute("aria-label", open ? "Open navigation menu" : "Close navigation menu");
-        nav.classList.toggle("is-open", !open);
+        if (toggle.getAttribute("aria-expanded") === "true") closeMenu();
+        else open();
       });
-
-      nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
-
+      $(".drawer-close").addEventListener("click", closeMenu);
+      overlay.addEventListener("click", closeMenu);
+      drawer.querySelectorAll("a[data-view-link], a[data-telegram]").forEach((link) => link.addEventListener("click", closeMenu));
+      drawer.addEventListener("click", (event) => {
+        const tagButton = event.target.closest("[data-drawer-tag]");
+        if (!tagButton) return;
+        event.preventDefault();
+        state.view = "home";
+        state.chip = tagButton.dataset.drawerTag;
+        state.query = "";
+        syncSearchInputs("");
+        history.replaceState(history.state, "", "/");
+        closeMenu();
+        renderPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeMenu();
-      });
-
-      window.addEventListener("resize", () => {
-        if (window.innerWidth >= 1140) closeMenu();
       });
     }
 
@@ -1859,28 +1263,12 @@
       });
     }
 
-    function scrollToSection(id) {
-      const section = document.getElementById(id);
-      if (!section) return;
-
-      // If a section is empty (or currently filtered away), open the full library instead.
-      if (section.hidden) {
-        state.showAll = true;
-        state.category = "All";
-        state.query = "";
-        syncSearchInputs("");
-        renderChips();
-        renderResults({ scroll: true });
-      }
-    }
-
     /* ================================================================
        EVENTS
        ================================================================ */
     function setupEvents() {
       document.addEventListener("click", (event) => {
         const target = event.target;
-
         const telegramLink = target.closest("[data-telegram]");
         if (telegramLink) {
           if (!telegramConfigured) {
@@ -1890,135 +1278,25 @@
           return;
         }
 
-        if (target.closest("[data-play]")) {
-          if (target.closest("[data-play]").tagName === "A") return;
-          const id = target.closest("[data-play]").dataset.play;
-          const video = byId(id);
-          if (video) {
-            event.preventDefault();
-            openWatch(video);
-          }
-          return;
-        }
-
-        const chip = target.closest("[data-cat]");
+        const chip = target.closest("[data-chip]");
         if (chip) {
-          state.category = chip.dataset.cat;
-          state.showAll = false;
-          renderChips();
-          renderResults({ scroll: true });
+          state.chip = chip.dataset.chip;
+          renderPage();
           return;
         }
 
-        if (target.closest("[data-show-all]")) {
-          state.category = "All";
-          state.showAll = true;
+        if (target.closest("[data-clear-filter]")) {
+          state.chip = "All";
           state.query = "";
           syncSearchInputs("");
-          renderChips();
-          renderResults({ scroll: true });
+          renderPage();
           return;
         }
-
-        if (target.closest("[data-clear]")) {
-          state.category = "All";
-          state.showAll = false;
-          state.query = "";
-          syncSearchInputs("");
-          renderChips();
-          renderResults();
-          return;
-        }
-
-        if (target.closest("[data-scroll-shorts]")) {
-          const row = $("#shorts-grid");
-          if (row) row.scrollBy({ left: Math.round(row.clientWidth * 0.8), behavior: "smooth" });
-          return;
-        }
-
-        if (target.closest("[data-hero-play]")) {
-          event.preventDefault();
-          openWatch(LAYOUT.featured);
-          return;
-        }
-
-        const action = target.closest("[data-act]");
-        if (action && action.dataset.act === "save") {
-          event.preventDefault();
-          toggleSave();
-          return;
-        }
-        if (action && action.dataset.act === "share") {
-          event.preventDefault();
-          shareCurrent();
-          return;
-        }
-
-        if (target.closest(".media-card") && !target.closest("a")) {
-          const card = target.closest(".media-card");
-          const button = card.querySelector("[data-play]");
-          const video = button ? byId(button.dataset.play) : null;
-          if (video) openWatch(video);
-        }
-      });
-
-      document.querySelectorAll("[data-nav]").forEach((link) => {
-        link.addEventListener("click", (event) => {
-          const id = link.getAttribute("href").slice(1);
-          closeMenu();
-          setActiveNav(id);
-          if (id === "top") return;
-          event.preventDefault();
-          const section = document.getElementById(id);
-          if (!section) return;
-          if (section.hidden) {
-            scrollToSection(id);
-          } else {
-            section.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        });
       });
     }
 
-    /* ---- active nav pill / tab -------------------------------------
-       The header pills and the mobile tab bar both use data-nav, so one
-       observer keeps the two in step with whatever section is on screen. */
-    function setActiveNav(id) {
-      document.querySelectorAll("[data-nav]").forEach((link) => {
-        const on = link.getAttribute("href") === `#${id}`;
-        link.classList.toggle("is-active", on);
-        if (on) link.setAttribute("aria-current", "page");
-        else link.removeAttribute("aria-current");
-      });
-    }
-
-    (function watchActiveNav() {
-      const targets = ["top", "trending", "shorts", "feed", "follow"]
-        .map((id) => document.getElementById(id))
-        .filter(Boolean);
-      if (!("IntersectionObserver" in window) || !targets.length) return;
-
-      const ratios = new Map();
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            ratios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
-          });
-          let best = "";
-          let bestRatio = 0;
-          ratios.forEach((ratio, id) => {
-            if (ratio > bestRatio) {
-              bestRatio = ratio;
-              best = id;
-            }
-          });
-          if (best) setActiveNav(best);
-        },
-        { rootMargin: "-90px 0px -55% 0px", threshold: [0.15, 0.4, 0.75] }
-      );
-
-      targets.forEach((node) => observer.observe(node));
-    })();
+    /* Top navigation and mobile tabs share the current type-filtered view. */
+    setActiveView(state.view);
 
     /* ================================================================
        THEME (dark default, saved choice, device preference on first visit)
@@ -2113,43 +1391,35 @@
       document.querySelector('meta[name="author"]')?.setAttribute("content", SITE_NAME);
       document.querySelector('meta[name="description"]')?.setAttribute(
         "content",
-        `${SITE_NAME} is a sleek home for curated video entertainment, featured releases, and exclusive picks.`
+        `${SITE_NAME} is a home for curated Movies, Shorts, and video picks.`
       );
       document.querySelector('meta[property="og:site_name"]')?.setAttribute("content", SITE_NAME);
       document.querySelector('meta[property="og:title"]')?.setAttribute("content", `${SITE_NAME}${suffix}`);
       document.querySelector('meta[property="og:description"]')?.setAttribute(
         "content",
-        `Discover featured releases and the latest video picks at ${SITE_NAME}.`
+        `Explore Movies, Shorts, and the latest videos at ${SITE_NAME}.`
       );
       document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", `${SITE_NAME}${suffix}`);
       document.querySelector('meta[name="twitter:description"]')?.setAttribute(
         "content",
-        `Discover featured releases and the latest video picks at ${SITE_NAME}.`
+        `Explore Movies, Shorts, and the latest videos at ${SITE_NAME}.`
       );
 
       const brandLink = $(".brand");
       brandLink?.setAttribute("aria-label", `${SITE_NAME} home`);
-      $("#social-links")?.setAttribute("aria-label", `${SITE_NAME} social media links`);
       const year = $("#current-year");
       if (year) year.textContent = String(new Date().getFullYear());
     }
 
     syncBranding();
     setupTheme();
-    renderFeatured();
-    renderUpNext();
-    renderChips();
-    renderSections();
-    mountBannerAd();
-    renderSocialLinks();
+    renderDrawerCategories();
     applyTelegramLinks();
     setupMenu();
     setupSearch();
     setupEvents();
-    renderResults();
+    renderPage();
 
-    // Fills in any hero duration discovered after the first metadata event.
-    window.addEventListener("load", refreshHeroStats);
   </script>
 </body>
 </html>

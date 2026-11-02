@@ -18,11 +18,20 @@
     return 0;
   }
 
+  function isShort(value) {
+    const duration = seconds(value);
+    return duration > 0 && duration <= 60;
+  }
+
   root.VideoRules = Object.freeze({
     seconds,
-    isShort(value) {
-      const duration = seconds(value);
-      return duration > 0 && duration <= 60;
+    isShort,
+    isMovie(value) {
+      // Unknown duration intentionally falls into Movies, never into Shorts.
+      return !isShort(value);
+    },
+    kind(value) {
+      return isShort(value) ? "short" : "movie";
     }
   });
 })(window);

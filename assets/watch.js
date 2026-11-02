@@ -508,12 +508,6 @@ function watchUrl(video) {
   return `/watch?v=${encodeURIComponent(key)}`;
 }
 
-function cardMetaText(video) {
-  return [video.creator, video.views ? `${video.views} views` : "", video.posted]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 function createCard(video, index) {
   const card = document.createElement("article");
   card.className = "media-card masonry-card";
@@ -521,7 +515,7 @@ function createCard(video, index) {
   const poster = document.createElement("div");
   poster.className = "poster poster--masonry";
   poster.style.setProperty("--tone", tone(index));
-  poster.style.setProperty("--ar", String(video.ratio || (isShort(video) ? 9 / 16 : 16 / 9)));
+  poster.style.setProperty("--ar", String(video.ratio || (video.orientation === "vertical" ? 9 / 16 : 16 / 9)));
 
   const button = document.createElement("a");
   button.className = "poster__btn";
@@ -531,7 +525,7 @@ function createCard(video, index) {
     '<span class="poster__art" aria-hidden="true"></span>',
     '<span class="poster__shade" aria-hidden="true"></span>',
     isShort(video) ? '<span class="poster__short">Short</span>' : "",
-    `<span class="poster__dur" ${video.duration ? "" : "hidden"}>${esc(video.duration || "")}</span>`,
+    `<span class="poster__dur">${esc(video.duration || (video.durationSeconds ? formatDuration(video.durationSeconds) : "—"))}</span>`,
     `<span class="poster__play" aria-hidden="true">${svg("play", "icon icon--fill")}</span>`
   ].join("");
   poster.append(button);
@@ -581,7 +575,7 @@ function createCard(video, index) {
   body.innerHTML = [
     '<div class="card__text">',
     `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
-    cardMetaText(video) ? `<p class="card__meta">${esc(cardMetaText(video))}</p>` : "",
+    `<p class="card__meta">${esc(video.views || "0")} views</p>`,
     "</div>"
   ].join("");
 
