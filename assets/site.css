@@ -2296,28 +2296,36 @@
   z-index: 71;
   inset: 0 auto 0 0;
   display: flex;
-  width: min(88vw, 360px);
+  width: clamp(176px, 44vw, 300px);
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   overflow-y: auto;
-  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  padding: max(0.8rem, env(safe-area-inset-top)) 0.5rem max(0.8rem, env(safe-area-inset-bottom));
   border-right: 1px solid var(--line-strong);
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   transform: translateX(-105%);
-  transition: transform 240ms cubic-bezier(.2,.75,.2,1);
+  transition: transform 250ms cubic-bezier(.2,.75,.2,1);
   pointer-events: none;
 }
 .nav-drawer.is-open { transform: translateX(0); pointer-events: auto; }
 .drawer-open { overflow: hidden; }
-.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--line); }
-.drawer-head .brand-logo { --logo-h: 27px; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
+/* Just the icon mark, never the wide wordmark. */
+.drawer-mark { display: flex; flex: 0 0 auto; align-items: center; }
+.drawer-mark img { display: block; width: 34px; height: 34px; object-fit: contain; }
+/* Small X visually, with a 44px hit area around it. */
+.nav-drawer .drawer-close { position: relative; width: 32px; height: 32px; }
+.nav-drawer .drawer-close::after { content: ""; position: absolute; inset: -6px; }
+.nav-drawer .drawer-close .icon { width: 16px; height: 16px; }
 .drawer-links, .drawer-categories { display: grid; gap: 0.25rem; }
 .drawer-links a, .drawer-categories button {
   display: flex;
-  min-height: 42px;
+  min-width: 0;
+  min-height: 44px;
   align-items: center;
-  padding: 0.65rem 0.8rem;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -2330,6 +2338,7 @@
 }
 .drawer-links a:hover, .drawer-categories button:hover { background: var(--tint); color: var(--text); }
 .drawer-links a.is-active { background: var(--rose-soft); color: var(--rose-200); }
+.drawer-links a.is-active .drawer-icon { color: var(--accent); }
 .drawer-title { margin: 0.25rem 0 -0.55rem; color: var(--quiet); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 .drawer-telegram, .footer-telegram {
   display: inline-flex;
@@ -2368,11 +2377,12 @@
 .drawer-categories-toggle {
   display: flex;
   width: 100%;
-  min-height: 42px;
+  min-width: 0;
+  min-height: 44px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.5rem;
-  padding: 0.65rem 0.8rem;
+  padding: 0.55rem 0.6rem;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -2385,8 +2395,9 @@
 }
 .drawer-categories-toggle:hover { background: var(--tint); color: var(--text); }
 .drawer-categories-chevron {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
   flex: 0 0 auto;
   transition: transform 240ms ease;
 }
@@ -2419,23 +2430,30 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.7rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.35rem;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--panel-bg);
 }
 .drawer-categories-search__icon { display: grid; place-items: center; color: var(--quiet); }
-.drawer-categories-search__icon .icon { width: 16px; height: 16px; }
+.drawer-categories-search__icon .icon { width: 14px; height: 14px; }
 .drawer-categories-search input {
   width: 100%;
+  min-width: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
   font-size: 13px;
+  text-overflow: ellipsis;
   outline: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
+/* The UA search decoration reserves space on a 176px drawer. */
+.drawer-categories-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .drawer-categories-search input::placeholder { color: var(--quiet); }
 .drawer-categories-list {
   display: grid;
@@ -2444,8 +2462,76 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.drawer-categories-empty { margin: 0; padding: 0.65rem 0.8rem; color: var(--quiet); font-size: 13px; }
+.drawer-categories-empty {
+  margin: 0;
+  overflow: hidden;
+  padding: 0.55rem 0.6rem;
+  color: var(--quiet);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .drawer-categories-panel, .drawer-categories-chevron { transition-duration: 0.01ms; }
+}
+
+/* ============ DRAWER RESTYLE: labels, Telegram pill, one-shot icon spin ============ */
+/* Every label stays on one line and truncates instead of wrapping or clipping. */
+.drawer-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Compact, content-sized Telegram pill pinned to the bottom of the drawer,
+   left-aligned with the rows above it. --tg is the site's #229ED9 blue. */
+.nav-drawer .drawer-telegram {
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--tg); /* #229ED9 */
+  color: #FFFFFF;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.nav-drawer .drawer-telegram:hover { background: var(--tg-hover); color: #FFFFFF; }
+.nav-drawer .drawer-telegram .icon { width: 16px; height: 16px; color: #FFFFFF; }
+.nav-drawer .drawer-telegram .drawer-label { flex: 0 1 auto; }
+
+/* One quick 0 -> 360 spin per icon when the drawer opens, staggered top to
+   bottom by --icon-step (set on each row). Only transform/opacity animate. */
+@keyframes drawer-icon-spin {
+  from { transform: rotate(0deg); opacity: 0; }
+  to { transform: rotate(360deg); opacity: 1; }
+}
+@keyframes drawer-icon-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.nav-drawer.is-open .drawer-icon {
+  animation-name: drawer-icon-spin;
+  animation-duration: 450ms;
+  animation-timing-function: ease-out;
+  animation-delay: calc(var(--icon-step, 0) * 40ms);
+  animation-iteration-count: 1;
+  animation-fill-mode: backwards;
+}
+/* Present only while the spin runs; the component drops .is-animating on
+   animationend so no will-change hint is left behind. */
+.nav-drawer.is-animating .drawer-icon { will-change: transform, opacity; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer.is-open .drawer-icon {
+    animation-name: drawer-icon-fade;
+    animation-duration: 200ms;
+  }
 }
