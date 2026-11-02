@@ -70,6 +70,7 @@
 
   <link rel="stylesheet" href="/assets/preloader.css">
   <script src="/assets/video-rules.js"></script>
+  <script defer src="/assets/site-nav.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body class="home-page">
@@ -82,57 +83,9 @@
   <div class="ambient" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- ================= SLIM TOP BAR ================= -->
-  <header class="site-header">
-    <div class="shell nav-shell">
-      <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-drawer">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
-      </button>
-      <a class="brand" href="/" aria-label="BootyMansion home">
-        <span class="brand-logo" role="img" aria-label="BootyMansion"></span>
-      </a>
-      <label class="search search--desktop" for="search-input">
-        <span class="search__icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg></span>
-        <input id="search-input" type="search" placeholder="Search videos…" autocomplete="off" spellcheck="false" aria-label="Search videos">
-      </label>
-      <button class="icon-btn search-toggle" type="button" aria-label="Open search" aria-expanded="false" aria-controls="search-mobile">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg>
-      </button>
-      <button class="icon-btn theme-toggle" type="button" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode">
-        <svg class="icon theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l1.6 1.6"></path></svg>
-        <svg class="icon theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.4A8.6 8.6 0 0 1 9.6 3.4a8.6 8.6 0 1 0 11 11Z"></path></svg>
-      </button>
-      <a class="btn btn-telegram-nav btn-telegram-icon" data-telegram href="#telegram" aria-label="Open Telegram" title="Telegram">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-      </a>
-    </div>
-    <div class="shell search-mobile" id="search-mobile" hidden>
-      <label class="search" for="search-input-mobile">
-        <span class="search__icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg></span>
-        <input id="search-input-mobile" type="search" placeholder="Search videos…" autocomplete="off" spellcheck="false" aria-label="Search videos">
-      </label>
-    </div>
-  </header>
-
-  <div class="drawer-overlay" id="drawer-overlay"></div>
-  <aside class="nav-drawer" id="site-drawer" aria-label="Main menu" aria-hidden="true" inert>
-    <div class="drawer-head">
-      <a class="brand" href="/" aria-label="BootyMansion home"><span class="brand-logo" role="img" aria-label="BootyMansion"></span></a>
-      <button class="icon-btn drawer-close" type="button" aria-label="Close menu"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-    </div>
-    <nav class="drawer-links" aria-label="Main navigation">
-      <a href="/" data-view-link="home">Home</a>
-      <a href="/?view=shorts" data-view-link="shorts">Shorts</a>
-      <a href="/?view=movies" data-view-link="movies">Movies</a>
-      <a href="/?view=library" data-view-link="library">Library</a>
-    </nav>
-    <h2 class="drawer-title">Categories</h2>
-    <nav class="drawer-categories" id="drawer-categories" aria-label="Video categories"></nav>
-    <a class="drawer-telegram" data-telegram href="#telegram">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-      Telegram
-    </a>
-  </aside>
+  <!-- ================= SHARED HEADER + DRAWER ================= -->
+  <!-- assets/site-nav.js builds the header, overlay and drawer on every page. -->
+  <div id="site-nav-root" data-nav-extras="home"></div>
 
   <!-- Categories are generated from the tags on the catalogue. -->
   <div class="shell chips-shell" hidden>
@@ -560,13 +513,15 @@
     const SHORTS = PINNED_FIRST.filter(isShort);
     const HOME_LATEST = MOVIES.length ? MOVIES : PINNED_FIRST;
 
-    const requestedView = new URLSearchParams(window.location.search).get("view");
+    const pageParams = new URLSearchParams(window.location.search);
+    const requestedView = pageParams.get("view");
     const validViews = new Set(["home", "movies", "shorts", "library"]);
     const view = validViews.has(requestedView) ? requestedView : "home";
 
+    /* A category link from the shared drawer lands here as ?category=<tag>. */
     const state = {
       view,
-      chip: "All",
+      chip: clean(pageParams.get("category")) || "All",
       query: ""
     };
 
@@ -999,21 +954,6 @@
       });
     }
 
-    function renderDrawerCategories() {
-      const list = $("#drawer-categories");
-      const title = $(".drawer-title");
-      list.replaceChildren();
-      list.hidden = categories.length === 0;
-      if (title) title.hidden = categories.length === 0;
-      categories.forEach((tag) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.dataset.drawerTag = tag;
-        button.textContent = tag;
-        list.append(button);
-      });
-    }
-
     function setGridVariant(grid, variant) {
       grid.classList.toggle("grid-latest", variant === "movie");
       grid.classList.toggle("grid-shorts", variant === "shorts");
@@ -1193,58 +1133,6 @@
       }, 350);
     }
 
-    function closeMenu() {
-      const toggle = $(".menu-toggle");
-      const drawer = $("#site-drawer");
-      const overlay = $("#drawer-overlay");
-      if (!toggle || !drawer || !overlay) return;
-      toggle.setAttribute("aria-expanded", "false");
-      toggle.setAttribute("aria-label", "Open menu");
-      drawer.classList.remove("is-open");
-      drawer.setAttribute("aria-hidden", "true");
-      drawer.inert = true;
-      overlay.classList.remove("is-open");
-      document.body.classList.remove("drawer-open");
-    }
-
-    function setupMenu() {
-      const toggle = $(".menu-toggle");
-      const drawer = $("#site-drawer");
-      const overlay = $("#drawer-overlay");
-      const open = () => {
-        toggle.setAttribute("aria-expanded", "true");
-        toggle.setAttribute("aria-label", "Close menu");
-        drawer.classList.add("is-open");
-        drawer.setAttribute("aria-hidden", "false");
-        drawer.inert = false;
-        overlay.classList.add("is-open");
-        document.body.classList.add("drawer-open");
-      };
-      toggle.addEventListener("click", () => {
-        if (toggle.getAttribute("aria-expanded") === "true") closeMenu();
-        else open();
-      });
-      $(".drawer-close").addEventListener("click", closeMenu);
-      overlay.addEventListener("click", closeMenu);
-      drawer.querySelectorAll("a[data-view-link], a[data-telegram]").forEach((link) => link.addEventListener("click", closeMenu));
-      drawer.addEventListener("click", (event) => {
-        const tagButton = event.target.closest("[data-drawer-tag]");
-        if (!tagButton) return;
-        event.preventDefault();
-        state.view = "home";
-        state.chip = tagButton.dataset.drawerTag;
-        state.query = "";
-        syncSearchInputs("");
-        history.replaceState(history.state, "", "/");
-        closeMenu();
-        renderPage();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeMenu();
-      });
-    }
-
     function setupSearch() {
       $("#search-input")?.addEventListener("input", (event) => handleSearch(event.target.value));
       $("#search-input-mobile")?.addEventListener("input", (event) => handleSearch(event.target.value));
@@ -1354,7 +1242,7 @@
         button.addEventListener("click", () => {
           const next = themeRoot.getAttribute("data-theme") === "light" ? "dark" : "light";
           applyTheme(next, { persist: true, animate: true });
-          closeMenu();
+          window.SiteNav?.close();
         });
       });
 
@@ -1413,9 +1301,8 @@
 
     syncBranding();
     setupTheme();
-    renderDrawerCategories();
+    window.SiteNav?.setCategories(categories);
     applyTelegramLinks();
-    setupMenu();
     setupSearch();
     setupEvents();
     renderPage();
