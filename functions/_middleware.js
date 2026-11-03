@@ -6,6 +6,8 @@
    failed (500)". Now a configuration problem comes back as 503 JSON naming the
    exact missing piece, so the login screen can say what to fix.                */
 
+import { injectWatchMeta, watchMeta, watchHtmlResponse } from "./_lib/watch-meta.js";
+
 const MAX_DETAIL = 300;
 
 function cleanDetail(value) {
@@ -73,6 +75,35 @@ export async function onRequest(context) {
   }
   if (path.startsWith("/api/")) {
     headers.set("x-robots-tag", "noindex");
+  }
+
+  /* The watch URL must always be a page, never a download. The dedicated
+     watch Function also removes this header; this is the belt-and-braces
+     path for deployments where only the middleware matches /watch/. */
+  const isWatch = path === "/watch" || path.startsWith("/watch/");
+  if (isWatch) {
+    headers.delete("content-disposition");
+
+    /* If the dedicated watch Function did not run (route matching differs
+       between Pages projects), inject the social preview tags here as a
+       fallback. injectWatchMeta is idempotent, so running it in both places
+       is harmless. */
+    const id = String(new URL(context.request.url).searchParams.get("v") || "").trim();
+    const contentType = String(response.headers.get("content-type") || "");
+    if (id && response.status === 200 && contentType.includes("text/html")) {
+      try {
+        const html = await response.text();
+        // If the dedicated watch Function already ran, its og:url tag is
+        // present — reuse its work instead of querying D1 a second time.
+        if (!/<meta\s+property="og:url"/i.test(html)) {
+          const meta = await watchMeta(context.env, new URL(context.request.url).origin, id);
+          return watchHtmlResponse(injectWatchMeta(html, meta), response);
+        }
+        return watchHtmlResponse(html, response);
+      } catch (error) {
+        return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+      }
+    }
   }
 
   return new Response(response.body, {
