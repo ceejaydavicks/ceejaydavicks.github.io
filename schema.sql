@@ -36,6 +36,18 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE INDEX IF NOT EXISTS videos_order_idx
   ON videos (featured DESC, pinned DESC, created_at DESC);
 
+-- Public feed queries (pinned first, newest first, 24 rows per page).
+-- A plain created_at DESC sort uses this index; wrapping the column in
+-- datetime() would force a full scan + sort on every request.
+CREATE INDEX IF NOT EXISTS videos_feed_idx
+  ON videos (featured DESC, pinned DESC, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC);
+
+-- Shorts/Movies filtering, pinned lookups and category/tag filtering.
+CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds);
+CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured);
+CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag);
+
 -- One Telegram message may only ever produce one row (webhook retries).
 CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx
   ON videos (tg_chat, tg_message_id);

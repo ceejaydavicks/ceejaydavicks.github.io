@@ -279,13 +279,18 @@
         }
       }
 
-      const [videosResult, settingsResult] = await Promise.allSettled([
-        fetchJson("/api/videos"),
-        fetchJson("/api/settings")
-      ]);
+      /* Reuse the page's single in-flight catalogue load. The home and watch
+         pages used to issue this pair of requests a second time just for the
+         category drawer; now all three consumers share one cached load. */
+      const shared = window.Catalogue;
+      const [videosResult, settingsResult] = shared
+        ? await Promise.allSettled([shared.load(), shared.settings()])
+        : await Promise.allSettled([fetchJson("/api/videos"), fetchJson("/api/settings")]);
 
       if (settingsResult.status === "fulfilled") {
-        const settings = settingsResult.value && settingsResult.value.settings;
+        const settings = shared
+          ? settingsResult.value
+          : (settingsResult.value && settingsResult.value.settings);
         if (settings) window.SiteNav.setTelegramUrl(settings.telegramUrl);
       }
 

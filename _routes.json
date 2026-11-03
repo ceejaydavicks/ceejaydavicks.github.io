@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/favicon-32.png",
+    "/favicon-64.png",
+    "/favicon-192.png",
+    "/apple-touch-icon.png",
+    "/embed-placeholder.webp",
+    "/videos.js"
+  ]
+}

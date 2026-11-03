@@ -53,11 +53,13 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600&display=swap" rel="stylesheet">
 
   <!-- The same stylesheet as the home page, so a card looks the same here. -->
   <link rel="stylesheet" href="/assets/preloader.css">
-  <script src="/assets/video-rules.js"></script>
+  <script defer src="/assets/catalogue.js"></script>
+  <script defer src="/assets/video-rules.js"></script>
   <script defer src="/assets/site-nav.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
   <link rel="stylesheet" href="/assets/watch.css">
@@ -72,6 +74,20 @@
   <div id="site-nav-root"></div>
 
   <main id="main" class="shell watch">
+    <!-- Static placeholders so a slow catalogue request never shows an empty page. -->
+    <div class="feed-skeleton" id="watch-skeleton" aria-hidden="true">
+      <div class="skeleton-poster skeleton-poster--wide"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-grid">
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div></div>
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div></div>
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div></div>
+      </div>
+    </div>
+    <div class="feed-error" id="watch-error" hidden>
+      <button class="btn btn-accent" type="button" id="retry-watch">Couldn't load videos. Tap to retry</button>
+    </div>
     <div class="watch__player-wrap">
       <div class="video-frame watch__player" id="watch-player"></div>
     </div>

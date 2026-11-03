@@ -54,11 +54,11 @@
   <meta name="twitter:title" content="BootyMansion | Curated Video Entertainment">
   <meta name="twitter:description" content="Explore Movies, Shorts, and the latest videos at BootyMansion.">
 
-  <!-- One remote font request, swap-in so text never waits on it. Falls back to system fonts offline. -->
+  <!-- One remote font request, swap-in so text never waits on it. Falls back to system fonts offline.
+       Preloaded because the header + section headings are above the fold. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600&display=swap" rel="stylesheet">
 
   <!-- ============================================================
@@ -69,7 +69,10 @@
        ============================================================ -->
 
   <link rel="stylesheet" href="/assets/preloader.css">
-  <script src="/assets/video-rules.js"></script>
+  <!-- Deferred so none of them block parsing. catalogue.js must come first:
+       the shared nav and the page module both reuse its single in-flight load. -->
+  <script defer src="/assets/catalogue.js"></script>
+  <script defer src="/assets/video-rules.js"></script>
   <script defer src="/assets/site-nav.js"></script>
   <link rel="stylesheet" href="/assets/site.css">
 </head>
@@ -94,6 +97,27 @@
 
   <!-- ================= CONTENT-FIRST VIDEO FEED ================= -->
   <main id="main" class="shell site-main">
+    <!-- Static placeholders: visible from the very first paint, with no JS.
+         They are hidden as soon as the catalogue renders (or an error shows),
+         so a slow or failed request can never leave an empty page. -->
+    <div class="feed-skeleton" id="feed-skeleton" aria-hidden="true">
+      <div class="skeleton-chips">
+        <span class="skeleton-chip"></span><span class="skeleton-chip"></span>
+        <span class="skeleton-chip"></span><span class="skeleton-chip"></span>
+      </div>
+      <div class="skeleton-heading"></div>
+      <div class="skeleton-grid">
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card"><div class="skeleton-poster"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+      </div>
+    </div>
+
+    <div class="feed-error" id="feed-error" hidden>
+      <button class="btn btn-accent" type="button" id="retry-catalogue">Couldn't load videos. Tap to retry</button>
+    </div>
+
     <section class="section home-section" id="shorts-section" aria-labelledby="shorts-title" hidden>
       <div class="section-head compact-section-head">
         <h1 id="shorts-title">Shorts</h1>
@@ -251,65 +275,44 @@
     /* ================================================================
        VIDEO DATA — served by /api/videos (D1, managed from /admin)
        ================================================================ */
-    const API_TIMEOUT = 7000;
-
     /* ================================================================
        ONE CATALOGUE
        ================================================================
-       /api/videos returns every video the site knows about: the ones added
-       in /admin and the ones published through the Telegram bot (the bot's
-       own catalogue is mirrored into the same database on the server, so
-       the admin panel and this page always read the same rows).
+       /api/videos is edge-cached and paginated (24 lean rows per response).
+       assets/catalogue.js owns the fetch: 8s timeout, 3 attempts, parallel
+       pages, dedupe and a session cache shared with the watch page. The
+       shuffle still happens here in the browser, so cached data is fine.
        ================================================================ */
 
-    async function fetchJson(url) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), API_TIMEOUT);
-      try {
-        const response = await fetch(url, {
-          headers: { accept: "application/json" },
-          credentials: "same-origin",
-          cache: "no-store",
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error(`${url} responded ${response.status}`);
-        return await response.json();
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-
     let rawVideos = [];
-    let apiLive = false;
     let siteSettings = null;
+    let loadError = false;
+    // True for lean API rows (which need mapping), false for bundled samples.
+    let apiLive = false;
 
-    // Both calls run in parallel; one failing never blocks the other.
-    const [videosResult, settingsResult] = await Promise.allSettled([
-      fetchJson("/api/videos"),
-      fetchJson("/api/settings")
-    ]);
-
-    if (videosResult.status === "fulfilled") {
-      const payload = videosResult.value || {};
-      rawVideos = Array.isArray(payload.videos) ? payload.videos : [];
-      apiLive = true;
+    if (window.Catalogue) {
+      try {
+        // Settings fail soft; the catalogue is the one load that must succeed.
+        const [catalogue, settings] = await Promise.all([
+          window.Catalogue.load(),
+          window.Catalogue.settings()
+        ]);
+        rawVideos = Array.isArray(catalogue.videos) ? catalogue.videos : [];
+        siteSettings = settings || null;
+        apiLive = true;
+      } catch (error) {
+        loadError = true;
+        console.warn("Video catalogue unavailable after retries.", error);
+        try { siteSettings = await window.Catalogue.settings(); } catch (ignored) { /* decorative */ }
+      }
     } else {
-      console.warn("Video API unavailable — falling back to the bundled samples.", videosResult.reason);
-    }
-
-    if (settingsResult.status === "fulfilled") {
-      siteSettings = (settingsResult.value && settingsResult.value.settings) || null;
-    }
-
-    // Without a backend (GitHub Pages, a static preview) the bundled samples keep
-    // the layout working. When the API *is* live but empty we show the empty
-    // state, never fake cards.
-    if (!apiLive) {
+      // The shared loader itself is missing (e.g. a broken static deploy).
+      // The bundled samples keep a legible page instead of a blank one.
       try {
         ({ videos: rawVideos } = await import("./videos.js"));
       } catch (error) {
         console.warn("videos.js could not be loaded:", error);
-        rawVideos = [];
+        loadError = true;
       }
     }
 
@@ -419,7 +422,9 @@
 
       const title = clean(video.title);
       const { originalUrl, directUrl } = getVideoUrls(video.url);
-      if (!title || (!originalUrl && !directUrl)) return null;
+      /* The lean list has no playable URL — cards link by id and the watch
+         page fetches /api/videos/:id for the one video it has to play. */
+      if (!title) return null;
 
       const embedUrl = typeof video.embed === "string" && /^https?:\/\//i.test(video.embed)
         ? video.embed
@@ -743,93 +748,54 @@
     }
 
     /* ================================================================
-       THUMBNAILS (poster frame, lazy + data-saver aware)
+       THUMBNAILS — small, lazy images only
+       ----------------------------------------------------------------
+       Cards never load a video file. Previously every card without a poster
+       appended a hidden <video preload="metadata"> that fetched the actual
+       clip: dozens of media requests, megabytes of traffic, and a stalled
+       window.load (which is what kept the preloader on screen). A generated
+       placeholder is written when a video is saved instead.
        ================================================================ */
-    const saveData = () => Boolean(navigator.connection && navigator.connection.saveData);
+    const CARD_PLACEHOLDER = "/assets/embed-placeholder.webp";
 
-    const frameObserver = "IntersectionObserver" in window
-      ? new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) return;
-            frameObserver.unobserve(entry.target);
-            loadFirstFrame(entry.target);
-          });
-        }, { rootMargin: "320px 0px" })
-      : null;
+    /* R2 posters can have a pre-generated 480px WebP variant; the media route
+       falls back to the original when there isn't one. */
+    function cardThumb(url) {
+      const value = clean(url) || CARD_PLACEHOLDER;
+      if (value.indexOf("/api/media/thumbs/") !== 0) return value;
+      return value + (value.includes("?") ? "&w=480" : "?w=480");
+    }
 
     function markReady(posterNode) {
       if (!posterNode) return;
       posterNode.classList.add("has-media");
     }
 
-    function loadFirstFrame(media) {
-      const video = media.querySelector?.("video[data-src]");
-      if (video) {
-        video.src = video.dataset.src;
-        delete video.dataset.src;
-      }
-    }
-
-    function watchFrame(media, eager) {
-      if (eager || !frameObserver) loadFirstFrame(media);
-      else frameObserver.observe(media);
-    }
-
     function attachMedia(posterButton, video, { eager = false } = {}) {
       const posterNode = posterButton.closest(".poster");
       if (!posterNode) return;
 
-      if (video.thumb) {
-        const image = document.createElement("img");
-        image.className = "poster__media";
-        image.alt = "";
-        image.decoding = "async";
-        image.loading = eager ? "eager" : "lazy";
-        if (eager) image.fetchPriority = "high";
-        image.src = video.thumb;
-        image.addEventListener("load", () => {
-          applyNaturalRatio(posterNode, video, image.naturalWidth, image.naturalHeight);
-          markReady(posterNode);
-        }, { once: true });
-        image.addEventListener("error", () => {
-          image.remove();
-          addFrameVideo(posterButton, video, eager);
-        }, { once: true });
-        posterButton.append(image);
-        return;
-      }
-
-      addFrameVideo(posterButton, video, eager);
-    }
-
-    function addFrameVideo(posterButton, video, eager) {
-      const posterNode = posterButton.closest(".poster");
-      if (!posterNode || !video.directUrl) return;
-
-      // On metered connections the gradient artwork stands in for the frame.
-      if (saveData() && !eager) return;
-
-      const frame = document.createElement("video");
-      frame.className = "poster__media";
-      frame.muted = true;
-      frame.defaultMuted = true;
-      frame.playsInline = true;
-      frame.preload = "metadata";
-      frame.tabIndex = -1;
-      frame.setAttribute("aria-hidden", "true");
-      frame.dataset.src = `${video.directUrl}#t=1`;
-      posterButton.append(frame);
-
-      const ready = () => markReady(posterNode);
-      frame.addEventListener("loadeddata", ready, { once: true });
-      frame.addEventListener("seeked", ready, { once: true });
-      frame.addEventListener("loadedmetadata", () => {
-        applyNaturalRatio(posterNode, video, frame.videoWidth, frame.videoHeight);
-        if (frame.duration > 0.6) frame.currentTime = 0.5;
+      const image = document.createElement("img");
+      image.className = "poster__media";
+      image.alt = "";
+      image.decoding = "async";
+      image.loading = eager ? "eager" : "lazy";
+      // Explicit intrinsic size stops layout shift while the image loads.
+      const ratio = Number(video.ratio) || (isShort(video) ? 9 / 16 : 16 / 9);
+      image.width = 480;
+      image.height = Math.max(1, Math.round(480 / ratio));
+      // Only the first few visible cards get high priority.
+      if (eager) image.fetchPriority = "high";
+      image.src = cardThumb(video.thumb);
+      image.addEventListener("load", () => {
+        applyNaturalRatio(posterNode, video, image.naturalWidth, image.naturalHeight);
+        markReady(posterNode);
       }, { once: true });
-      frame.addEventListener("error", () => frame.remove(), { once: true });
-
-      watchFrame(posterButton, eager);
+      image.addEventListener("error", () => {
+        if (image.src.endsWith(CARD_PLACEHOLDER)) { image.remove(); return; }
+        image.src = CARD_PLACEHOLDER;
+      }, { once: true });
+      posterButton.append(image);
     }
 
     /* ================================================================
@@ -846,6 +812,7 @@
       const link = document.createElement("a");
       link.className = "poster__btn";
       link.href = watchUrl(video);
+      link.dataset.videoId = String(video.id || "");
       link.setAttribute("aria-label", `Watch ${video.title}`);
       link.innerHTML = [
         '<span class="poster__art" aria-hidden="true"></span>',
@@ -868,7 +835,7 @@
       const body = document.createElement("div");
       body.className = "card__body";
       body.innerHTML = [
-        `<h3 class="card__title"><a href="${esc(watchUrl(video))}">${esc(video.title)}</a></h3>`,
+        `<h3 class="card__title"><a href="${esc(watchUrl(video))}" data-video-id="${esc(video.id)}">${esc(video.title)}</a></h3>`,
         `<p class="card__meta">${esc(video.views || "0")} views</p>`
       ].join("");
       card.append(body);
@@ -1521,13 +1488,70 @@
       if (year) year.textContent = String(new Date().getFullYear());
     }
 
+    /* The page must never be left blank or stuck behind the preloader, on
+       either the success or the failure path. */
+    function ensurePageVisible() {
+      const skeleton = $("#feed-skeleton");
+      if (skeleton) skeleton.hidden = true;
+      const preloader = $("#preloader");
+      if (preloader) preloader.classList.add("is-done");
+    }
+
+    function showFeedError() {
+      const panel = $("#feed-error");
+      if (panel) panel.hidden = false;
+      const button = $("#retry-catalogue");
+      button?.addEventListener("click", () => {
+        window.Catalogue?.clear();
+        window.location.reload();
+      }, { once: true });
+    }
+
+    function setupCardPrefetch() {
+      if (!window.Catalogue) return;
+      const warm = (event) => {
+        const node = event.target.closest?.("[data-video-id]");
+        const id = node && node.dataset.videoId;
+        if (id) window.Catalogue.prefetch(id);
+      };
+      document.addEventListener("pointerover", warm, { passive: true });
+      document.addEventListener("pointerdown", warm, { passive: true });
+      document.addEventListener("focusin", warm);
+
+      // Only the first two cards above the fold warm their detail; everything
+      // else waits for a hover/focus/tap. Keeps Function invocations low on
+      // metered/free plans. The HTML prefetch itself is a static asset.
+      if ("IntersectionObserver" in window) {
+        let left = 2;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting || left <= 0) return;
+            const id = entry.target.dataset.videoId;
+            if (id) { window.Catalogue.prefetch(id); left -= 1; }
+            observer.unobserve(entry.target);
+          });
+        }, { rootMargin: "200px 0px" });
+        [...document.querySelectorAll(".poster__btn[data-video-id]")]
+          .slice(0, 2)
+          .forEach((node) => observer.observe(node));
+      }
+    }
+
     syncBranding();
     setupTheme();
     window.SiteNav?.setCategories(categories);
     applyTelegramLinks();
     setupSearch();
     setupEvents();
-    renderPage();
+    ensurePageVisible();
+    if (loadError) {
+      // Still show the filter bar so the page is recognisable, never blank.
+      renderChips();
+      showFeedError();
+    } else {
+      renderPage();
+    }
+    setupCardPrefetch();
     if (state.view === "home") setupFeedPersistence(FEED_KEY, () => homeSeed);
     if (state.view === "shorts") setupFeedPersistence(SHORTS_FEED_KEY, () => shortsSeed);
     if (state.view === "home" && cameFromHistory) restoreFeed(savedFeed, homeSeed, homeLatest.length);

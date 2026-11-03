@@ -75,7 +75,25 @@ export async function onRequestGet({ request, params, env }) {
   if (!key || key.includes("..") || key.includes("\\")) return fail("Not found", 404);
   if (!FOLDERS.has(folder)) return fail("Not found", 404);
 
-  const meta = await env.MEDIA.head(key);
+  /* Cards ask for a small WebP poster (?w=480). If a 480px variant was
+     generated for this object, serve it instead of the full-size original;
+     otherwise fall back to the original so a card is never broken. */
+  const wantsCard = folder === "thumbs" &&
+    new URL(request.url).searchParams.get("w") === "480";
+  let objectKey = key;
+  let meta = await env.MEDIA.head(key);
+  if (wantsCard && meta) {
+    try {
+      const variantKey = key.replace(/\.[^.]+$/, "") + "-480.webp";
+      const variantMeta = await env.MEDIA.head(variantKey);
+      if (variantMeta) {
+        objectKey = variantKey;
+        meta = variantMeta;
+      }
+    } catch (error) {
+      /* No generated variant — the original is still a perfectly good card. */
+    }
+  }
   if (!meta) return fail("Not found", 404);
 
   const size = Number(meta.size) || 0;
@@ -94,8 +112,8 @@ export async function onRequestGet({ request, params, env }) {
   }
 
   const object = range
-    ? await env.MEDIA.get(key, { range: { offset: range.offset, length: range.length } })
-    : await env.MEDIA.get(key);
+    ? await env.MEDIA.get(objectKey, { range: { offset: range.offset, length: range.length } })
+    : await env.MEDIA.get(objectKey);
 
   if (!object) return fail("Not found", 404);
 
