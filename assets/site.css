@@ -2661,3 +2661,83 @@
     padding: 0;
   }
 }
+
+/* ================================================================
+   LOADING SHELL — static skeletons and a friendly retry
+   These placeholders live in the HTML itself, so they are on screen
+   from the first paint with no JavaScript. Same gray + transform/opacity
+   shimmer as the poster placeholders; reduced-motion disables it.
+   ================================================================ */
+.feed-skeleton { padding-top: 1.25rem; }
+.skeleton-chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+.skeleton-chip {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 34px;
+  border-radius: 999px;
+}
+.skeleton-heading {
+  width: 130px;
+  height: 22px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+@media (min-width: 760px) {
+  .skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.skeleton-card { min-width: 0; }
+.skeleton-poster {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--card-radius);
+}
+.skeleton-poster--wide { margin-bottom: 1rem; }
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  margin-top: 0.55rem;
+}
+.skeleton-line.short { width: 55%; }
+
+.skeleton-chip,
+.skeleton-heading,
+.skeleton-poster,
+.skeleton-line {
+  position: relative;
+  overflow: hidden;
+  background: var(--skeleton);
+}
+.skeleton-chip::after,
+.skeleton-heading::after,
+.skeleton-poster::after,
+.skeleton-line::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, var(--skeleton-sheen) 50%, transparent 80%);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.feed-error {
+  display: grid;
+  place-items: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.feed-error .btn {
+  height: auto;
+  min-height: 44px;
+  padding: 0.8rem 1.25rem;
+  font-size: 14px;
+  white-space: normal;
+}

@@ -1,6 +1,10 @@
-/* PUT    /api/videos/:id – replace a video (admin)
+/* GET    /api/videos/:id – public detail (playable URL + description)
+   PUT    /api/videos/:id – replace a video (admin)
    PATCH  /api/videos/:id – partial update, e.g. { featured: true } (admin)
-   DELETE /api/videos/:id – delete (admin)                                          */
+   DELETE /api/videos/:id – delete (admin)
+
+   The list endpoint deliberately omits playable URLs and long descriptions;
+   the watch page fetches just this one row, cached at the edge like the feed. */
 
 import { isAdminRequest } from "../../_lib/auth.js";
 import { embedThumbnail } from "../../_lib/catalogue.js";
@@ -13,7 +17,7 @@ import {
   updateVideo
 } from "../../_lib/db.js";
 import { deleteTelegramPost } from "../../_lib/telegram.js";
-import { fail, methodNotAllowed } from "../../_lib/http.js";
+import { fail } from "../../_lib/http.js";
 import { rowToInput, validateVideoInput } from "../../_lib/validate.js";
 
 function parseId(params) {
@@ -158,6 +162,16 @@ export async function onRequestDelete({ request, env, params }) {
   );
 }
 
-export function onRequestGet() {
-  return methodNotAllowed(["PUT", "PATCH", "DELETE"]);
+export async function onRequestGet({ env, params }) {
+  const id = parseId(params);
+  if (!id) return fail("Invalid video id");
+
+  await ensureSchema(env);
+  const video = await getVideo(env, id);
+  if (!video || (!video.video_url && !video.embed_url)) return fail("Video not found", 404);
+
+  return Response.json(
+    { video },
+    { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=600" } }
+  );
 }

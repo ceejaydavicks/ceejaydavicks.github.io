@@ -12,7 +12,7 @@ export async function onRequestGet({ env }) {
   const settings = await readSettings(env);
   return Response.json(
     { settings },
-    { headers: { "cache-control": "public, max-age=30, stale-while-revalidate=120" } }
+    { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=600" } }
   );
 }
 

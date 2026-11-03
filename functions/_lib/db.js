@@ -31,6 +31,15 @@ const SCHEMA = [
   )`,
   `CREATE INDEX IF NOT EXISTS videos_order_idx
      ON videos (featured DESC, pinned DESC, created_at DESC)`,
+  /* Covering index for the public feed: pinned/date order + the card fields.
+     The old query wrapped created_at in datetime(), which made this index
+     unusable and forced a full scan + sort on every page load. */
+  `CREATE INDEX IF NOT EXISTS videos_feed_idx
+     ON videos (featured DESC, pinned DESC, created_at DESC, id DESC)`,
+  `CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)`,
+  `CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)`,
+  `CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)`,
   `CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT '',
@@ -97,7 +106,12 @@ const LATE_COLUMNS = [
 /* One Telegram message may only ever produce one row: webhook updates are
    retried by Telegram, and a retried update must not duplicate a video. */
 const LATE_INDEXES = [
-  "CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx ON videos (tg_chat, tg_message_id)"
+  "CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx ON videos (tg_chat, tg_message_id)",
+  "CREATE INDEX IF NOT EXISTS videos_feed_idx ON videos (featured DESC, pinned DESC, created_at DESC, id DESC)",
+  "CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC)",
+  "CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)",
+  "CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)",
+  "CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)"
 ];
 
 async function migrate(env) {
@@ -168,7 +182,7 @@ export const VIDEO_COLUMNS = [
 export async function listVideos(env) {
   const { results } = await env.DB.prepare(
     `SELECT ${VIDEO_COLUMNS} FROM videos
-     ORDER BY featured DESC, pinned DESC, datetime(created_at) DESC, id DESC`
+     ORDER BY featured DESC, pinned DESC, created_at DESC, id DESC`
   ).all();
   return results || [];
 }
@@ -177,9 +191,46 @@ export async function listPublishedVideos(env) {
   const { results } = await env.DB.prepare(
     `SELECT ${VIDEO_COLUMNS} FROM videos
      WHERE video_url <> '' OR embed_url <> ''
-     ORDER BY featured DESC, pinned DESC, datetime(created_at) DESC, id DESC`
+     ORDER BY featured DESC, pinned DESC, created_at DESC, id DESC`
   ).all();
   return results || [];
+}
+
+/* Only the fields a card actually renders. No caption/description, no play
+   URLs (the watch page fetches those from /api/videos/:id), no internal
+   source/Telegram bookkeeping. This is the payload that gets edge-cached. */
+export const CARD_COLUMNS = [
+  "id",
+  "title",
+  "COALESCE(NULLIF(thumbnail_url, ''), '/assets/embed-placeholder.webp') AS thumbnail_url",
+  "duration",
+  "duration_seconds",
+  '"views"',
+  "tag",
+  "tags",
+  "created_at",
+  "orientation",
+  "featured",
+  "pinned"
+].join(", ");
+
+const PUBLISHED = "WHERE video_url <> '' OR embed_url <> ''";
+/* created_at is stored as 'YYYY-MM-DD HH:MM:SS', so a plain DESC sort is
+   chronological AND can use videos_feed_idx. No datetime() wrapper. */
+const FEED_ORDER = "ORDER BY featured DESC, pinned DESC, created_at DESC, id DESC";
+
+/* Count + page in one D1 batch (one round trip). `total` lets the client
+   fetch the remaining 24-row pages in parallel and dedupe them safely. */
+export async function listPublishedCardVideos(env, { limit = 24, offset = 0 } = {}) {
+  const statements = [
+    env.DB.prepare(`SELECT COUNT(*) AS total FROM videos ${PUBLISHED}`),
+    env.DB.prepare(
+      `SELECT ${CARD_COLUMNS} FROM videos ${PUBLISHED} ${FEED_ORDER} LIMIT ? OFFSET ?`
+    ).bind(limit, offset)
+  ];
+  const [countResult, pageResult] = await env.DB.batch(statements);
+  const total = Number(countResult?.results?.[0]?.total) || 0;
+  return { videos: pageResult?.results || [], total };
 }
 
 export async function getVideo(env, id) {

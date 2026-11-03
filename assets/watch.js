@@ -71,6 +71,15 @@ const AD_CONFIG = {
 const API_TIMEOUT = 7000;
 const RELATED_PAGE = 12;
 
+/* Cards are images only. Posters are generated when a video is saved, so a
+   card never has to load the video file just to find a frame. */
+const CARD_PLACEHOLDER = "/assets/embed-placeholder.webp";
+function cardThumb(url) {
+  const value = clean(url) || CARD_PLACEHOLDER;
+  if (value.indexOf("/api/media/thumbs/") !== 0) return value;
+  return value + (value.includes("?") ? "&w=480" : "?w=480");
+}
+
 async function fetchJson(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT);
@@ -170,13 +179,36 @@ function publishedAt(video) {
 
 /* ---- data --------------------------------------------------------------- */
 
-const [videosResult, settingsResult] = await Promise.allSettled([
-  fetchJson("/api/videos"),
-  fetchJson("/api/settings")
-]);
+/* One shared, retried, session-cached load for this page and the shared nav. */
+let loadError = false;
+let catalogueResult = { videos: [] };
+let settingsResultValue = {};
+if (window.Catalogue) {
+  try {
+    const [catalogue, settings] = await Promise.all([
+      window.Catalogue.load(),
+      window.Catalogue.settings()
+    ]);
+    catalogueResult = catalogue;
+    settingsResultValue = settings || {};
+  } catch (error) {
+    loadError = true;
+    console.warn("Video catalogue unavailable after retries.", error);
+  }
+} else {
+  const [videosResult, settingsResult] = await Promise.allSettled([
+    fetchJson("/api/videos"),
+    fetchJson("/api/settings")
+  ]);
+  if (videosResult.status === "fulfilled") catalogueResult = videosResult.value || { videos: [] };
+  else loadError = true;
+  if (settingsResult.status === "fulfilled") {
+    settingsResultValue = (settingsResult.value && settingsResult.value.settings) || {};
+  }
+}
 
-if (settingsResult.status === "fulfilled") {
-  const settings = (settingsResult.value && settingsResult.value.settings) || {};
+{
+  const settings = settingsResultValue;
   const siteName = clean(settings.siteName);
   if (siteName) SITE_NAME = siteName.slice(0, 60);
   const telegram = clean(settings.telegramUrl);
@@ -188,16 +220,47 @@ if (settingsResult.status === "fulfilled") {
   if (/^https?:\/\//i.test(clean(settings.adSmartlinkUrl))) AD_CONFIG.smartlink.url = clean(settings.adSmartlinkUrl);
 }
 
-const rows = videosResult.status === "fulfilled" ? (videosResult.value || {}).videos : [];
-const VIDEOS = (Array.isArray(rows) ? rows : []).map(rowToVideo).filter(Boolean);
+const rows = Array.isArray(catalogueResult.videos) ? catalogueResult.videos : [];
+const VIDEOS = rows.map(rowToVideo).filter(Boolean);
 
 /* ---- the video that was asked for --------------------------------------- */
 
 const requested = clean(new URLSearchParams(window.location.search).get("v"));
-const current =
+let current =
   VIDEOS.find((video) => video.id === `a${requested}`) ||
   VIDEOS.find((video) => String(video.id) === requested) ||
   null;
+
+/* The list is deliberately lean: only the watch page needs the playable URL
+   and the longer description. A detail prefetched from a card on the home
+   page lets this render with no network wait at all. */
+function mergeDetail(video, row) {
+  if (!video || !row) return video;
+  const embed = clean(row.embed_url);
+  const direct = clean(row.video_url);
+  const caption = clean(row.caption) || video.caption;
+  return {
+    ...video,
+    creator: clean(row.creator) || video.creator,
+    caption,
+    description: caption || video.description,
+    thumb: safeUrl(row.thumbnail_url) || video.thumb,
+    url: direct || embed || video.url,
+    directUrl: direct || video.directUrl,
+    embedUrl: embed || video.embedUrl,
+    embed: /^https?:\/\//i.test(embed) ? embed : video.embed
+  };
+}
+
+if (current && window.Catalogue) {
+  const cached = window.Catalogue.cachedDetail(requested);
+  if (cached) current = mergeDetail(current, cached);
+  else {
+    const detail = await window.Catalogue.detail(requested);
+    if (detail) current = mergeDetail(current, detail);
+  }
+  window.Catalogue.prefetch(requested);
+}
 
 /* ---- page title and meta tags ------------------------------------------ */
 
@@ -530,13 +593,16 @@ function createCard(video, index) {
   ].join("");
   poster.append(button);
 
-  if (video.thumb) {
+  {
     const image = document.createElement("img");
     image.className = "poster__media";
     image.alt = "";
     image.decoding = "async";
     image.loading = "lazy";
-    image.src = video.thumb;
+    const ratio = Number(video.ratio) || (isShort(video) ? 9 / 16 : 16 / 9);
+    image.width = 480;
+    image.height = Math.max(1, Math.round(480 / ratio));
+    image.src = cardThumb(video.thumb);
     image.addEventListener(
       "load",
       () => {
@@ -545,29 +611,11 @@ function createCard(video, index) {
       },
       { once: true }
     );
-    image.addEventListener("error", () => image.remove(), { once: true });
+    image.addEventListener("error", () => {
+      if (image.src.endsWith(CARD_PLACEHOLDER)) { image.remove(); return; }
+      image.src = CARD_PLACEHOLDER;
+    }, { once: true });
     poster.append(image);
-  } else if (video.directUrl) {
-    /* No picture of its own: the first frame of the file stands in. */
-    const frame = document.createElement("video");
-    frame.className = "poster__media";
-    frame.muted = true;
-    frame.defaultMuted = true;
-    frame.playsInline = true;
-    frame.preload = "metadata";
-    frame.tabIndex = -1;
-    frame.setAttribute("aria-hidden", "true");
-    frame.src = `${video.directUrl}#t=1`;
-    frame.addEventListener(
-      "loadeddata",
-      () => {
-        poster.classList.add("has-media");
-        applyNaturalRatio(poster, video, frame.videoWidth, frame.videoHeight);
-      },
-      { once: true }
-    );
-    frame.addEventListener("error", () => frame.remove(), { once: true });
-    poster.append(frame);
   }
 
   const body = document.createElement("div");
@@ -801,9 +849,25 @@ function renderNotFound() {
   if (related) related.hidden = true;
 }
 
+function ensureWatchVisible() {
+  const skeleton = $("#watch-skeleton");
+  if (skeleton) skeleton.hidden = true;
+  const preloader = $("#preloader");
+  if (preloader) preloader.classList.add("is-done");
+  if (loadError) {
+    const panel = $("#watch-error");
+    if (panel) panel.hidden = false;
+    $("#retry-watch")?.addEventListener("click", () => {
+      window.Catalogue?.clear();
+      window.location.reload();
+    }, { once: true });
+  }
+}
+
+ensureWatchVisible();
 applyHead(current);
 
-if (current) {
+if (!loadError && current) {
   rememberSeen(current.id);
   renderPlayer(current);
   renderInfo(current);
