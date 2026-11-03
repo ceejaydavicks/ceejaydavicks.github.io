@@ -191,5 +191,8 @@ export async function embedThumbnail(url) {
     return `https://thumbnail.vimeocdn.com/video/${id}_640.jpg`;
   }
 
-  return EMBED_PLACEHOLDER;
+  /* Unknown hosts have no official thumbnail. Return an empty value so the
+     row is marked as needing a picture (the admin asks for an upload and the
+     public site shows the placeholder) instead of silently saving a logo. */
+  return "";
 }

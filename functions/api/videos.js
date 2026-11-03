@@ -13,7 +13,7 @@
 */
 
 import { isAdminRequest } from "../_lib/auth.js";
-import { EMBED_PLACEHOLDER, embedThumbnail, syncBotCatalogue } from "../_lib/catalogue.js";
+import { embedThumbnail, syncBotCatalogue } from "../_lib/catalogue.js";
 import { ensureSchema, insertVideo, listPublishedCardVideos, listVideos } from "../_lib/db.js";
 import { fail, methodNotAllowed, toInt } from "../_lib/http.js";
 import { validateVideoInput } from "../_lib/validate.js";
@@ -137,16 +137,17 @@ export async function onRequestPost({ request, env }) {
   parsed.values.featured = 0;
   parsed.values.pinned = 0;
 
-  /* An embed link brings its own thumbnail (YouTube, Vimeo); everything else
-     gets the dark placeholder with the logo, never a black box. Generating the
-     poster at save time means cards never have to load a <video> to find one. */
+  /* An embed link brings its own thumbnail (YouTube, Vimeo). A host with no
+     official thumbnail stays empty: that is a real "needs thumbnail" row, so
+     the admin can offer an upload and the public site can use its lightweight
+     first-frame fallback. Writing the logo placeholder here would make the
+     row look like it already had a saved picture. */
   if (!parsed.values.thumbnail_url && parsed.values.embed_url) {
-    parsed.values.thumbnail_url = await embedThumbnail(parsed.values.embed_url);
-    parsed.values.thumb_source = "embed";
-  }
-  if (!parsed.values.thumbnail_url) {
-    parsed.values.thumbnail_url = EMBED_PLACEHOLDER;
-    parsed.values.thumb_source = "generated";
+    const official = await embedThumbnail(parsed.values.embed_url);
+    if (official) {
+      parsed.values.thumbnail_url = official;
+      parsed.values.thumb_source = "embed";
+    }
   }
 
   const video = await insertVideo(env, parsed.values);
