@@ -288,7 +288,7 @@ function applyHead(video) {
     setMeta("#meta-description", "content", "");
     setMeta("#og-title", "content", "");
     setMeta("#og-description", "content", "");
-    setMeta("#og-image", "content", "");
+    setMeta("#og-image", "content", `${window.location.origin}/assets/apple-touch-icon.png`);
     return;
   }
 
@@ -305,10 +305,11 @@ function applyHead(video) {
   setMeta("#meta-description", "content", description.slice(0, 300));
   setMeta("#og-title", "content", title);
   setMeta("#og-description", "content", description.slice(0, 300));
-  setMeta("#og-image", "content", video.thumb || "");
+  /* Link previews use the site logo, never the video poster. */
+  setMeta("#og-image", "content", `${window.location.origin}/assets/apple-touch-icon.png`);
 
   const canonical = $("#canonical");
-  if (canonical) canonical.setAttribute("href", `${window.location.origin}/watch?v=${requested}`);
+  if (canonical) canonical.setAttribute("href", publicWatchUrl(video));
 }
 
 /* ---- the player --------------------------------------------------------- */
@@ -474,9 +475,17 @@ function toggleSave() {
   syncSaveButton(nowSaved);
 }
 
+/* Always share the public watch page — never the media file, an /api/ URL or
+   a thumbnail. Build it from the id so tracking params or a legacy /watch?v=
+   address bar can never leak into the copied link. */
+function publicWatchUrl(video) {
+  const id = String((video && video.id) || "").replace(/^a/, "");
+  return `${window.location.origin}/watch/?v=${encodeURIComponent(id)}`;
+}
+
 async function shareCurrent() {
   if (!current) return;
-  const url = window.location.href;
+  const url = publicWatchUrl(current);
   const payload = { title: current.title, text: `${current.title} · ${SITE_NAME}`, url };
 
   if (navigator.share) {
@@ -579,7 +588,7 @@ function relatedVideos(video) {
 
 function watchUrl(video) {
   const key = String(video.id || "").replace(/^a/, "");
-  return `/watch?v=${encodeURIComponent(key)}`;
+  return `/watch/?v=${encodeURIComponent(key)}`;
 }
 
 function createCard(video, index) {

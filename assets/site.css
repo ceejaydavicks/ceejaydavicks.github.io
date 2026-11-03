@@ -2741,3 +2741,17 @@
   font-size: 14px;
   white-space: normal;
 }
+
+/* Small two-option sort control on the Shorts / Movies / Library pages.
+   Reuses the existing chip look so the design stays the same. */
+.sort-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.5rem 0 1rem;
+}
+.sort-toggle .chip {
+  min-height: 32px;
+  padding: 0.4rem 0.9rem;
+  font-size: 12px;
+}

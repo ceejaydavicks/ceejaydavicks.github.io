@@ -121,8 +121,8 @@
 
     <section class="section home-section" id="shorts-section" aria-labelledby="shorts-title" hidden>
       <div class="section-head compact-section-head">
-        <h1 id="shorts-title">Shorts</h1>
-        <a class="link-btn" href="/?view=shorts">View all <span aria-hidden="true">→</span></a>
+        <h1 id="shorts-title">Discover</h1>
+        <a class="link-btn" href="/?view=library">View all <span aria-hidden="true">→</span></a>
       </div>
       <div class="grid-shorts masonry-grid" id="shorts-grid"></div>
     </section>
@@ -144,6 +144,10 @@
 
     <section class="section" id="catalogue-section" aria-labelledby="catalogue-title" hidden>
       <div class="section-head compact-section-head"><h1 id="catalogue-title"></h1></div>
+      <div class="sort-toggle" id="sort-toggle" role="group" aria-label="Sort videos" hidden>
+        <button class="chip" type="button" data-sort="shuffle">Shuffle</button>
+        <button class="chip" type="button" data-sort="newest">Newest</button>
+      </div>
       <div id="catalogue-grid" class="grid-filtered masonry-grid"></div>
     </section>
 
@@ -539,25 +543,34 @@
     const state = {
       view,
       chip: clean(pageParams.get("category")) || "All",
-      query: ""
+      query: "",
+      /* "shuffle" (default) or "newest" on the Shorts / Movies / Library
+         pages. The home page uses the Newest chip instead. */
+      sort: "shuffle"
     };
 
     /* ================================================================
-       FEED RESHUFFLE (home shelves + the Shorts page)
+       FEED ORDER — seeded shuffle everywhere, plus a Newest sort
        ----------------------------------------------------------------
-       Only the unfiltered home shelves (Shorts + Latest/Movies) and the
-       unfiltered Shorts page are shuffled. A random seed is created on
-       every fresh visit to either page and kept in sessionStorage; the
-       same seed drives every infinite-scroll page, so the order cannot
-       change while browsing. Each view owns its own pair of keys so a
-       visit to the Shorts page cannot overwrite the home seed (which
-       would reshuffle home on Back). Back/forward and bfcache restores
-       reuse the seed and the saved scroll position.
+       Every fresh load (first visit, refresh, tab, logo/Home, coming back
+       later) creates a crypto seed for the current view and stores it in
+       sessionStorage. Fisher-Yates runs entirely in the browser, so an
+       edge-cached API response can never repeat the same order. The same
+       seed drives every infinite-scroll page, so nothing is duplicated or
+       skipped. Back/forward restores the seed, cursor and scroll position
+       instead of reshuffling. Each view owns its own keys, so visiting one
+       page cannot overwrite another page's seed.
        ================================================================ */
-    const SEED_KEY = "bootymansion.home.shuffle.seed";
-    const FEED_KEY = "bootymansion.home.feed";
-    const SHORTS_SEED_KEY = "bootymansion.shorts.shuffle.seed";
-    const SHORTS_FEED_KEY = "bootymansion.shorts.feed";
+    const FEED_KEYS = {
+      home:    { seed: "bootymansion.home.shuffle.seed",    feed: "bootymansion.home.feed" },
+      shorts:  { seed: "bootymansion.shorts.shuffle.seed",  feed: "bootymansion.shorts.feed" },
+      movies:  { seed: "bootymansion.movies.shuffle.seed",  feed: "bootymansion.movies.feed" },
+      library: { seed: "bootymansion.library.shuffle.seed", feed: "bootymansion.library.feed" }
+    };
+    /* Change this ONE line to shuffle category/chip results too. */
+    const SHUFFLE_CATEGORIES = false;
+
+    const activeKeys = FEED_KEYS[state.view] || FEED_KEYS.home;
     const navEntry = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
     const cameFromHistory = Boolean(navEntry && navEntry.type === "back_forward");
 
@@ -610,9 +623,9 @@
 
     const isPinned = (video) => Boolean(video.pinned || video.featured);
 
-    /* Pinned videos keep their existing admin order at the front; only the
-       rest is shuffled. Then two of this shelf's newest uploads are placed
-       in the first eight, without ever moving a pinned video. */
+    /* Pinned videos keep their admin order at the front; only the rest is
+       shuffled. Then at least two of this shelf's newest uploads are placed
+       in the first eight without ever moving a pinned video. */
     function shuffleShelf(list, random) {
       const pinned = list.filter(isPinned);
       const rest = fisherYates(list.filter((video) => !isPinned(video)), random);
@@ -645,23 +658,7 @@
       return result;
     }
 
-    let homeSeed = createShuffleSeed();
-    let homeShorts = SHORTS;
-    let homeLatest = HOME_LATEST;
-    let shortsSeed = createShuffleSeed();
-    let shortsFeed = SHORTS;
-
-    function rebuildHomeOrder() {
-      /* Two independent streams keep Shorts and Movies shuffled separately. */
-      homeShorts = shuffleShelf(SHORTS, seededRandom(homeSeed ^ 0x9e3779b9));
-      homeLatest = shuffleShelf(HOME_LATEST, seededRandom(homeSeed));
-    }
-
-    function rebuildShortsOrder() {
-      /* The Shorts page uses the exact same shuffleShelf/Fisher-Yates engine,
-         over the whole SHORTS list rather than the home page's first eight. */
-      shortsFeed = shuffleShelf(SHORTS, seededRandom(shortsSeed));
-    }
+    const isFilterActive = () => state.chip !== "All" || Boolean(state.query.trim());
 
     function readFeedState(key) {
       try {
@@ -672,38 +669,24 @@
       }
     }
 
+    /* chip / query / sort travel with the feed state so Back restores the
+       exact view that was open, not just the order. */
     function saveFeedState(key, seed, cursor, scrollY) {
       try {
         sessionStorage.setItem(key, JSON.stringify({
           seed,
+          chip: state.chip,
+          query: state.query,
+          sort: state.sort,
           cursor: Number(cursor) || 0,
           scrollY: Math.max(0, Number(scrollY) || 0)
         }));
       } catch (error) { /* private mode */ }
     }
 
-    const isFilterActive = () => state.chip !== "All" || Boolean(state.query.trim());
-
-    if (state.view === "home") {
-      if (cameFromHistory) homeSeed = storedSeed(SEED_KEY) || homeSeed;
-      saveSeed(SEED_KEY, homeSeed);
-      if (!cameFromHistory) saveFeedState(FEED_KEY, homeSeed, 0, 0);
-      rebuildHomeOrder();
-    }
-    const savedFeed = state.view === "home" && cameFromHistory ? readFeedState(FEED_KEY) : null;
-
-    if (state.view === "shorts") {
-      if (cameFromHistory) shortsSeed = storedSeed(SHORTS_SEED_KEY) || shortsSeed;
-      saveSeed(SHORTS_SEED_KEY, shortsSeed);
-      if (!cameFromHistory) saveFeedState(SHORTS_FEED_KEY, shortsSeed, 0, 0);
-      rebuildShortsOrder();
-    }
-    const savedShortsFeed = state.view === "shorts" && cameFromHistory ? readFeedState(SHORTS_FEED_KEY) : null;
-
-    function restoreFeed(saved, seed, total) {
-      if (!saved || saved.seed !== seed) return;
-      if (isFilterActive()) return;
-      const target = Math.min(Number(saved.cursor) || 0, total);
+    function restoreFeed(saved, seed) {
+      if (!saved || saved.seed !== seed || !pager) return;
+      const target = Math.min(Number(saved.cursor) || 0, pager.items.length);
       let guard = 0;
       while (pager && pager.cursor < target && guard < 100) {
         loadNextPage();
@@ -712,8 +695,7 @@
       const y = Math.max(0, Number(saved.scrollY) || 0);
       if (!y) return;
       /* The stylesheet sets scroll-behavior:smooth on <html>; temporarily
-         override it so the restored position lands immediately instead of
-         animating (and so it cannot race native scroll restoration). */
+         override it so the restored position lands immediately. */
       const jump = () => {
         const root = document.documentElement;
         const previous = root.style.scrollBehavior;
@@ -738,6 +720,55 @@
       }, { passive: true });
     }
 
+    /* One seed for the current view. A history navigation reuses it. */
+    let seed = cameFromHistory
+      ? (storedSeed(activeKeys.seed) || createShuffleSeed())
+      : createShuffleSeed();
+    saveSeed(activeKeys.seed, seed);
+    if (!cameFromHistory) saveFeedState(activeKeys.feed, seed, 0, 0);
+    const savedFeed = cameFromHistory ? readFeedState(activeKeys.feed) : null;
+    if (cameFromHistory && savedFeed && savedFeed.seed === seed) {
+      if (typeof savedFeed.chip === "string") state.chip = savedFeed.chip;
+      if (typeof savedFeed.query === "string") state.query = savedFeed.query;
+      if (savedFeed.sort === "newest" || savedFeed.sort === "shuffle") state.sort = savedFeed.sort;
+    }
+
+    /* ---- ordered lists -------------------------------------------------- */
+    function newestFor(view) {
+      if (view === "shorts") return BY_RECENCY.filter(isShort);
+      if (view === "movies") return BY_RECENCY.filter(isMovie);
+      return BY_RECENCY.slice();
+    }
+    function poolFor(view) {
+      if (view === "shorts") return SHORTS;
+      if (view === "movies") return MOVIES;
+      return PINNED_FIRST;
+    }
+
+    let homeDiscover = PINNED_FIRST;   /* mixed videos + Shorts */
+    let homeLatest = HOME_LATEST;      /* Movies only */
+    let catalogueFeed = PINNED_FIRST;  /* Shorts / Movies / Library page */
+
+    function rebuildOrders() {
+      /* Home gets two independent streams from the same seed: Discover and
+         Latest. Shorts/Movies/Library get one stream over their own pool. */
+      homeDiscover = shuffleShelf(PINNED_FIRST, seededRandom(seed ^ 0x9e3779b9));
+      homeLatest = shuffleShelf(HOME_LATEST, seededRandom(seed ^ 0x85ebca6b));
+      catalogueFeed = state.sort === "newest"
+        ? newestFor(state.view)
+        : shuffleShelf(poolFor(state.view), seededRandom(seed ^ 0xc2b2ae35));
+    }
+    rebuildOrders();
+
+    /* A brand-new shuffle. Only a fresh load, the logo/Home or the All chip
+       calls this — toggling Newest/Shuffle or opening a video does not. */
+    function newShuffle() {
+      seed = createShuffleSeed();
+      saveSeed(activeKeys.seed, seed);
+      saveFeedState(activeKeys.feed, seed, 0, 0);
+      rebuildOrders();
+    }
+
     /* The logo/Home is a fresh home visit. The preloader intercepts .brand
        links on this page instead of reloading, so create the new seed here. */
     function handleBrandReshuffle(event) {
@@ -750,11 +781,9 @@
       if (destination.pathname !== "/" && destination.pathname !== "/index.html") return;
       state.chip = "All";
       state.query = "";
+      state.sort = "shuffle";
       syncSearchInputs("");
-      homeSeed = createShuffleSeed();
-      saveSeed(SEED_KEY, homeSeed);
-      saveFeedState(FEED_KEY, homeSeed, 0, 0);
-      rebuildHomeOrder();
+      newShuffle();
       renderPage();
     }
 
@@ -1121,7 +1150,7 @@
       if (!video) return "/";
       const id = String(video.id || "");
       const key = id.replace(/^a/, "") || id;
-      return `/watch?v=${encodeURIComponent(key)}`;
+      return `/watch/?v=${encodeURIComponent(key)}`;
     }
 
     /* ================================================================
@@ -1139,12 +1168,39 @@
       }, { rootMargin: "500px 0px" });
     }
 
+    function searchHaystack(video) {
+      return [video.title, video.creator, video.description, video.tag, ...videoTags(video)]
+        .filter(Boolean).join(" ").toLowerCase();
+    }
+
+    /* Search results: best textual match first, then newest first. */
+    function sortByRelevanceThenNewest(list, query) {
+      const q = String(query || "").trim().toLowerCase();
+      if (!q) return list;
+      const rank = (video) => {
+        const title = String(video.title || "").toLowerCase();
+        const tags = videoTags(video).map((tag) => tag.toLowerCase());
+        let score = 0;
+        if (title === q) score += 100;
+        else if (title.startsWith(q)) score += 60;
+        else if (title.includes(q)) score += 30;
+        if (tags.some((tag) => tag === q)) score += 40;
+        else if (tags.some((tag) => tag.includes(q))) score += 15;
+        if ([video.creator, video.description, video.tag].filter(Boolean).join(" ").toLowerCase().includes(q)) score += 5;
+        return score;
+      };
+      const at = (video) => videoPublishedAt(video) || 0;
+      return list.slice().sort((a, b) => (rank(b) - rank(a)) || (at(b) - at(a)));
+    }
+
     function matchesFilter(video) {
       const query = state.query.trim().toLowerCase();
       const chip = state.chip;
       if (chip === "Shorts" && !isShort(video)) return false;
       if (chip === "Movies" && !isMovie(video)) return false;
-      if (chip !== "All" && chip !== "Shorts" && chip !== "Movies" &&
+      /* "Newest" is a sort, not a tag — searching while it is active still
+         works instead of looking for a category literally named Newest. */
+      if (chip !== "All" && chip !== "Newest" && chip !== "Shorts" && chip !== "Movies" &&
           !videoTags(video).some((tag) => tag.toLowerCase() === chip.toLowerCase())) return false;
       if (!query) return true;
       const haystack = [video.title, video.creator, video.category, video.tag, ...videoTags(video), video.description]
@@ -1164,7 +1220,8 @@
     function renderChips() {
       const bar = $("#chips");
       if (chipsShell) chipsShell.hidden = state.view !== "home";
-      const labels = ["All", "Shorts", "Movies", ...categories];
+      /* All, Newest, Shorts, Movies, then the tag chips. */
+      const labels = ["All", "Newest", "Shorts", "Movies", ...categories];
       bar.replaceChildren();
       labels.forEach((label) => {
         const chip = document.createElement("button");
@@ -1238,6 +1295,7 @@
       const catalogueSection = $("#catalogue-section");
       const empty = $("#catalogue-empty");
       const banner = $("#ad-banner");
+      const sortToggle = $("#sort-toggle");
       if (loadObserver && loadSentinel) loadObserver.unobserve(loadSentinel);
       pager = null;
       loadSentinel.hidden = true;
@@ -1248,20 +1306,21 @@
       catalogueSection.hidden = true;
 
       if (state.view === "home") {
-        const isFiltered = state.chip !== "All" || Boolean(state.query.trim());
-        if (!isFiltered) {
-          const shorts = homeShorts.slice(0, 8);
-          if (shorts.length) {
+        if (sortToggle) sortToggle.hidden = true;
+        if (!isFilterActive()) {
+          /* Discover is a shuffled MIX of Movies and Shorts; the Short badge
+             is decided per video by createPoster(). */
+          const discover = homeDiscover.slice(0, 8);
+          if (discover.length) {
             shortsSection.hidden = false;
-            fillGrid($("#shorts-grid"), shorts, { variant: "shorts" });
+            fillGrid($("#shorts-grid"), discover, { variant: "shorts" });
           }
           mountBannerAd();
-          const latest = homeLatest;
-          if (latest.length) {
+          if (homeLatest.length) {
             latestSection.hidden = false;
-            showPaginatedGrid($("#latest-grid"), latest, { variant: "movie", native: true });
+            showPaginatedGrid($("#latest-grid"), homeLatest, { variant: "movie", native: true });
           }
-          if (!shorts.length && !latest.length) {
+          if (!discover.length && !homeLatest.length) {
             empty.textContent = "No videos yet.";
             empty.hidden = false;
           }
@@ -1269,45 +1328,75 @@
         }
 
         banner.hidden = true;
-        const items = PINNED_FIRST.filter(matchesFilter);
+        let items;
+        let variant = "masonry";
+        if (state.chip === "Newest" && !state.query.trim()) {
+          /* Newest: strictly newest to oldest, videos + Shorts together,
+             with no pinned-first rule. */
+          items = BY_RECENCY.slice();
+          $("#filtered-title").textContent = "Newest";
+        } else if (state.query.trim()) {
+          const query = state.query.trim().toLowerCase();
+          items = sortByRelevanceThenNewest(BY_RECENCY.filter(matchesFilter), query);
+          $("#filtered-title").textContent = "Search results";
+        } else {
+          /* Category chips: newest to oldest, never shuffled. */
+          const byDate = BY_RECENCY.filter(matchesFilter);
+          items = SHUFFLE_CATEGORIES
+            ? shuffleShelf(byDate, seededRandom(seed ^ 0x27d4eb2f))
+            : byDate;
+          $("#filtered-title").textContent = state.chip;
+          variant = state.chip === "Movies" ? "movie" : state.chip === "Shorts" ? "shorts" : "masonry";
+        }
         if (!items.length) {
           empty.textContent = "No videos match this filter.";
           empty.hidden = false;
           return;
         }
-        const variant = state.chip === "Movies" ? "movie" : state.chip === "Shorts" ? "shorts" : "masonry";
         filteredSection.hidden = false;
-        $("#filtered-title").textContent = state.query.trim() ? "Search results" : state.chip;
         showPaginatedGrid($("#filtered-grid"), items, { variant });
         return;
       }
 
       banner.hidden = true;
-      /* A chip or search keeps the Shorts page newest-first and unshuffled. */
-      const items = state.view === "movies" ? MOVIES
-        : state.view === "shorts" ? (isFilterActive() ? SHORTS : shortsFeed)
-        : PINNED_FIRST;
-      const title = state.view === "library" ? "Full library" : state.view === "movies" ? "Movies" : "Shorts";
-      $("#catalogue-title").textContent = title;
+      const hasFilter = isFilterActive();
+      if (sortToggle) {
+        sortToggle.hidden = hasFilter;
+        sortToggle.querySelectorAll("[data-sort]").forEach((button) => {
+          const active = button.dataset.sort === state.sort;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+      }
+
+      let items;
       if (state.query.trim()) {
         const query = state.query.trim().toLowerCase();
-        const searchable = items.filter((video) => [video.title, video.creator, video.description, ...videoTags(video)].filter(Boolean).join(" ").toLowerCase().includes(query));
-        if (!searchable.length) {
-          empty.textContent = "No videos match your search.";
-          empty.hidden = false;
-          return;
-        }
-        catalogueSection.hidden = false;
-        showPaginatedGrid($("#catalogue-grid"), searchable, { variant: state.view === "movies" ? "movie" : state.view === "shorts" ? "shorts" : "masonry", native: state.view === "movies" });
-        return;
+        items = sortByRelevanceThenNewest(
+          BY_RECENCY.filter((video) => searchHaystack(video).includes(query)), query
+        );
+      } else if (hasFilter) {
+        /* Category pages: newest to oldest, no shuffle. */
+        const byDate = BY_RECENCY.filter(matchesFilter);
+        items = SHUFFLE_CATEGORIES
+          ? shuffleShelf(byDate, seededRandom(seed ^ 0x27d4eb2f))
+          : byDate;
+      } else {
+        items = catalogueFeed;
       }
+
+      const title = state.view === "library" ? "Full library" : state.view === "movies" ? "Movies" : "Shorts";
+      $("#catalogue-title").textContent = title;
       if (!items.length) {
-        empty.textContent = `No ${title.toLowerCase()} yet.`;
+        empty.textContent = state.query.trim() ? "No videos match your search." : `No ${title.toLowerCase()} yet.`;
         empty.hidden = false;
         return;
       }
       catalogueSection.hidden = false;
-      showPaginatedGrid($("#catalogue-grid"), items, { variant: state.view === "movies" ? "movie" : state.view === "shorts" ? "shorts" : "masonry", native: state.view === "movies" });
+      showPaginatedGrid($("#catalogue-grid"), items, {
+        variant: state.view === "movies" ? "movie" : state.view === "shorts" ? "shorts" : "masonry",
+        native: state.view === "movies"
+      });
     }
 
     /* ================================================================
@@ -1396,7 +1485,23 @@
 
         const chip = target.closest("[data-chip]");
         if (chip) {
+          /* All brings back the shuffle, and a NEW one at that. */
+          if (chip.dataset.chip === "All" && state.view === "home") {
+            newShuffle();
+            window.scrollTo({ top: 0, behavior: "auto" });
+          }
           state.chip = chip.dataset.chip;
+          renderPage();
+          return;
+        }
+
+        const sortButton = target.closest("[data-sort]");
+        if (sortButton) {
+          /* Switching sort keeps the SAME seed, so toggling back restores the
+             exact shuffle that was showing. */
+          state.sort = sortButton.dataset.sort;
+          saveFeedState(activeKeys.feed, seed, 0, 0);
+          rebuildOrders();
           renderPage();
           return;
         }
@@ -1405,6 +1510,7 @@
           state.chip = "All";
           state.query = "";
           syncSearchInputs("");
+          if (state.view === "home") newShuffle();
           renderPage();
           return;
         }
@@ -1593,10 +1699,9 @@
       renderPage();
     }
     setupCardPrefetch();
-    if (state.view === "home") setupFeedPersistence(FEED_KEY, () => homeSeed);
-    if (state.view === "shorts") setupFeedPersistence(SHORTS_FEED_KEY, () => shortsSeed);
-    if (state.view === "home" && cameFromHistory) restoreFeed(savedFeed, homeSeed, homeLatest.length);
-    if (state.view === "shorts" && cameFromHistory) restoreFeed(savedShortsFeed, shortsSeed, shortsFeed.length);
+    syncSearchInputs(state.query);
+    setupFeedPersistence(activeKeys.feed, () => seed);
+    if (cameFromHistory) restoreFeed(savedFeed, seed);
 
   </script>
 </body>
