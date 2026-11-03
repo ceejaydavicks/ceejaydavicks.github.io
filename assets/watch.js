@@ -76,7 +76,14 @@ const RELATED_PAGE = 12;
 const CARD_PLACEHOLDER = "/assets/embed-placeholder.webp";
 function cardThumb(url) {
   const value = clean(url) || CARD_PLACEHOLDER;
-  if (value.indexOf("/api/media/thumbs/") !== 0) return value;
+  /* safeUrl() turns relative R2 paths into absolute URLs, so compare the
+     pathname instead of the raw string. */
+  let path = value;
+  try {
+    const parsed = new URL(value, window.location.href);
+    if (parsed.origin === window.location.origin) path = parsed.pathname + parsed.search;
+  } catch (error) { /* leave unusual values alone */ }
+  if (path.indexOf("/api/media/thumbs/") !== 0) return value;
   return value + (value.includes("?") ? "&w=480" : "?w=480");
 }
 
@@ -153,6 +160,10 @@ function rowToVideo(row) {
     caption: clean(row.caption),
     description: clean(row.caption),
     thumb: safeUrl(row.thumbnail_url),
+    hasThumb: row.has_thumb != null
+      ? Boolean(Number(row.has_thumb))
+      : Boolean(row.thumbnail_url && row.thumbnail_url !== "/assets/embed-placeholder.webp"),
+    frameUrl: clean(row.frame_url),
     url: directUrl,
     directUrl,
     embed: /^https?:\/\//i.test(embedUrl) ? embedUrl : null,
@@ -594,6 +605,9 @@ function createCard(video, index) {
   poster.append(button);
 
   {
+    const hasSaved = video.hasThumb === undefined
+      ? Boolean(video.thumb)
+      : Boolean(video.hasThumb);
     const image = document.createElement("img");
     image.className = "poster__media";
     image.alt = "";
@@ -602,7 +616,7 @@ function createCard(video, index) {
     const ratio = Number(video.ratio) || (isShort(video) ? 9 / 16 : 16 / 9);
     image.width = 480;
     image.height = Math.max(1, Math.round(480 / ratio));
-    image.src = cardThumb(video.thumb);
+    image.src = hasSaved ? cardThumb(video.thumb) : CARD_PLACEHOLDER;
     image.addEventListener(
       "load",
       () => {
@@ -616,6 +630,21 @@ function createCard(video, index) {
       image.src = CARD_PLACEHOLDER;
     }, { once: true });
     poster.append(image);
+
+    if (!hasSaved && video.frameUrl && window.FrameFallback) {
+      window.FrameFallback.request(
+        poster,
+        video.frameUrl,
+        (still) => {
+          if (still) image.src = still;
+          poster.classList.add("has-media");
+        },
+        () => {
+          if (!image.src.endsWith(CARD_PLACEHOLDER)) image.src = CARD_PLACEHOLDER;
+          poster.classList.add("has-media");
+        }
+      );
+    }
   }
 
   const body = document.createElement("div");

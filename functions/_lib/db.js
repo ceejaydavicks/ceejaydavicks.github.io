@@ -202,7 +202,20 @@ export async function listPublishedVideos(env) {
 export const CARD_COLUMNS = [
   "id",
   "title",
-  "COALESCE(NULLIF(thumbnail_url, ''), '/assets/embed-placeholder.webp') AS thumbnail_url",
+  /* Keep the raw value: an empty thumbnail is a real "needs a picture" row.
+     The client shows the logo placeholder and, for direct files, a lightweight
+     first-frame fallback. */
+  "thumbnail_url",
+  /* 1 only for a picture actually saved for this video. The logo placeholder
+     written by older builds does not count. */
+  "CASE WHEN thumbnail_url <> '' AND thumbnail_url <> '/assets/embed-placeholder.webp' " +
+    "THEN 1 ELSE 0 END AS has_thumb",
+  /* Only rows with no saved picture and a direct playable file get a URL for
+     the on-screen <video> first-frame fallback. Embeds get an empty string.
+     Keep each CASE in ONE array entry: the list is joined with ", ". */
+  "CASE WHEN (thumbnail_url = '' OR thumbnail_url = '/assets/embed-placeholder.webp') " +
+    "AND video_url <> '' AND embed_url = '' " +
+    "THEN video_url ELSE '' END AS frame_url",
   "duration",
   "duration_seconds",
   '"views"',

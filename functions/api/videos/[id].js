@@ -77,15 +77,21 @@ export async function onRequestPut({ request, env, params }) {
      the picture did not change, its origin is kept as it was. */
   const thumbChanged = String(merged.thumbnail_url || "") !== String(existing.thumbnail_url || "");
   if (thumbChanged) {
-    parsed.values.thumb_source = body.thumb_source === "auto" ? "auto" : "manual";
+    parsed.values.thumb_source = ["auto", "embed", "telegram"].includes(body.thumb_source)
+      ? body.thumb_source
+      : "manual";
   } else {
     parsed.values.thumb_source = existing.thumb_source || parsed.values.thumb_source || "";
   }
 
-  /* An embed without a picture of its own gets the dark placeholder. */
+  /* An embed with an official provider thumbnail uses it; unknown hosts stay
+     empty so the row is correctly reported as "Needs thumbnail". */
   if (!parsed.values.thumbnail_url && parsed.values.embed_url) {
-    parsed.values.thumbnail_url = await embedThumbnail(parsed.values.embed_url);
-    parsed.values.thumb_source = "embed";
+    const official = await embedThumbnail(parsed.values.embed_url);
+    if (official) {
+      parsed.values.thumbnail_url = official;
+      parsed.values.thumb_source = "embed";
+    }
   }
 
   const video = await updateVideo(env, id, parsed.values);
@@ -125,7 +131,9 @@ export async function onRequestPatch({ request, env, params }) {
 
   const thumbChanged = String(merged.thumbnail_url || "") !== String(existing.thumbnail_url || "");
   if (thumbChanged) {
-    parsed.values.thumb_source = body.thumb_source === "auto" ? "auto" : "manual";
+    parsed.values.thumb_source = ["auto", "embed", "telegram"].includes(body.thumb_source)
+      ? body.thumb_source
+      : "manual";
   } else if (!("thumb_source" in body)) {
     parsed.values.thumb_source = existing.thumb_source || "";
   }
