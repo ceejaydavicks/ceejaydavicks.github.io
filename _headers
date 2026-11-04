@@ -1,3 +1,19 @@
+# ============================================================================
+# Cloudflare Pages browser cache policy.
+#
+# Rules here apply to STATIC ASSET responses only — Cloudflare does not apply
+# `_headers` to responses produced by Pages Functions. HTML, watch pages and
+# JS/CSS are therefore also handled in functions/_middleware.js, which sets the
+# same `no-cache` / immutable values on the Function response. These static
+# rules are the safe fallback for any request that bypasses the Function.
+#
+# Rule of thumb: a long `immutable` cache is only safe when the URL itself
+# changes whenever the bytes change. Images/fonts use fixed names that are
+# never overwritten; JS/CSS now always carry `?v=<deploy version>` in the HTML,
+# and the middleware gives only those versioned URLs the immutable header.
+# ============================================================================
+
+# ---- Images and fonts: fixed filenames, safe to cache for a year ----------
 /assets/*.png
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
@@ -34,9 +50,38 @@
 /apple-touch-icon.png
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
+
+# ---- JS/CSS without a version: revalidate every time ----------------------
+# The middleware upgrades `/assets/x.js?v=<version>` to immutable. Anything
+# requested without that version (old bookmarks, crawlers, stale HTML) must
+# never be stored for an hour or served stale-while-revalidate.
 /assets/*.css
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: no-cache
   X-Content-Type-Options: nosniff
 /assets/*.js
-  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/videos.js
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+
+# ---- HTML: revalidate every time ------------------------------------------
+# A cached HTML page would keep pointing at the previous deploy's asset URLs.
+/
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/*.html
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/watch
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/watch/
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/admin
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+/admin/
+  Cache-Control: no-cache
   X-Content-Type-Options: nosniff

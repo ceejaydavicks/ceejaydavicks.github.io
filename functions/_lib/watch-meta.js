@@ -8,7 +8,12 @@
    ========================================================================== */
 
 export const WATCH_LOGO_IMAGE = "/assets/apple-touch-icon.png";
-export const WATCH_CACHE = "public, max-age=60, stale-while-revalidate=600";
+
+/* The watch HTML is rewritten per video by a Pages Function, and per deploy by
+   the root middleware (versioned asset URLs). It must never sit in a browser
+   or CDN cache for minutes: `no-cache` forces a revalidation on every visit,
+   which keeps both the preview tags and the asset URLs current. */
+export const WATCH_CACHE = "no-cache";
 
 export function escapeAttr(value) {
   return String(value == null ? "" : value)
