@@ -32,7 +32,9 @@ export async function onRequestGet(context) {
       status: 301,
       headers: {
         location: url.toString(),
-        "cache-control": "public, max-age=3600"
+        /* Revalidate instead of pinning the redirect for an hour. A stale
+           301 is another way an old deploy can keep serving old HTML. */
+        "cache-control": "no-cache"
       }
     });
   }

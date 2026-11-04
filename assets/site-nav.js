@@ -300,7 +300,11 @@
         rows = Array.isArray(payload.videos) ? payload.videos : [];
       } else {
         try {
-          const sample = await import("/videos.js");
+          /* The edge injects window.ASSET_VERSION into every HTML page. Using
+             it here keeps this fallback module on the same deployment-scoped
+             URL as every other JS file, so it can never be served stale. */
+          const version = String(window.ASSET_VERSION || "").replace(/[^0-9a-f]/gi, "").slice(0, 40);
+          const sample = await import(version ? `/videos.js?v=${version}` : "/videos.js");
           rows = Array.isArray(sample.videos) ? sample.videos : [];
         } catch (error) {
           rows = [];
