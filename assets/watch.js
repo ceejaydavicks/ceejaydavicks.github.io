@@ -485,12 +485,14 @@ function publicWatchUrl(video) {
 
 async function shareCurrent() {
   if (!current) return;
-  const url = publicWatchUrl(current);
-  const payload = { title: current.title, text: `${current.title} · ${SITE_NAME}`, url };
+  /* Only the bare URL is shared. A title/text field is what messaging apps
+     paste in front of the link; the per-video og: preview supplies the title
+     on its own when the link unfurls. */
+  const url = publicWatchUrl(current).trim();
 
   if (navigator.share) {
     try {
-      await navigator.share(payload);
+      await navigator.share({ url });
       return;
     } catch (error) {
       /* The visitor dismissed the sheet — fall through to copying. */
