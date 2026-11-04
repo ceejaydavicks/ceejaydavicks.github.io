@@ -1,0 +1,81 @@
+name: cache-verify
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Cloudflare Pages preview URL to check
+        required: true
+      old_version:
+        description: Version from the previous deployment (must be gone)
+        required: false
+        default: ""
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deployed HTML and cache headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          U="${{ inputs.url }}"
+          OLD="${{ inputs.old_version }}"
+          echo "TARGET=$U"
+          echo "EXPECTED_OLD_VERSION=$OLD"
+
+          echo "===== HOME: RESPONSE HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/" | grep -iE '^(HTTP/|cache-control:|content-type:|etag:)' || true
+
+          echo "===== HOME: ASSET URLS IN DEPLOYED HTML ====="
+          HOME_HTML=$(curl -sS "$U/")
+          echo "$HOME_HTML" | grep -oE '(src|href)="[^"]+\.(js|css)[^"]*"' | sort -u
+
+          echo "===== HOME: VERSION BOOTSTRAP ====="
+          V=$(echo "$HOME_HTML" | grep -oE 'window\.ASSET_VERSION="[^"]+"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "VERSION=$V"
+          test -n "$V"
+          VCOUNT=$(echo "$HOME_HTML" | grep -oE '\?v=[0-9a-f]+' | sort -u | wc -l)
+          echo "DISTINCT_VERSIONS=$VCOUNT"
+          test "$VCOUNT" -eq 1
+
+          echo "===== HOME: NO OLD VERSION ====="
+          if [ -n "$OLD" ]; then
+            if echo "$HOME_HTML" | grep -q "$OLD"; then echo "ERROR: old version still referenced"; exit 1; fi
+            echo "old version $OLD is gone"
+          fi
+
+          echo "===== VERSIONED JS: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/assets/watch.js?v=$V" | grep -iE '^(HTTP/|cache-control:|content-type:)' || true
+          echo "===== UNVERSIONED JS: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/assets/watch.js" | grep -iE '^(HTTP/|cache-control:)' || true
+          echo "===== VERSIONED CSS: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/assets/site.css?v=$V" | grep -iE '^(HTTP/|cache-control:)' || true
+          echo "===== UNVERSIONED CSS: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/assets/site.css" | grep -iE '^(HTTP/|cache-control:)' || true
+          echo "===== IMAGE: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/assets/favicon-32.png" | grep -iE '^(HTTP/|cache-control:)' || true
+
+          echo "===== WATCH PAGE: HEADERS ====="
+          curl -sS -D - -o /dev/null "$U/watch/?v=62" | grep -iE '^(HTTP/|cache-control:|content-type:)' || true
+          echo "===== WATCH PAGE: ASSET URLS + PREVIEW TAGS ====="
+          WATCH_HTML=$(curl -sS "$U/watch/?v=62")
+          echo "$WATCH_HTML" | grep -oE '(src|href)="[^"]+\.(js|css)[^"]*"' | sort -u
+          echo "$WATCH_HTML" | grep -oE '<meta property="og:title"[^>]*>' | head -2
+          echo "$WATCH_HTML" | grep -oE 'window\.ASSET_VERSION="[^"]+"' | head -1
+
+          echo "===== SHARE HANDLER IN DEPLOYED JS ====="
+          curl -sS "$U/assets/watch.js?v=$V" | grep -nE 'navigator\.share|clipboard\.writeText|Link copied' | head -10
+
+          echo "===== ASSERTIONS ====="
+          test "$(curl -sS -D - -o /dev/null "$U/" | grep -i '^cache-control:' | tr -d '\r' | awk '{print $2, $3}')" = "no-cache" || true
+          CC_HTML=$(curl -sS -D - -o /dev/null "$U/" | grep -i '^cache-control:' | tr -d '\r' | sed -E 's/^[^:]*: *//')
+          CC_VER=$(curl -sS -D - -o /dev/null "$U/assets/watch.js?v=$V" | grep -i '^cache-control:' | tr -d '\r' | sed -E 's/^[^:]*: *//')
+          CC_PLAIN=$(curl -sS -D - -o /dev/null "$U/assets/watch.js" | grep -i '^cache-control:' | tr -d '\r' | sed -E 's/^[^:]*: *//')
+          CC_WATCH=$(curl -sS -D - -o /dev/null "$U/watch/?v=62" | grep -i '^cache-control:' | tr -d '\r' | sed -E 's/^[^:]*: *//')
+          echo "CC_HTML=[$CC_HTML] CC_VER=[$CC_VER] CC_PLAIN=[$CC_PLAIN] CC_WATCH=[$CC_WATCH]"
+          test "$CC_HTML" = "no-cache"
+          test "$CC_PLAIN" = "no-cache"
+          test "$CC_WATCH" = "no-cache"
+          echo "$CC_VER" | grep -q "31536000" && echo "$CC_VER" | grep -q "immutable"
+          echo "$WATCH_HTML" | grep -q "assets/watch.js?v=$V"
+          echo "$HOME_HTML" | grep -q "window.ASSET_VERSION=\"$V\""
+          echo "ALL ASSERTIONS PASSED"
