@@ -55,6 +55,23 @@ export async function onRequestGet(context) {
   chunks.push(await probe(context, "IMAGE LIVE", "/assets/favicon-32.png", 0));
   chunks.push(await probe(context, "OLD VERSIONED JS", "/assets/watch.js?v=097bfbd", 0));
 
+  /* Compare the three real deployments: each must carry its own commit SHA. */
+  const previous = [
+    "https://24c30738.boootymansion.pages.dev/",
+    "https://38e4891b.boootymansion.pages.dev/"
+  ];
+  chunks.push("=== PREVIOUS DEPLOYMENTS ===");
+  for (const url of previous) {
+    try {
+      const response = await fetch(url, { headers: { "cache-control": "no-cache" } });
+      const html = await response.text();
+      const found = (html.match(/window\.ASSET_VERSION="([^"]+)"/) || [])[1] || "none";
+      chunks.push(`${url} status=${response.status} version=${found} cache-control=${response.headers.get("cache-control")}`);
+    } catch (error) {
+      chunks.push(`${url} FAILED ${String(error && error.message || error)}`);
+    }
+  }
+
   return new Response(chunks.join("\n\n"), {
     headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" }
   });
