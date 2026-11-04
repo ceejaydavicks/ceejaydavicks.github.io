@@ -12,13 +12,32 @@
    (`[...key]`) is rejected by Wrangler while generating the Functions bundle
    ("Parameter names must only contain alphanumeric and underscore characters"),
    so the R2 key is reassembled from its two path segments instead. Every key
-   this app writes is `thumbs/<name>` or `videos/<name>`, so the public URLs are
-   unchanged: `/api/media/thumbs/<name>`.                                    */
+   this app writes is `thumbs/<name>`, `videos/<name>` or `share/<name>`, so
+   the public URLs stay `/api/media/thumbs/<name>` and friends.
+
+   `share/<name>` is the crawler-facing 1200x630 JPG link preview. Everything
+   in this route is public and CORS-open: no auth cookie, no age gate, and no
+   Content-Disposition: attachment header.                                  */
 
 import { fail } from "../../../_lib/http.js";
 
-const FOLDERS = new Set(["thumbs", "videos"]);
+/* `share/` holds the 1200x630 JPG previews used by og:image / twitter:image.
+   Like thumbs and videos it is public: social crawlers must never need a
+   cookie, a login session or the age gate to fetch a preview. */
+const FOLDERS = new Set(["thumbs", "videos", "share"]);
 const RANGE_RE = /^bytes=(\d*)-(\d*)$/;
+
+/* A few older R2 objects were written before httpMetadata was always set. */
+function contentTypeFor(key, metadataType) {
+  const type = String(metadataType || "").split(";")[0].trim().toLowerCase();
+  if (type) return type;
+  const lower = key.toLowerCase();
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".mp4")) return "video/mp4";
+  return "application/octet-stream";
+}
 
 /* Pages hands route parameters back as text; decode defensively so keys with
    escaped characters still resolve, without ever throwing on malformed input. */
@@ -100,10 +119,18 @@ export async function onRequestGet({ request, params, env }) {
   const range = parseRange(request.headers.get("range"), size);
 
   const headers = new Headers();
-  headers.set("content-type", meta.httpMetadata?.contentType || "application/octet-stream");
+  headers.set("content-type", contentTypeFor(objectKey, meta.httpMetadata?.contentType));
+  /* Share-image keys carry a content hash, so overwriting is impossible and a
+     year of immutable caching is safe. Short, crawlable, and CORS-open. */
   headers.set("cache-control", "public, max-age=31536000, immutable");
   headers.set("x-content-type-options", "nosniff");
   headers.set("accept-ranges", "bytes");
+  headers.set("access-control-allow-origin", "*");
+  headers.set("cross-origin-resource-policy", "cross-origin");
+  headers.set("timing-allow-origin", "*");
+  /* Never send Content-Disposition: an attachment header makes some crawlers
+     refuse to unfurl the image. */
+  headers.delete("content-disposition");
   if (meta.httpEtag) headers.set("etag", meta.httpEtag);
 
   if (range === "invalid") {

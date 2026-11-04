@@ -12,6 +12,8 @@
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 
   <script src="/assets/video-rules.js"></script>
+  <!-- Draws the 1200x630 link-preview JPG in a canvas before it is stored. -->
+  <script src="/assets/share-image.js"></script>
   <!-- Same theme as the site: the saved choice, else the device setting. -->
   <script>
     (function () {
@@ -399,6 +401,10 @@
     .btn.is-urgent { border-color: #F43F5E; box-shadow: inset 0 0 0 1px #F43F5E; color: #FFFFFF; background: #E11D48; }
     .badge--need { border-color: #F43F5E; color: #FB7185; }
     .fix-progress { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .share-failures { flex-basis: 100%; margin-top: .5rem; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--muted); font-size: 12px; }
+    .share-failures strong { color: var(--text); }
+    .share-failures ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+    .share-failures li { margin-bottom: .25rem; }
 
     .thumb-row { display: flex; gap: 0.5rem; align-items: center; }
     .thumb-row input { flex: 1 1 auto; }
@@ -565,7 +571,11 @@
           <button class="btn btn--ghost btn--small" type="button" id="fix-thumbnails">Fix missing thumbnails</button>
           <span class="fix-progress" id="fix-progress" hidden></span>
           <button class="btn btn--ghost btn--small" type="button" id="stop-fix" hidden>Stop</button>
+          <button class="btn btn--ghost btn--small" type="button" id="fix-share-images">Fix share images</button>
+          <span class="fix-progress" id="share-fix-progress" hidden></span>
+          <button class="btn btn--ghost btn--small" type="button" id="stop-share-fix" hidden>Stop</button>
           <button class="btn" type="button" id="add-video">+ Add video</button>
+          <div class="share-failures" id="share-fix-failures" hidden></div>
         </div>
 
         <div class="video-list" id="video-list"></div>
@@ -753,6 +763,8 @@
       needsThumbOnly: false,
       uploadingFor: null,
       fix: { running: false, stop: false, done: 0, total: 0, fixed: 0, failed: [] },
+      /* Bulk generation of the 1200x630 link-preview JPGs. */
+      shareFix: { running: false, stop: false, done: 0, total: 0, fixed: 0, failed: [] },
       /* "manual" for a picture the admin uploaded, "auto" for a frame that was
          taken from the video. A manual picture always wins. */
       thumbSource: ""
@@ -924,6 +936,37 @@
       if (upload) upload.classList.remove("is-urgent");
     }
 
+    /* ---------------------------------------------------------------- */
+    /* link preview images (1200x630 JPGs used by og:image)             */
+    /* ---------------------------------------------------------------- */
+    function needsShareImage(video) {
+      return !String((video && video.share_image_url) || "").trim();
+    }
+
+    /* Draws the share image in a canvas, uploads it to R2 at a stable
+       content-hashed URL and stores that URL on the video record. Used on
+       save, on every thumbnail change, and by the bulk "Fix share images". */
+    async function makeShareImage(video) {
+      if (!window.ShareImage) throw new Error("The share image helper did not load.");
+      if (needsThumbnail(video)) throw new Error("This video has no thumbnail.");
+      const made = await window.ShareImage.create(video);
+      const form = new FormData();
+      form.append("videoId", String(video.id));
+      form.append("file", new File([made.blob], "share.jpg", { type: "image/jpeg" }));
+      const result = await api("/api/share-image", { method: "POST", form });
+      const patch = result.video || { share_image_url: result.url };
+      Object.assign(video, patch);
+      const record = state.videos.find((item) => String(item.id) === String(video.id));
+      if (record) Object.assign(record, patch);
+      return result;
+    }
+
+    /* Thumbnail-only edits regenerate the preview without blocking the UI. */
+    function queueShareImage(video) {
+      if (!video || needsThumbnail(video)) return;
+      makeShareImage(video).then(renderVideos).catch(() => {});
+    }
+
     function withTimeout(promise, ms) {
       return Promise.race([
         promise,
@@ -1058,6 +1101,7 @@
         if (!video.video_url && video.embed_url) badges.append(el("span", "badge", "Embed"));
         if (video.source === "bot") badges.append(el("span", "badge", "Telegram bot"));
         if (needsThumbnail(video)) badges.append(el("span", "badge badge--need", "Needs thumbnail"));
+        if (!needsShareImage(video)) badges.append(el("span", "badge", "Share image"));
         tagList(video).forEach((tag) => badges.append(el("span", "badge", tag)));
         main.append(badges);
 
@@ -1547,6 +1591,7 @@
           const record = state.videos.find((item) => String(item.id) === String(state.editingId));
           if (record) Object.assign(record, result.video || { thumbnail_url: made.url, thumb_source: "auto" });
           renderVideos();
+          if (record) queueShareImage(record);
         }
         toast("New thumbnail saved");
       } catch (error) {
@@ -1577,6 +1622,7 @@
           body: { thumbnail_url: url, thumb_source: source }
         });
         Object.assign(video, result.video || { thumbnail_url: url, thumb_source: source });
+        queueShareImage(video);
         return true;
       } catch (error) {
         return false;
@@ -1637,6 +1683,89 @@
         `${state.fix.failed.length} still need a picture`, state.fix.failed.length > 0);
     }
 
+    /* ---------------------------------------------------------------- */
+    /* bulk "Fix share images"                                          */
+    /* ---------------------------------------------------------------- */
+    function updateShareFixProgress() {
+      const fix = state.shareFix;
+      const node = $("#share-fix-progress");
+      if (!node) return;
+      node.hidden = false;
+      node.textContent = `${fix.done}/${fix.total} checked · ${fix.fixed} created · ` +
+        `${fix.failed.length} failed${fix.stop ? " · stopping…" : ""}`;
+    }
+
+    function renderShareFixFailures() {
+      const node = $("#share-fix-failures");
+      if (!node) return;
+      const failed = state.shareFix.failed;
+      node.replaceChildren();
+      if (!failed.length) {
+        node.hidden = true;
+        return;
+      }
+      node.hidden = false;
+      node.append(el("strong", "", `${failed.length} share image${failed.length === 1 ? "" : "s"} could not be created:`));
+      const list = el("ul");
+      failed.forEach((entry) => {
+        list.append(el("li", "", `#${entry.video.id} “${entry.video.title}” — ${entry.reason}`));
+      });
+      node.append(list);
+    }
+
+    async function fixShareImages() {
+      if (state.shareFix.running) return;
+      const videos = state.videos.slice();
+      if (!videos.length) {
+        toast("There are no videos yet");
+        return;
+      }
+
+      state.shareFix = { running: true, stop: false, done: 0, total: videos.length, fixed: 0, failed: [] };
+      const button = $("#fix-share-images");
+      const stopButton = $("#stop-share-fix");
+      const failures = $("#share-fix-failures");
+      button.disabled = true;
+      stopButton.hidden = false;
+      if (failures) failures.hidden = true;
+      updateShareFixProgress();
+
+      let cursor = 0;
+      async function worker() {
+        while (cursor < videos.length && !state.shareFix.stop) {
+          const video = videos[cursor];
+          cursor += 1;
+          if (needsThumbnail(video)) {
+            state.shareFix.failed.push({ video, reason: "no thumbnail (upload a picture first)" });
+          } else {
+            try {
+              await withTimeout(makeShareImage(video), 20000);
+              state.shareFix.fixed += 1;
+            } catch (error) {
+              state.shareFix.failed.push({
+                video,
+                reason: error && error.message ? error.message : "could not be generated"
+              });
+            }
+          }
+          state.shareFix.done += 1;
+          updateShareFixProgress();
+        }
+      }
+
+      /* Two at a time; every canvas is drawn and encoded in the browser. */
+      await Promise.all([worker(), worker()]);
+
+      state.shareFix.running = false;
+      button.disabled = false;
+      stopButton.hidden = true;
+      updateShareFixProgress();
+      renderShareFixFailures();
+      renderVideos();
+      toast(`${state.shareFix.fixed} share image${state.shareFix.fixed === 1 ? "" : "s"} created · ` +
+        `${state.shareFix.failed.length} failed`, state.shareFix.failed.length > 0);
+    }
+
     async function uploadRowThumbnail(file, id) {
       const video = state.videos.find((item) => String(item.id) === String(id));
       if (!video) return;
@@ -1651,6 +1780,7 @@
         });
         Object.assign(video, result.video || { thumbnail_url: data.url, thumb_source: "manual" });
         renderVideos();
+        queueShareImage(video);
         toast(`Thumbnail saved for “${video.title}”`);
       } catch (error) {
         if (error.message !== "Unauthorized") toast(error.message, true);
@@ -1866,6 +1996,13 @@
       updateFixProgress();
       toast("Stopping after the current videos…");
     });
+    $("#fix-share-images").addEventListener("click", fixShareImages);
+    $("#stop-share-fix").addEventListener("click", () => {
+      if (!state.shareFix.running) return;
+      state.shareFix.stop = true;
+      updateShareFixProgress();
+      toast("Stopping after the current videos…");
+    });
     document.querySelectorAll("[data-thumb]").forEach((button) => {
       button.addEventListener("click", () => {
         state.needsThumbOnly = !state.needsThumbOnly;
@@ -2004,12 +2141,29 @@
            clear instruction to upload one (the list row also carries the
            "Needs thumbnail" label and an Upload button). */
         const stillNeedsThumb = !body.thumbnail_url;
+        const before = state.editingId
+          ? state.videos.find((item) => String(item.id) === String(state.editingId))
+          : null;
+        let saved = null;
         if (state.editingId) {
-          await api(`/api/videos/${state.editingId}`, { method: "PUT", body });
+          saved = await api(`/api/videos/${state.editingId}`, { method: "PUT", body });
           toast(stillNeedsThumb ? `Video updated — ${THUMB_BLOCKED}` : "Video updated", stillNeedsThumb);
         } else {
-          await api("/api/videos", { method: "POST", body });
+          saved = await api("/api/videos", { method: "POST", body });
           toast(stillNeedsThumb ? `Video added — ${THUMB_BLOCKED}` : "Video added", stillNeedsThumb);
+        }
+
+        /* A new row, a changed thumbnail or a missing preview needs a fresh
+           1200x630 share image. Failure never rolls back the saved video. */
+        const savedVideo = saved && saved.video;
+        const thumbChanged = !before ||
+          String(before.thumbnail_url || "") !== String(body.thumbnail_url || "");
+        if (savedVideo && !needsThumbnail(savedVideo) && (thumbChanged || needsShareImage(savedVideo))) {
+          try {
+            await makeShareImage(savedVideo);
+          } catch (error) {
+            toast(`Saved, but the share image failed: ${error && error.message ? error.message : "unknown error"}`, true);
+          }
         }
         editor.close();
         await loadVideos();

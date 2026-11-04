@@ -32,7 +32,9 @@ async function removeStoredFiles(env, row) {
   const removed = [];
   if (!env.MEDIA) return removed;
 
-  for (const url of [row.thumbnail_url, row.video_url]) {
+  /* The generated link preview lives in the same bucket and is only useful
+     for this row, so it goes too. */
+  for (const url of [row.thumbnail_url, row.video_url, row.share_image_url]) {
     const value = String(url || "");
     if (!value.startsWith("/api/media/")) continue;
     const key = value.slice("/api/media/".length);

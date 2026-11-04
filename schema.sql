@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS videos (
   source TEXT NOT NULL DEFAULT 'site',   -- "site" (panel) or "bot" (mirrored catalogue)
   source_id TEXT NOT NULL DEFAULT '',     -- id in the original catalogue
   thumb_source TEXT NOT NULL DEFAULT '',  -- manual | auto | telegram | embed
+  share_image_url TEXT NOT NULL DEFAULT '', -- 1200x630 JPG in R2 for og:image
   tg_chat TEXT,          -- channel a video was published from (NULL for manual rows)
   tg_message_id INTEGER,
   source_url TEXT NOT NULL DEFAULT '',  -- page a scraped row came from
