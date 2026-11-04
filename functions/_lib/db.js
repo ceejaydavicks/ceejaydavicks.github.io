@@ -24,6 +24,9 @@ const SCHEMA = [
     source TEXT NOT NULL DEFAULT 'site',
     source_id TEXT NOT NULL DEFAULT '',
     thumb_source TEXT NOT NULL DEFAULT '',
+    /* 1200x630 JPG link preview in R2 (/api/media/share/...). Empty until the
+       admin generates one; the watch page falls back to the thumbnail. */
+    share_image_url TEXT NOT NULL DEFAULT '',
     tg_chat TEXT,
     tg_message_id INTEGER,
     source_url TEXT NOT NULL DEFAULT '',
@@ -100,7 +103,9 @@ const LATE_COLUMNS = [
   /* How the thumbnail was made: "manual" (uploaded by the admin), "auto" (a
      frame captured from the file), "telegram" (Telegram's own poster) or
      "embed" (the provider's thumbnail). A manual thumbnail always wins. */
-  ["thumb_source", "ALTER TABLE videos ADD COLUMN thumb_source TEXT NOT NULL DEFAULT ''"]
+  ["thumb_source", "ALTER TABLE videos ADD COLUMN thumb_source TEXT NOT NULL DEFAULT ''"],
+  /* Stable R2 URL of the generated 1200x630 share image for link previews. */
+  ["share_image_url", "ALTER TABLE videos ADD COLUMN share_image_url TEXT NOT NULL DEFAULT ''"]
 ];
 
 /* One Telegram message may only ever produce one row: webhook updates are
@@ -175,6 +180,7 @@ export const VIDEO_COLUMNS = [
   "source",
   "source_id",
   "thumb_source",
+  "share_image_url",
   "source_url",
   "created_at"
 ].join(", ");
@@ -336,6 +342,17 @@ export async function updateVideo(env, id, values) {
 
 export async function deleteVideo(env, id) {
   await env.DB.prepare("DELETE FROM videos WHERE id = ?").bind(id).run();
+}
+
+/* Share images are generated in the admin's browser by /api/share-image. They
+   are deliberately NOT part of insertVideo/updateVideo: editing a title or a
+   caption must never wipe a good preview image. */
+export async function setShareImage(env, id, url) {
+  await env.DB
+    .prepare("UPDATE videos SET share_image_url = ? WHERE id = ?")
+    .bind(String(url || ""), id)
+    .run();
+  return getVideo(env, id);
 }
 
 /* ---- mirrored catalogues (the Telegram bot's own video list) ------------ */
