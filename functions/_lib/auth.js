@@ -2,14 +2,18 @@
    Authentication: password login, signed session cookie, login rate limiting.
    Secrets stay in environment variables (ADMIN_PASSWORD / SESSION_SECRET) and
    never reach the browser.
+
+   Rate limiting is deliberately simple but must be *self-healing*: an expired
+   lockout row is deleted on sight, so it can never re-arm itself with a stale
+   count and keep a legitimate admin out forever.
    ========================================================================== */
 
 export const COOKIE_NAME = "admin_session";
 export const SESSION_TTL_SECONDS = 12 * 60 * 60; // 12 hours
 
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const BLOCK_MS = 15 * 60 * 1000;
+export const MAX_ATTEMPTS = 5;
+export const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+export const BLOCK_MS = 10 * 60 * 1000; // lockout resets itself after 10 minutes
 
 const encoder = new TextEncoder();
 
@@ -76,7 +80,6 @@ export async function passwordMatches(candidate, expected) {
 export async function createSessionToken(env) {
   const secret = sessionSecret(env);
   if (!secret) throw new Error("ADMIN_PASSWORD or SESSION_SECRET is not set");
-
   const payload = {
     exp: Date.now() + SESSION_TTL_SECONDS * 1000,
     iat: Date.now()
@@ -89,13 +92,10 @@ export async function createSessionToken(env) {
 export async function verifySessionToken(env, token) {
   const secret = sessionSecret(env);
   if (!secret || typeof token !== "string" || !token.includes(".")) return false;
-
   const [body, signature] = token.split(".");
   if (!body || !signature) return false;
-
   const expected = await hmac(secret, body);
   if (!timingSafeEqual(signature, expected)) return false;
-
   try {
     const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(body)));
     return Number(payload.exp) > Date.now();
@@ -121,6 +121,7 @@ export function isLocalRequest(request) {
 
 export function sessionCookie(request, token) {
   // Secure everywhere except plain-HTTP local development, where browsers drop it.
+  // HttpOnly + SameSite=Lax keep the cookie away from scripts and cross-site forms.
   const secure = isLocalRequest(request) ? "" : "; Secure";
   return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secure}`;
 }
@@ -160,55 +161,101 @@ export function clientIp(request) {
 }
 
 /* ---- login throttling (D1 table login_attempts) ------------------------- */
-
-export async function checkRateLimit(env, ip) {
-  const now = Date.now();
-  const row = await env.DB.prepare(
-    "SELECT count, first_at, blocked_until FROM login_attempts WHERE ip = ?"
-  )
-    .bind(ip)
-    .first();
-
-  if (!row) return { allowed: true, retryAfter: 0 };
-
-  if (row.blocked_until && Number(row.blocked_until) > now) {
-    return { allowed: false, retryAfter: Math.ceil((Number(row.blocked_until) - now) / 1000) };
-  }
-
-  if (now - Number(row.first_at) > WINDOW_MS) {
-    return { allowed: true, retryAfter: 0 };
-  }
-
-  return { allowed: true, retryAfter: 0 };
-}
-
-export async function recordLoginFailure(env, ip) {
-  const now = Date.now();
-  const row = await env.DB.prepare("SELECT count, first_at FROM login_attempts WHERE ip = ?")
-    .bind(ip)
-    .first();
-
-  if (!row || now - Number(row.first_at) > WINDOW_MS) {
-    await env.DB.prepare(
-      "INSERT INTO login_attempts (ip, count, first_at, blocked_until) VALUES (?, 1, ?, 0) " +
-        "ON CONFLICT(ip) DO UPDATE SET count = 1, first_at = excluded.first_at, blocked_until = 0"
-    )
-      .bind(ip, now)
-      .run();
-    return;
-  }
-
-  const count = Number(row.count) + 1;
-  const blockedUntil = count >= MAX_ATTEMPTS ? now + BLOCK_MS : 0;
-  await env.DB.prepare(
-    "UPDATE login_attempts SET count = ?, blocked_until = ? WHERE ip = ?"
-  )
-    .bind(count, blockedUntil, ip)
-    .run();
-}
+/* A single row per IP. `first_at` anchors the counting window, `blocked_until`
+   is an absolute epoch-ms deadline. Both are always refreshed/deleted so an
+   old row can never lock an admin out indefinitely. */
 
 export async function clearLoginFailures(env, ip) {
   await env.DB.prepare("DELETE FROM login_attempts WHERE ip = ?").bind(ip).run();
 }
 
-export const LOGIN_LIMITS = { maxAttempts: MAX_ATTEMPTS, windowMs: WINDOW_MS, blockMs: BLOCK_MS };
+export async function checkRateLimit(env, ip) {
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    "SELECT count, first_at, blocked_until FROM login_attempts WHERE ip = ?"
+  ).bind(ip).first();
+
+  if (!row) return { allowed: true, retryAfter: 0, retryMinutes: 0, attempts: 0, locked: false };
+
+  const blockedUntil = Number(row.blocked_until) || 0;
+  const firstAt = Number(row.first_at) || 0;
+  const attempts = Number(row.count) || 0;
+
+  if (blockedUntil > now) {
+    const retryAfter = Math.ceil((blockedUntil - now) / 1000);
+    return {
+      allowed: false,
+      retryAfter,
+      retryMinutes: Math.max(1, Math.ceil(retryAfter / 60)),
+      attempts,
+      locked: true
+    };
+  }
+
+  /* Self-healing: an expired lockout or an expired counting window is removed
+     immediately, so the next failure starts a fresh window instead of
+     inheriting count=5 and instantly re-arming the block. */
+  if (blockedUntil || now - firstAt > WINDOW_MS) {
+    await clearLoginFailures(env, ip);
+    return { allowed: true, retryAfter: 0, retryMinutes: 0, attempts: 0, locked: false };
+  }
+
+  return { allowed: true, retryAfter: 0, retryMinutes: 0, attempts, locked: false };
+}
+
+export async function recordLoginFailure(env, ip) {
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    "SELECT count, first_at FROM login_attempts WHERE ip = ?"
+  ).bind(ip).first();
+
+  /* Start a new window when there is no row, or the previous one has expired. */
+  if (!row || now - Number(row.first_at || 0) > WINDOW_MS) {
+    await env.DB.prepare(
+      "INSERT INTO login_attempts (ip, count, first_at, blocked_until) VALUES (?, 1, ?, 0) " +
+        "ON CONFLICT(ip) DO UPDATE SET count = 1, first_at = excluded.first_at, blocked_until = 0"
+    ).bind(ip, now).run();
+    return { attempts: 1, locked: false, retryAfter: 0 };
+  }
+
+  const count = Number(row.count || 0) + 1;
+  const locked = count >= MAX_ATTEMPTS;
+  const blockedUntil = locked ? now + BLOCK_MS : 0;
+  /* Anchoring first_at to the block start makes the window and the lockout
+     expire together — no 30-minute lockout from a 15-minute window. */
+  const firstAt = locked ? now : Number(row.first_at || now);
+  await env.DB.prepare(
+    "UPDATE login_attempts SET count = ?, first_at = ?, blocked_until = ? WHERE ip = ?"
+  ).bind(count, firstAt, blockedUntil, ip).run();
+  return {
+    attempts: count,
+    locked,
+    retryAfter: locked ? Math.ceil(BLOCK_MS / 1000) : 0
+  };
+}
+
+/* Read-only snapshot for /api/health — never returns a password or a token. */
+export async function rateLimitStatus(env, ip) {
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    "SELECT count, first_at, blocked_until FROM login_attempts WHERE ip = ?"
+  ).bind(ip).first();
+  const blockedUntil = Number(row && row.blocked_until) || 0;
+  const locked = blockedUntil > now;
+  return {
+    ipKnown: Boolean(row),
+    attempts: Number(row && row.count) || 0,
+    locked,
+    retryMinutes: locked ? Math.max(1, Math.ceil((blockedUntil - now) / 60000)) : 0,
+    windowMinutes: Math.round(WINDOW_MS / 60000),
+    blockMinutes: Math.round(BLOCK_MS / 60000),
+    maxAttempts: MAX_ATTEMPTS
+  };
+}
+
+export const LOGIN_LIMITS = {
+  maxAttempts: MAX_ATTEMPTS,
+  windowMs: WINDOW_MS,
+  blockMs: BLOCK_MS,
+  sessionTtlSeconds: SESSION_TTL_SECONDS
+};

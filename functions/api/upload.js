@@ -1,27 +1,28 @@
-/* POST /api/upload — admin file uploads into the R2 binding MEDIA.
+/* POST /api/upload — admin file uploads.
 
    Two shapes, one endpoint:
 
    1. multipart/form-data, field "file"          (thumbnails, small files)
-        returns { url, key, size, type, kind }
+        returns { url, key, size, type, kind, storage }
 
    2. raw body + headers                         (videos up to 95 MB)
         content-type: video/mp4, video/webm, video/quicktime, video/x-m4v
         x-file-size: 12345678  (optional, used when Content-Length is absent)
-        x-kind: video          (optional; the content type is enough)
       The body is streamed straight into R2, so a large video never has to be
       buffered inside the Function.
 
-   Size ceilings:
-     images 5 MB          — grid thumbnails/player posters
-     videos 95 MB         — Cloudflare caps a request body at 100 MB on the
-                            Free/Pro plans, so 95 MB leaves room for the
-                            multipart framing. Anything larger should arrive
-                            through the Telegram channel, where the file never
-                            passes through the Worker at all.
+   Storage:
+     R2 (MEDIA binding)  -> /api/media/thumbs/... (preferred)
+     D1 fallback         -> /api/media/local/...  for small images only, so the
+                            "Fix missing thumbnails" tool still works when the
+                            optional R2 binding has not been added yet.
+     Videos always require R2; a clear 503 explains what to add in Cloudflare.
+
+   Size ceilings: images 5 MB, videos 95 MB.
 */
 
 import { isAdminRequest } from "../_lib/auth.js";
+import { storeImage } from "../_lib/media-store.js";
 import { fail, json } from "../_lib/http.js";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -48,6 +49,11 @@ const TOO_BIG_VIDEO =
 
 const TOO_BIG_IMAGE = "That image is larger than 5 MB. Resize it or paste an image link instead.";
 
+const NO_R2_VIDEO =
+  "Video uploads need the R2 binding MEDIA (optional on the free plan). " +
+  "Add it under Pages project → Settings → Bindings, or paste a video link instead. " +
+  "Captured card thumbnails work without it.";
+
 function randomKey() {
   const bytes = crypto.getRandomValues(new Uint8Array(12));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -70,7 +76,6 @@ function classify(type, name) {
   if (imageMatch) return { kind: "thumb", ext, type: imageMatch[0] };
   const videoMatch = Object.entries(VIDEO_TYPES).find(([, value]) => value === ext);
   if (videoMatch) return { kind: "video", ext, type: videoMatch[0] };
-
   return null;
 }
 
@@ -87,45 +92,52 @@ async function store(env, { body, info, size }) {
 
   const key = `${folder}/${Date.now()}-${randomKey()}.${info.ext}`;
 
-  try {
-    await env.MEDIA.put(key, body, {
-      httpMetadata: {
-        contentType: info.type,
-        cacheControl: "public, max-age=31536000, immutable"
-      }
-    });
-  } catch (error) {
-    return fail("Upload failed while writing to R2. Check the MEDIA binding.", 500);
+  /* R2 can take the stream directly; the D1 fallback needs the bytes. */
+  if (env.MEDIA) {
+    try {
+      const stored = await storeImage(env, key, body, info.type);
+      return json({
+        url: stored.url,
+        key,
+        size,
+        type: info.type,
+        kind: info.kind,
+        storage: stored.storage
+      }, 201);
+    } catch (error) {
+      return fail("Upload failed while writing to R2. Check the MEDIA binding.", 500);
+    }
   }
 
-  return json(
-    {
-      url: `/api/media/${key}`,
-      key,
-      size,
+  if (info.kind === "video") return fail(NO_R2_VIDEO, 503);
+
+  try {
+    const bytes = new Uint8Array(await new Response(body).arrayBuffer());
+    if (!bytes.length) return fail("The uploaded file is empty.", 422);
+    const stored = await storeImage(env, key, bytes, info.type);
+    return json({
+      url: stored.url,
+      key: stored.key,
+      size: bytes.length,
       type: info.type,
-      kind: info.kind
-    },
-    201
-  );
+      kind: info.kind,
+      storage: stored.storage
+    }, 201);
+  } catch (error) {
+    return fail(
+      String(error && error.message ? error.message : "Upload failed while saving the image."),
+      500
+    );
+  }
 }
 
 export async function onRequestPost({ request, env }) {
   if (!(await isAdminRequest({ request, env }))) return fail("Unauthorized", 401);
-  if (!env.MEDIA) {
-    return fail(
-      "Uploads need the R2 binding MEDIA, which is optional (R2 is a paid product). "
-        + "Without it, paste an image or video URL in the panel instead — everything else works.",
-      503
-    );
-  }
 
   const contentType = String(request.headers.get("content-type") || "").toLowerCase();
 
   /* ---- 1. raw body: one video file, streamed ---------------------------- */
   if (!contentType.startsWith("multipart/form-data")) {
-    // Browsers set Content-Length for a File body; the admin panel also sends
-    // x-file-size so the size is known even behind a proxy that strips it.
     const declared = Number(
       request.headers.get("content-length") || request.headers.get("x-file-size") || 0
     );
@@ -135,7 +147,6 @@ export async function onRequestPost({ request, env }) {
     }
     if (!request.body) return fail("The upload was empty.", 422);
     if (!declared) return fail("The upload is missing its size (Content-Length header).", 411);
-
     return store(env, { body: request.body, info, size: declared });
   }
 

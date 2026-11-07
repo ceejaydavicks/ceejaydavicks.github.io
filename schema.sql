@@ -48,6 +48,8 @@ CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC);
 CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds);
 CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured);
 CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag);
+-- Bot mirror lookups by (source, source_id); avoids a table scan per feed row.
+CREATE INDEX IF NOT EXISTS videos_source_idx ON videos (source, source_id);
 
 -- One Telegram message may only ever produce one row (webhook retries).
 CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx
@@ -73,6 +75,16 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   count INTEGER NOT NULL DEFAULT 0,
   first_at INTEGER NOT NULL DEFAULT 0,
   blocked_until INTEGER NOT NULL DEFAULT 0
+);
+
+-- Small card thumbnails captured in the admin when the R2 MEDIA binding is not
+-- configured. Videos are never stored here; they still need R2.
+CREATE TABLE IF NOT EXISTS stored_media (
+  id TEXT PRIMARY KEY,
+  content_type TEXT NOT NULL DEFAULT '',
+  data TEXT NOT NULL DEFAULT '',       -- base64-encoded image bytes
+  bytes INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 INSERT OR IGNORE INTO settings (key, value) VALUES

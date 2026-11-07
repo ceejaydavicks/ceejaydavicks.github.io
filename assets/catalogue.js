@@ -32,6 +32,26 @@
   var catalogueInflight = null;
   var settingsInflight = null;
   var details = new Map();
+  var warmedHosts = new Set();
+
+  /* Most posters live on one other origin (the bot's Worker). A single
+     preconnect removes a DNS + TLS round trip from EVERY card image, which is
+     by far the slowest part of a cold page load. Purely an optimisation. */
+  function warmThumbnailHosts(rows) {
+    try {
+      for (var i = 0; i < rows.length && warmedHosts.size < 2; i += 1) {
+        var raw = rows[i] && rows[i].thumbnail_url;
+        if (!raw || !/^https?:\/\//i.test(raw)) continue;
+        var parsed = new URL(raw, window.location.href);
+        if (parsed.origin === window.location.origin || warmedHosts.has(parsed.origin)) continue;
+        warmedHosts.add(parsed.origin);
+        var link = document.createElement("link");
+        link.rel = "preconnect";
+        link.href = parsed.origin;
+        document.head.appendChild(link);
+      }
+    } catch (error) { /* an optimisation must never break the feed */ }
+  }
 
   function delay(ms) {
     return new Promise(function (resolve) { window.setTimeout(resolve, ms); });
@@ -89,7 +109,10 @@
 
   async function loadCatalogue() {
     var cached = readCache(CACHE_KEY);
-    if (cached && Array.isArray(cached.videos)) return cached;
+    if (cached && Array.isArray(cached.videos)) {
+      warmThumbnailHosts(cached.videos);
+      return cached;
+    }
 
     var first = await fetchJson(pageUrl(0));
     var rows = Array.isArray(first && first.videos) ? first.videos.slice() : [];
@@ -120,6 +143,8 @@
       seen.add(key);
       return true;
     });
+
+    warmThumbnailHosts(rows);
 
     var value = { videos: rows, total: total, partial: rows.length < total };
     writeCache(CACHE_KEY, value);

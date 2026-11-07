@@ -17,6 +17,7 @@ import {
   updateVideo
 } from "../../_lib/db.js";
 import { deleteTelegramPost } from "../../_lib/telegram.js";
+import { cachedResponse, DETAIL_CACHE } from "../../_lib/edge-cache.js";
 import { fail } from "../../_lib/http.js";
 import { rowToInput, validateVideoInput } from "../../_lib/validate.js";
 
@@ -172,16 +173,27 @@ export async function onRequestDelete({ request, env, params }) {
   );
 }
 
-export async function onRequestGet({ env, params }) {
+export async function onRequestGet({ request, env, params }) {
   const id = parseId(params);
   if (!id) return fail("Invalid video id");
 
-  await ensureSchema(env);
-  const video = await getVideo(env, id);
-  if (!video || (!video.video_url && !video.embed_url)) return fail("Video not found", 404);
+  /* The watch page and card hover both ask for this one row. A short edge
+     cache keeps repeat visits off D1 while an admin edit still shows up
+     within a minute. */
+  return cachedResponse(request, async () => {
+    await ensureSchema(env);
+    const video = await getVideo(env, id);
+    if (!video || (!video.video_url && !video.embed_url)) return fail("Video not found", 404);
 
-  return Response.json(
-    { video },
-    { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=600" } }
-  );
+    return Response.json(
+      { video },
+      {
+        headers: {
+          "cache-control": DETAIL_CACHE,
+          "content-type": "application/json; charset=utf-8",
+          "x-content-type-options": "nosniff"
+        }
+      }
+    );
+  });
 }

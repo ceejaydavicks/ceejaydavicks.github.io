@@ -405,6 +405,10 @@
     .share-failures strong { color: var(--text); }
     .share-failures ul { margin: .5rem 0 0; padding-left: 1.2rem; }
     .share-failures li { margin-bottom: .25rem; }
+    .fix-failures { flex-basis: 100%; margin-top: .5rem; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--muted); font-size: 12px; }
+    .fix-failures strong { color: var(--text); }
+    .fix-failures ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+    .fix-failures li { margin-bottom: .25rem; }
 
     .thumb-row { display: flex; gap: 0.5rem; align-items: center; }
     .thumb-row input { flex: 1 1 auto; }
@@ -575,6 +579,7 @@
           <span class="fix-progress" id="share-fix-progress" hidden></span>
           <button class="btn btn--ghost btn--small" type="button" id="stop-share-fix" hidden>Stop</button>
           <button class="btn" type="button" id="add-video">+ Add video</button>
+          <div class="fix-failures" id="fix-failures" hidden></div>
           <div class="share-failures" id="share-fix-failures" hidden></div>
         </div>
 
@@ -783,7 +788,10 @@
       toastTimer = window.setTimeout(() => node.classList.remove("is-visible"), 3200);
     }
 
-    async function api(path, { method = "GET", body, form } = {}) {
+    /* Every API call is bounded. Without a timeout a stalled Function (cold
+       D1 isolate, unreachable upstream, dropped response) left the login form
+       on "Checking…" forever. Form uploads get longer because they carry data. */
+    async function api(path, { method = "GET", body, form, timeoutMs } = {}) {
       const headers = { "x-requested-with": "admin" };
       let payload;
 
@@ -794,18 +802,34 @@
         payload = JSON.stringify(body);
       }
 
-      const response = await fetch(path, {
-        method,
-        headers,
-        body: payload,
-        credentials: "same-origin"
-      });
-
+      const limit = timeoutMs || (form ? 30000 : 10000);
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), limit);
+      let response;
       let data = {};
       try {
-        data = await response.json();
+        response = await fetch(path, {
+          method,
+          headers,
+          body: payload,
+          credentials: "same-origin",
+          signal: controller.signal
+        });
+        /* The body is part of the request too: a server that sends headers and
+           then stalls must also time out. */
+        try {
+          data = await response.json();
+        } catch (error) {
+          if (error && error.name === "AbortError") throw error;
+          data = {};
+        }
       } catch (error) {
-        data = {};
+        if (error && error.name === "AbortError") {
+          throw new Error(`The request timed out after ${Math.round(limit / 1000)} seconds. Please try again.`);
+        }
+        throw new Error("Cannot reach the server. Check your connection and try again.");
+      } finally {
+        window.clearTimeout(timer);
       }
 
       if (response.status === 401 && path !== "/api/login") {
@@ -814,15 +838,19 @@
       }
 
       if (!response.ok) {
-        if (data && data.error) {
-          throw new Error(data.hint ? `${data.error} ${data.hint}` : data.error);
-        }
-        if (response.status >= 500) {
-          throw new Error(
-            `Server error (${response.status}). Open /api/health in a new tab to see which binding or secret is missing.`
-          );
-        }
-        throw new Error(`Request failed (${response.status})`);
+        /* Attach status + headers so the login form can distinguish a wrong
+           password from a lockout without guessing from the text. */
+        const error = new Error(
+          data && data.error
+            ? (data.hint ? `${data.error} ${data.hint}` : data.error)
+            : response.status >= 500
+              ? `Server error (${response.status}). Open /api/health in a new tab for live D1 and R2 checks.`
+              : `Request failed (${response.status})`
+        );
+        error.status = response.status;
+        error.retryAfter = Number(response.headers.get("retry-after")) || 0;
+        error.retryMinutes = Math.max(1, Math.ceil(error.retryAfter / 60));
+        throw error;
       }
 
       return data;
@@ -1479,10 +1507,23 @@
       return data.url;
     }
 
+    /* A link-added file on another host taints a canvas (most video CDNs send
+       no CORS headers). Stream it through our own origin so frame capture works
+       for those videos instead of always reporting "host blocks capture". */
+    function frameSourceFor(source, videoId) {
+      if (!videoId || typeof source !== "string" || !/^https?:\/\//i.test(source)) return source;
+      try {
+        if (new URL(source, window.location.href).origin === window.location.origin) return source;
+      } catch (error) {
+        return source;
+      }
+      return `/api/thumbnail-source?videoId=${encodeURIComponent(videoId)}`;
+    }
+
     /* A picture made from the file itself: the frame is grabbed in the
-       browser, compressed and stored in R2. */
-    async function makeAutoThumbnail(source, moment, timeoutMs = 15000) {
-      const result = await captureFrame(source, moment, timeoutMs);
+       browser, compressed and stored (R2 when configured, otherwise D1). */
+    async function makeAutoThumbnail(source, moment, timeoutMs = 15000, videoId = null) {
+      const result = await captureFrame(frameSourceFor(source, videoId), moment, timeoutMs);
       if (result.error) throw new Error(result.error);
       const url = await uploadBlob(result.blob, "poster.webp");
       return { url, width: result.width, height: result.height };
@@ -1578,7 +1619,7 @@
 
       try {
         const moment = Number($("#f-moment").value) || 1;
-        const made = await makeAutoThumbnail(source, moment);
+        const made = await makeAutoThumbnail(source, moment, 15000, state.editingId);
         $("#f-thumb").value = made.url;
         state.thumbSource = "auto";
         refreshThumbPreview();
@@ -1613,19 +1654,26 @@
           url = await withTimeout(officialEmbedThumbnail(video.embed_url), 15000);
           source = "embed";
         } else if (video.video_url) {
-          const made = await withTimeout(makeAutoThumbnail(video.video_url, 1, 15000), 15000);
+          const made = await withTimeout(
+            makeAutoThumbnail(video.video_url, 1, 15000, video.id), 15000
+          );
           url = made.url;
         }
-        if (!url) return false;
+        if (!url) {
+          return { ok: false, reason: "no poster found — upload a picture" };
+        }
         const result = await api(`/api/videos/${video.id}`, {
           method: "PATCH",
           body: { thumbnail_url: url, thumb_source: source }
         });
         Object.assign(video, result.video || { thumbnail_url: url, thumb_source: source });
         queueShareImage(video);
-        return true;
+        return { ok: true };
       } catch (error) {
-        return false;
+        return {
+          ok: false,
+          reason: String(error && error.message ? error.message : "could not be captured")
+        };
       }
     }
 
@@ -1636,6 +1684,23 @@
       node.hidden = false;
       node.textContent = `${fix.done}/${fix.total} checked · ${fix.fixed} fixed · ` +
         `${fix.failed.length} need a picture${fix.stop ? " · stopping…" : ""}`;
+    }
+
+    function renderFixFailures() {
+      const node = $("#fix-failures");
+      if (!node) return;
+      node.replaceChildren();
+      if (!state.fix.failed.length) {
+        node.hidden = true;
+        return;
+      }
+      node.hidden = false;
+      node.append(el("strong", "", `${state.fix.failed.length} video${state.fix.failed.length === 1 ? "" : "s"} still need a picture — use the Upload thumbnail button:`));
+      const list = el("ul");
+      state.fix.failed.forEach((entry) => {
+        list.append(el("li", "", `#${entry.video.id} “${entry.video.title}” — ${entry.reason}`));
+      });
+      node.append(list);
     }
 
     async function fixMissingThumbnails() {
@@ -1649,8 +1714,10 @@
       state.fix = { running: true, stop: false, done: 0, total: missing.length, fixed: 0, failed: [] };
       const fixButton = $("#fix-thumbnails");
       const stopButton = $("#stop-fix");
+      const failures = $("#fix-failures");
       fixButton.disabled = true;
       stopButton.hidden = false;
+      if (failures) failures.hidden = true;
       updateFixProgress();
 
       let cursor = 0;
@@ -1658,10 +1725,10 @@
         while (cursor < missing.length && !state.fix.stop) {
           const video = missing[cursor];
           cursor += 1;
-          const ok = await fixOneThumbnail(video);
+          const result = await fixOneThumbnail(video);
           state.fix.done += 1;
-          if (ok) state.fix.fixed += 1;
-          else state.fix.failed.push(video);
+          if (result.ok) state.fix.fixed += 1;
+          else state.fix.failed.push({ video, reason: result.reason });
           updateFixProgress();
         }
       }
@@ -1673,13 +1740,14 @@
       fixButton.disabled = false;
       stopButton.hidden = true;
       updateFixProgress();
+      renderFixFailures();
 
       /* The failures are exactly the rows still without a saved picture:
          switch the list to them, each with the label + an Upload button. */
       state.needsThumbOnly = true;
       document.querySelectorAll("[data-thumb]").forEach((node) => node.setAttribute("aria-pressed", "true"));
       renderVideos();
-      toast(`${state.fix.fixed} thumbnail${state.fix.fixed === 1 ? "" : "s"} saved · ` +
+      toast(`${state.fix.fixed}/${state.fix.total} thumbnail${state.fix.fixed === 1 ? "" : "s"} saved · ` +
         `${state.fix.failed.length} still need a picture`, state.fix.failed.length > 0);
     }
 
@@ -1935,15 +2003,41 @@
       submit.disabled = true;
       status.textContent = "Checking…";
 
+      /* A bounded request, and a specific message for every failure. The
+         status line can never be left on "Checking…" again. */
       try {
         await api("/api/login", {
           method: "POST",
-          body: { password: $("#password").value }
+          body: { password: $("#password").value },
+          timeoutMs: 10000
         });
-        status.textContent = "";
+      } catch (error) {
+        const message = String(error && error.message ? error.message : "");
+        if (error.status === 401) {
+          status.textContent = "Wrong password";
+        } else if (error.status === 429) {
+          const minutes = error.retryMinutes || 10;
+          status.textContent = `Too many attempts, try again in ${minutes} minute${minutes === 1 ? "" : "s"}`;
+        } else if (error.status === 503 && /ADMIN_PASSWORD|not configured/i.test(message)) {
+          status.textContent = "Server not configured: ADMIN_PASSWORD missing";
+        } else if (error.status === 503) {
+          status.textContent = `Server not configured: ${message}`;
+        } else {
+          status.textContent = message || "Sign-in failed. Please try again.";
+        }
+        submit.disabled = false;
+        return;
+      }
+
+      status.textContent = "";
+      try {
         await showAdmin();
       } catch (error) {
-        status.textContent = error.message;
+        /* The session cookie is already valid here. A slow/failing video list
+           must never look like a rejected password. */
+        $("#login-view").hidden = true;
+        $("#admin-view").hidden = false;
+        toast(String(error && error.message ? error.message : "Could not load the video list"), true);
       } finally {
         submit.disabled = false;
       }
@@ -2104,7 +2198,7 @@
             $("#upload-hint").classList.remove("is-alert");
             try {
               const moment = Number($("#f-moment").value) || 1;
-              const made = await makeAutoThumbnail(videoUrl, moment);
+              const made = await makeAutoThumbnail(videoUrl, moment, 15000, state.editingId);
               $("#f-thumb").value = made.url;
               state.thumbSource = "auto";
               refreshThumbPreview();

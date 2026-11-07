@@ -20,6 +20,7 @@
    Content-Disposition: attachment header.                                  */
 
 import { fail } from "../../../_lib/http.js";
+import { loadLocalImage } from "../../../_lib/media-store.js";
 
 /* `share/` holds the 1200x630 JPG previews used by og:image / twitter:image.
    Like thumbs and videos it is public: social crawlers must never need a
@@ -83,15 +84,44 @@ export function parseRange(header, size) {
   return { offset: start, length: last - start + 1 };
 }
 
-export async function onRequestGet({ request, params, env }) {
-  if (!env.MEDIA) return fail("R2 bucket is not configured (binding MEDIA).", 503);
+/* Every object here is public to crawlers: correct type, CORS-open, immutable
+   (keys are content-hashed or write-once), and never an attachment download. */
+function publicHeaders(contentType, size, etag) {
+  const headers = new Headers();
+  headers.set("content-type", contentType);
+  headers.set("cache-control", "public, max-age=31536000, immutable");
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("accept-ranges", "bytes");
+  headers.set("access-control-allow-origin", "*");
+  headers.set("cross-origin-resource-policy", "cross-origin");
+  headers.set("timing-allow-origin", "*");
+  headers.delete("content-disposition");
+  if (etag) headers.set("etag", etag);
+  if (Number.isFinite(size)) headers.set("content-length", String(size));
+  return headers;
+}
 
+export async function onRequestGet({ request, params, env }) {
   const folder = decodeSegment(params && params.folder);
   const file = decodeSegment(params && params.file);
   const key = folder && file ? `${folder}/${file}` : "";
 
-  // Only the two generated prefixes are servable, and traversal is refused.
+  // Traversal is refused for every path, including the D1-backed one.
   if (!key || key.includes("..") || key.includes("\\")) return fail("Not found", 404);
+
+  /* Small images captured in the admin when the optional R2 binding is absent
+     live in D1. They are still served from this same public /api/media/ URL. */
+  if (folder === "local") {
+    const id = String(file || "").replace(/\.[a-z0-9]{2,5}$/i, "");
+    const image = /^[0-9a-f]{8,40}$/i.test(id) ? await loadLocalImage(env, id) : null;
+    if (!image) return fail("Not found", 404);
+    return new Response(image.bytes, {
+      status: 200,
+      headers: publicHeaders(image.contentType, image.size, `"local-${id}"`)
+    });
+  }
+
+  if (!env.MEDIA) return fail("R2 bucket is not configured (binding MEDIA).", 503);
   if (!FOLDERS.has(folder)) return fail("Not found", 404);
 
   /* Cards ask for a small WebP poster (?w=480). If a 480px variant was
@@ -117,21 +147,11 @@ export async function onRequestGet({ request, params, env }) {
 
   const size = Number(meta.size) || 0;
   const range = parseRange(request.headers.get("range"), size);
-
-  const headers = new Headers();
-  headers.set("content-type", contentTypeFor(objectKey, meta.httpMetadata?.contentType));
-  /* Share-image keys carry a content hash, so overwriting is impossible and a
-     year of immutable caching is safe. Short, crawlable, and CORS-open. */
-  headers.set("cache-control", "public, max-age=31536000, immutable");
-  headers.set("x-content-type-options", "nosniff");
-  headers.set("accept-ranges", "bytes");
-  headers.set("access-control-allow-origin", "*");
-  headers.set("cross-origin-resource-policy", "cross-origin");
-  headers.set("timing-allow-origin", "*");
-  /* Never send Content-Disposition: an attachment header makes some crawlers
-     refuse to unfurl the image. */
-  headers.delete("content-disposition");
-  if (meta.httpEtag) headers.set("etag", meta.httpEtag);
+  const headers = publicHeaders(
+    contentTypeFor(objectKey, meta.httpMetadata?.contentType),
+    size,
+    meta.httpEtag
+  );
 
   if (range === "invalid") {
     headers.set("content-range", `bytes */${size}`);
@@ -148,8 +168,6 @@ export async function onRequestGet({ request, params, env }) {
     const last = range.offset + range.length - 1;
     headers.set("content-range", `bytes ${range.offset}-${last}/${size}`);
     headers.set("content-length", String(range.length));
-  } else {
-    headers.set("content-length", String(size));
   }
 
   return new Response(object.body, { status: range ? 206 : 200, headers });
