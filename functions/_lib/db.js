@@ -43,6 +43,9 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)`,
   `CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)`,
   `CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)`,
+  /* The bot mirror looks each feed row up by (source, source_id). Without this
+     index it scans the whole table once per row on every sync. */
+  `CREATE INDEX IF NOT EXISTS videos_source_idx ON videos (source, source_id)`,
   `CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT '',
@@ -63,6 +66,16 @@ const SCHEMA = [
     count INTEGER NOT NULL DEFAULT 0,
     first_at INTEGER NOT NULL DEFAULT 0,
     blocked_until INTEGER NOT NULL DEFAULT 0
+  )`,
+  /* Small images (captured card thumbnails) when the R2 MEDIA binding is not
+     configured. Videos are never stored here — they still need R2. Keeping the
+     admin's "Fix missing thumbnails" tool usable is worth a few KB per row. */
+  `CREATE TABLE IF NOT EXISTS stored_media (
+    id TEXT PRIMARY KEY,
+    content_type TEXT NOT NULL DEFAULT '',
+    data TEXT NOT NULL DEFAULT '',
+    bytes INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`
 ];
 
@@ -116,7 +129,8 @@ const LATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC)",
   "CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)",
   "CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)",
-  "CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)"
+  "CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)",
+  "CREATE INDEX IF NOT EXISTS videos_source_idx ON videos (source, source_id)"
 ];
 
 async function migrate(env) {
@@ -353,6 +367,31 @@ export async function setShareImage(env, id, url) {
     .bind(String(url || ""), id)
     .run();
   return getVideo(env, id);
+}
+
+/* ---- tiny D1 media store (used only when the R2 binding is absent) ------ */
+
+export async function putStoredMedia(env, id, contentType, base64, bytes) {
+  await env.DB.prepare(
+    `INSERT INTO stored_media (id, content_type, data, bytes, created_at)
+     VALUES (?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET
+       content_type = excluded.content_type,
+       data = excluded.data,
+       bytes = excluded.bytes,
+       created_at = excluded.created_at`
+  ).bind(String(id), String(contentType || ""), String(base64 || ""), Number(bytes) || 0).run();
+}
+
+export async function getStoredMedia(env, id) {
+  return env.DB.prepare(
+    "SELECT content_type, data, bytes FROM stored_media WHERE id = ?"
+  ).bind(String(id)).first();
+}
+
+export async function storedMediaCount(env) {
+  const row = await env.DB.prepare("SELECT COUNT(*) AS total FROM stored_media").first();
+  return Number(row && row.total) || 0;
 }
 
 /* ---- mirrored catalogues (the Telegram bot's own video list) ------------ */

@@ -3,17 +3,28 @@
 
 import { isAdminRequest } from "../_lib/auth.js";
 import { ensureSchema, readSettings, writeSettings } from "../_lib/db.js";
+import { cachedResponse, SETTINGS_CACHE } from "../_lib/edge-cache.js";
 import { cleanText, fail, safeHttpUrl } from "../_lib/http.js";
 
 const MAX_AD_CODE = 20000;
 
-export async function onRequestGet({ env }) {
-  await ensureSchema(env);
-  const settings = await readSettings(env);
-  return Response.json(
-    { settings },
-    { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=600" } }
-  );
+export async function onRequestGet({ request, env }) {
+  /* Settings are read on every public page load. Caching the immutable-ish
+     payload at the edge removes a D1 round trip for almost every visitor. */
+  return cachedResponse(request, async () => {
+    await ensureSchema(env);
+    const settings = await readSettings(env);
+    return Response.json(
+      { settings },
+      {
+        headers: {
+          "cache-control": SETTINGS_CACHE,
+          "content-type": "application/json; charset=utf-8",
+          "x-content-type-options": "nosniff"
+        }
+      }
+    );
+  });
 }
 
 function validateSettings(body) {

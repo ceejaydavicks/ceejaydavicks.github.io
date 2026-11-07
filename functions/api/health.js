@@ -1,13 +1,14 @@
 /* GET /api/health — public, read-only diagnostics for the admin deployment.
  *
- * Answers "why does /admin say 500?" without exposing a single secret: it only
- * reports whether each binding/secret is present, whether the database answers,
- * and whether the tables could be created. Open it in a phone browser.
+ * Answers "why can't I sign in?" without exposing a single secret: it reports
+ * whether each binding/secret is present, the login lockout state, and a LIVE
+ * connection test of D1 and R2 (with timings). No values, tokens or passwords.
  *
  *   200 -> everything the admin needs is wired up
  *   503 -> nothing secret is broken, but something is missing (see `error`)
  */
 
+import { LOGIN_LIMITS, rateLimitStatus } from "../_lib/auth.js";
 import { ensureSchema } from "../_lib/db.js";
 import { json } from "../_lib/http.js";
 
@@ -15,11 +16,25 @@ const DB_HINT =
   "Pages project → Settings → Bindings → add a D1 database with the variable name DB (for Production and Preview), then retry the deployment.";
 
 function message(error) {
-  const text = String(error && error.message ? error.message : error || "Unknown error");
-  return text.replace(/\s+/g, " ").trim().slice(0, 300);
+  return String(error && error.message ? error.message : error || "Unknown error")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 300);
 }
 
-export async function onRequestGet({ env }) {
+/* A live probe, not just `Boolean(env.X)`: a binding can be present but point
+   at a deleted database or a dead bucket. */
+async function probe(label, work) {
+  const started = Date.now();
+  try {
+    await work();
+    return { label, connected: true, ms: Date.now() - started, error: null };
+  } catch (error) {
+    return { label, connected: false, ms: Date.now() - started, error: message(error) };
+  }
+}
+
+export async function onRequestGet({ request, env }) {
   const checks = {
     adminPassword: Boolean(env.ADMIN_PASSWORD && String(env.ADMIN_PASSWORD).trim()),
     sessionSecret: Boolean(env.SESSION_SECRET && String(env.SESSION_SECRET).trim()),
@@ -32,9 +47,6 @@ export async function onRequestGet({ env }) {
     telegramChannel: Boolean(env.TELEGRAM_CHANNEL && String(env.TELEGRAM_CHANNEL).trim())
   };
 
-  // Which deployment answered? Cloudflare sets these on every Pages build, so
-  // the report proves whether you are looking at production or a preview, and at
-  // which commit — the usual source of "I added the binding but it still fails".
   const branch = env.CF_PAGES_BRANCH ? String(env.CF_PAGES_BRANCH) : null;
   const report = {
     ok: false,
@@ -45,6 +57,17 @@ export async function onRequestGet({ env }) {
       url: env.CF_PAGES_URL ? String(env.CF_PAGES_URL) : null
     },
     checks,
+    login: {
+      maxAttempts: LOGIN_LIMITS.maxAttempts,
+      windowMinutes: Math.round(LOGIN_LIMITS.windowMs / 60000),
+      blockMinutes: Math.round(LOGIN_LIMITS.blockMs / 60000),
+      sessionHours: Math.round(LOGIN_LIMITS.sessionTtlSeconds / 3600),
+      lockout: { ipKnown: false, attempts: 0, locked: false, retryMinutes: 0 }
+    },
+    connections: {
+      d1: { label: "D1", connected: false, ms: null, error: "not tested" },
+      r2: { label: "R2", connected: false, ms: null, error: "binding not configured" }
+    },
     limits: { imageUploadMb: 5, videoUploadMb: 95, telegramDirectMb: 20 },
     database: { reachable: false, schemaReady: false, videoCount: null },
     notes: [],
@@ -52,7 +75,6 @@ export async function onRequestGet({ env }) {
     hint: null
   };
 
-  // Optional pieces: say what still works without them instead of failing.
   if (!checks.sessionSecret) {
     report.notes.push(
       "SESSION_SECRET is not set — the session cookie is signed with ADMIN_PASSWORD instead. Sign-in works; changing the password signs everyone out."
@@ -60,7 +82,7 @@ export async function onRequestGet({ env }) {
   }
   if (!checks.mediaBinding) {
     report.notes.push(
-      "No MEDIA (R2) binding. Nothing breaks for the automatic paths: scraped links, page embeds and Telegram channel videos are linked, not copied. Only admin file uploads and bot downloads of files up to 20 MB need R2."
+      "No MEDIA (R2) binding. Admin uploads now fall back to the D1 media store, so thumbnails still work; large video uploads still need R2."
     );
   }
   if (!checks.telegram) {
@@ -74,8 +96,54 @@ export async function onRequestGet({ env }) {
     );
   }
 
+  /* Live D1 test — always attempted when a binding exists, even if the schema
+     check later fails. */
+  if (checks.dbBinding) {
+    report.connections.d1 = await probe("D1", async () => {
+      await env.DB.prepare("SELECT 1 AS ok").first();
+    });
+    report.database.reachable = report.connections.d1.connected;
+    if (!report.connections.d1.connected) {
+      report.notes.push(`D1 live test failed: ${report.connections.d1.error}`);
+    }
+  }
+
+  /* Live R2 test: a HEAD on a probe key proves the bucket is reachable without
+     writing anything or revealing an object. */
+  if (checks.mediaBinding) {
+    report.connections.r2 = await probe("R2", async () => {
+      await env.MEDIA.head("__health_probe__");
+    });
+    if (!report.connections.r2.connected) {
+      report.notes.push(`R2 live test failed: ${report.connections.r2.error}`);
+    }
+  }
+
+  /* Make sure login_attempts exists before reading the lockout state. */
+  if (checks.dbBinding && report.database.reachable) {
+    try {
+      await ensureSchema(env);
+    } catch (error) {
+      report.notes.push(`Schema check failed: ${message(error)}`);
+    }
+  }
+
+  /* Lockout state for this caller. Only counts/booleans — never the IP,
+     a password, a token or a secret value. */
+  if (checks.dbBinding && report.database.reachable) {
+    try {
+      const ip =
+        request.headers.get("cf-connecting-ip") ||
+        (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() ||
+        "unknown";
+      report.login.lockout = await rateLimitStatus(env, ip);
+    } catch (error) {
+      report.notes.push(`Login lockout state unavailable: ${message(error)}`);
+    }
+  }
+
   if (!checks.adminPassword) {
-    report.error = "ADMIN_PASSWORD is not set on this deployment.";
+    report.error = "Server not configured: ADMIN_PASSWORD missing";
     report.hint =
       "Pages project → Settings → Variables and Secrets → add ADMIN_PASSWORD as a Secret, then retry the deployment.";
     return json(report, 503);
@@ -91,15 +159,11 @@ export async function onRequestGet({ env }) {
   }
 
   try {
-    await env.DB.prepare("SELECT 1 AS ok").first();
-    report.database.reachable = true;
-
-    // Creates videos/settings/login_attempts if this is the first request.
     await ensureSchema(env);
     const row = await env.DB.prepare("SELECT COUNT(*) AS total FROM videos").first();
     report.database.schemaReady = true;
     report.database.videoCount = Number((row && (row.total ?? row.n)) || 0);
-    report.ok = true;
+    report.ok = report.connections.d1.connected;
   } catch (error) {
     report.error = message(error);
     report.hint =

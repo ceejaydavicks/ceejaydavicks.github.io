@@ -21,6 +21,7 @@
 
 import { isAdminRequest } from "../_lib/auth.js";
 import { ensureSchema, getVideo, setShareImage } from "../_lib/db.js";
+import { storeImage } from "../_lib/media-store.js";
 import { fail, json } from "../_lib/http.js";
 
 const MAX_SHARE_BYTES = 300 * 1024;
@@ -146,9 +147,6 @@ export async function onRequestGet({ request, env }) {
 /* ---- POST: store the generated JPG and remember its URL ----------------- */
 export async function onRequestPost({ request, env }) {
   if (!(await isAdminRequest({ request, env }))) return fail("Unauthorized", 401);
-  if (!env.MEDIA) {
-    return fail("Share images need the R2 binding MEDIA.", 503);
-  }
 
   let form;
   try { form = await request.formData(); } catch (error) { return fail("Expected multipart/form-data", 400); }
@@ -183,24 +181,22 @@ export async function onRequestPost({ request, env }) {
   if (!existing) return fail("Video not found", 404);
 
   /* Content hash means the URL changes only when the image changes. That is
-     both stable and safe to cache immutably for a year. */
+     both stable and safe to cache immutably for a year. R2 is preferred; the
+     D1 fallback keeps this working on deployments without the MEDIA binding. */
   const key = `share/${id}-${await hashBytes(bytes)}.jpg`;
-  const imageUrl = `/api/media/${key}`;
-
+  let imageUrl;
   try {
-    await env.MEDIA.put(key, bytes, {
-      httpMetadata: {
-        contentType: "image/jpeg",
-        cacheControl: "public, max-age=31536000, immutable"
-      }
-    });
+    imageUrl = (await storeImage(env, key, bytes, "image/jpeg")).url;
   } catch (error) {
-    return fail("Could not write the share image to R2.", 500);
+    return fail(
+      String(error && error.message ? error.message : "Could not write the share image."),
+      500
+    );
   }
 
   /* Remove the previous preview so regenerating does not leave orphans. */
   const previous = String(existing.share_image_url || "");
-  if (previous && previous !== imageUrl && previous.startsWith("/api/media/share/")) {
+  if (env.MEDIA && previous && previous !== imageUrl && previous.startsWith("/api/media/share/")) {
     const oldKey = previous.slice("/api/media/".length);
     if (oldKey && !oldKey.includes("..") && !oldKey.includes("\\")) {
       try { await env.MEDIA.delete(oldKey); } catch (error) { /* best effort */ }

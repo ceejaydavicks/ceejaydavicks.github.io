@@ -15,10 +15,10 @@
 import { isAdminRequest } from "../_lib/auth.js";
 import { embedThumbnail, syncBotCatalogue } from "../_lib/catalogue.js";
 import { ensureSchema, insertVideo, listPublishedCardVideos, listVideos } from "../_lib/db.js";
+import { cachedResponse, FEED_CACHE } from "../_lib/edge-cache.js";
 import { fail, methodNotAllowed, toInt } from "../_lib/http.js";
 import { validateVideoInput } from "../_lib/validate.js";
 
-const FEED_CACHE = "public, max-age=60, stale-while-revalidate=600";
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
 const MAX_OFFSET = 100000;
@@ -26,38 +26,6 @@ const MAX_OFFSET = 100000;
 function clamp(value, fallback, min, max) {
   const n = toInt(value, fallback);
   return Math.min(max, Math.max(min, n));
-}
-
-/* The Cache API is available on most Workers/Pages runtimes. Guard it so a
-   runtime without it still gets the CDN Cache-Control header below. */
-function cacheApi() {
-  try {
-    return typeof caches !== "undefined" && caches.default ? caches.default : null;
-  } catch (error) {
-    return null;
-  }
-}
-
-async function cachedResponse(request, make) {
-  const cache = cacheApi();
-  if (cache) {
-    try {
-      const hit = await cache.match(request);
-      if (hit) return hit;
-    } catch (error) {
-      /* Ignore a cache that is not readable here. */
-    }
-  }
-
-  const response = await make();
-  if (cache && response.status === 200) {
-    try {
-      await cache.put(request, response.clone());
-    } catch (error) {
-      /* A cache write must never fail the request. */
-    }
-  }
-  return response;
 }
 
 /* Best-effort background mirror. It is throttled to once a minute inside
@@ -77,9 +45,12 @@ export async function onRequestGet(context) {
     return fail("Unauthorized", 401);
   }
 
-  /* Admin wants the whole table with every column, immediately, uncached. */
+  /* Admin wants the whole table with every column, immediately, uncached.
+     Mirroring the bot catalogue used to be awaited here: a 6s upstream fetch
+     plus one D1 read per row held the whole admin page hostage on every load.
+     It now runs in the background, exactly like the public feed does. */
   if (wantsAll) {
-    await syncBotCatalogue(env);
+    scheduleBotSync(context);
     const videos = await listVideos(env);
     return new Response(JSON.stringify({ videos }), {
       status: 200,

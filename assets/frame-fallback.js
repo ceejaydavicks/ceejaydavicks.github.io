@@ -17,8 +17,15 @@
   "use strict";
 
   var MAX_VIDEOS = 4;
-  var TIMEOUT_MS = 9000;
+  /* A dead link host used to hold one of the four capture slots for 9 seconds,
+     and every card from that host tried again. Fail fast and remember it. */
+  var TIMEOUT_MS = 5000;
   var CAPTURE_WIDTH = 480;
+  var failedHosts = new Set();
+
+  function hostOf(url) {
+    try { return new URL(url, window.location.href).host; } catch (error) { return ""; }
+  }
 
   var slots = [];       // jobs that currently own a live <video>
   var waiting = [];     // jobs waiting for the viewport or a free slot
@@ -116,6 +123,8 @@
     job.loaded = true;
 
     if (kind === "fail") {
+      var host = hostOf(job.url);
+      if (host) failedHosts.add(host);
       removeVideo(job);
       if (typeof job.onFail === "function") job.onFail();
       release(job);
@@ -201,6 +210,7 @@
     request: function (card, frameUrl, onFrame, onFail) {
       var url = safeUrl(frameUrl);
       if (!card || !url) { if (onFail) onFail(); return null; }
+      if (failedHosts.has(hostOf(url))) { if (onFail) onFail(); return null; }
       var job = {
         card: card, url: url, onFrame: onFrame, onFail: onFail,
         visible: !observer, done: false, loaded: false, video: null, timer: 0
