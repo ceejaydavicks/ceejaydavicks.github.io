@@ -1,21 +1,45 @@
 # ---------------------------------------------------------------------------
-# Cloudflare Pages configuration for the admin (Functions + D1 + R2).
+# Wrangler file for this Cloudflare PAGES project (local development only).
 #
 # HOW THIS PROJECT IS CONFIGURED  (read this before editing)
 # ----------------------------------------------------------
-# This repo is built by Cloudflare Pages from GitHub and its D1 / R2 bindings
-# are created in the dashboard (Pages project → Settings → Bindings), exactly as
-# SETUP.md walks through.
+# This repo is built by Cloudflare Pages from GitHub. The build output directory
+# is the repository root, there is no build command, and the D1 / R2 bindings
+# and secrets are created in the dashboard (Pages project → Settings →
+# Bindings / Variables and Secrets), exactly as SETUP.md walks through.
 #
 # `pages_build_output_dir` is therefore DELIBERATELY NOT SET. Per Cloudflare's
 # docs, adding that key makes this file the "source of truth" for the project
 # and the dashboard bindings stop being applied — the Functions then run without
-# `env.DB` / `env.MEDIA`, and `/admin` sign-in answers 500. With the key absent,
-# Pages ignores this file (it logs a harmless "skipping file" warning) and the
-# dashboard bindings apply.
+# `env.DB` / `env.MEDIA`, and `/admin` sign-in answers 500. This was already
+# seen once in this project; do not re-add the key without ALSO declaring every
+# binding below with its real id. With the key absent, Pages logs a harmless
+# "skipping file" warning and the dashboard bindings apply.
+#
+# WARNING — the warning is NOT the deployment failure. Even when Pages skips
+# this file as a *Pages* configuration, Wrangler still reads `name` and
+# `compatibility_date` from it while it builds and publishes the Functions
+# worker. Both must be correct:
+#
+#   * `name` MUST be the actual Pages project name. It used to be set to the
+#     GitHub repository name ("ceejaydavicks-github-io"), which is not the
+#     project this Git integration publishes ("boootymansion"). A mismatched
+#     name is attached to the Function at publish time and Cloudflare answers
+#     with the opaque "Failed to publish your Function. Got error: Unknown
+#     internal error occurred." error.
+#
+#   * `compatibility_date` MUST be supported by the Workers runtime that the
+#     Pages build uses. The Git build runs Wrangler 3.x / workerd
+#     1.20250718.0, whose newest supported date is 2025-07-18. The old value
+#     (2025-09-01) is in the future for that runtime: esbuild still compiles
+#     the Functions bundle ("Compiled Worker successfully"), but the publish
+#     step rejects the runtime metadata with the same opaque error. Locally,
+#     `wrangler pages dev .` used to print "The latest compatibility date
+#     supported ... is 2025-07-18, but you've requested 2025-09-01".
 #
 # Secrets (ADMIN_PASSWORD, SESSION_SECRET, bot token…) always live in the
-# dashboard, never in this file.
+# dashboard, never in this file. No reserved binding name (`ASSETS` is used
+# internally by Pages) may be declared here or in the dashboard.
 #
 # OPTIONAL — configuration-as-code
 # --------------------------------
@@ -25,8 +49,8 @@
 # without the bindings breaks the deployment. Never ship one without the other.
 # ---------------------------------------------------------------------------
 
-name = "ceejaydavicks-github-io"
-compatibility_date = "2025-09-01"
+name = "boootymansion"
+compatibility_date = "2025-07-18"
 
 # pages_build_output_dir = "."
 

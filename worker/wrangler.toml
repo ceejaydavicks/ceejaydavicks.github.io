@@ -4,6 +4,10 @@
 # This is NOT the Pages project config. The site keeps using the root
 # `wrangler.toml` + dashboard bindings (D1 `DB`); this file deploys the
 # AfterDark template as its own Worker with its own KV namespace.
+# Cloudflare Pages only reads a Wrangler file at the repository root, and
+# `.assetsignore` keeps /worker out of the uploaded assets, so this Workers
+# config (with `main`, which Pages forbids) can never affect the Pages build.
+# Keep it inside /worker — do not move it to the repository root.
 #
 #   cd worker
 #   npx wrangler kv namespace create VIDEOS        # copy the id below
@@ -17,7 +21,10 @@
 
 name = "bootymansion-catalogue"   # rename if you like
 main = "worker.js"
-compatibility_date = "2025-09-01"
+# Same runtime ceiling as the Pages project: Wrangler 3.x / workerd
+# 1.20250718.0 supports dates up to 2025-07-18. A newer date is rejected when
+# the Worker is published, even though the bundle compiles.
+compatibility_date = "2025-07-18"
 
 # Public *.workers.dev URL. Turn off if you attach a custom domain instead.
 workers_dev = true

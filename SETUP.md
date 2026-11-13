@@ -408,7 +408,12 @@ npx wrangler pages dev . --d1 DB --r2 MEDIA
 The leading `.` is the static output directory. Wrangler may print *"A Wrangler
 configuration file was found but it does not appear to be valid… skipping"* —
 that is expected and harmless: the file is kept out of Pages' hands on purpose so
-the dashboard bindings stay in charge (Part 2).
+the dashboard bindings stay in charge (Part 2). Even so, Wrangler still reads
+`name` and `compatibility_date` from it, so those two values must stay correct:
+`name` is the **Pages project name** (not the GitHub repo name) and
+`compatibility_date` must be supported by the runtime the Pages build uses
+(`2025-07-18` for Wrangler 3.x). A wrong name or a date in the future compiles
+the Functions bundle but fails at the publish step — see Part 9.
 
 Put the secrets in a `.dev.vars` file in the project root (it is already in
 `.gitignore`, so it is never committed):
@@ -443,6 +448,7 @@ answers with a note explaining that.
 | Login says **"Request failed (500)"** | A Function threw before it could answer — almost always a binding the deployment cannot see. Open `/api/health`: it names the missing piece. Do **not** add `pages_build_output_dir` to `wrangler.toml` to "fix" it; that is what makes the dashboard bindings stop applying. |
 | The binding is listed in the dashboard but `/api/health` says `"dbBinding": false` | `wrangler.toml` contains `pages_build_output_dir` (the file then overrides the dashboard), or the binding was added only to the other environment, or the deployment predates the binding. Remove the key / add the binding for this environment / retry the deployment. |
 | Build fails with `Invalid Pages function route parameter` | A Functions filename used Next.js rest syntax. Cloudflare Pages route parameters must be a **single path segment** with a name made of letters, digits or `_` — e.g. `[id].js`, `[folder]/[file].js`, `[secret].js`. `[...key].js` is rejected; the only catch-all Pages accepts is the double-bracket `[[path]].js`. |
+| `Failed to publish your Function. Got error: Unknown internal error occurred.` (assets upload fine, Worker compiles) | This is a **publish-step metadata** failure, not a Functions code error. In `wrangler.toml` check that `name` is exactly the Pages project name (`boootymansion`, not the GitHub repo name) and that `compatibility_date` is supported by the build runtime (`2025-07-18`; the old `2025-09-01` is too new). Do **not** "fix" it by adding `pages_build_output_dir` alone — that makes the file the source of truth and drops the dashboard `DB`/`MEDIA` bindings. Also check the dashboard bindings for a reserved/duplicate name (`ASSETS` is used internally by Pages), then retry the deployment. |
 
 ---
 
