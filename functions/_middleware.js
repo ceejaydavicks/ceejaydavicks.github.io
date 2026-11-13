@@ -75,9 +75,15 @@ function securityHeaders(headers, path) {
   if (path === "/admin" || path.startsWith("/admin/")) {
     headers.set("x-robots-tag", "noindex, nofollow, noarchive");
   }
+  const isHtml = String(headers.get("content-type") || "").includes("text/html");
   if (path.startsWith("/api/")) {
     headers.set("x-robots-tag", "noindex");
   }
+  /* A static file's Last-Modified is its deploy/build timestamp. Public API,
+     media and HTML responses must not expose any date, so strip it here.
+     Cache-Control and the content-derived ETag are untouched, so revalidation
+     and the versioned-asset cache still work exactly as before. */
+  if (path.startsWith("/api/") || isHtml) headers.delete("last-modified");
 }
 
 function passThrough(response, headers) {
@@ -112,7 +118,11 @@ export async function onRequest(context) {
 
   const isScriptOrStyle = /\.(?:js|mjs|css)$/i.test(path);
 
-  /* A 304 carries no body, but it must still repeat the same cache policy. */
+  /* A 304 carries no body, but it must still repeat the same cache policy.
+     Versioned JS/CSS keep their Last-Modified; everything else (API, media,
+     HTML) must not echo a deploy timestamp even on a revalidation. */
+  if (response.status === 304 && !isScriptOrStyle) headers.delete("last-modified");
+
   if (response.status === 304) {
     if (isScriptOrStyle) {
       headers.set(

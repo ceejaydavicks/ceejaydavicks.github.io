@@ -54,8 +54,11 @@ const NO_R2_VIDEO =
   "Add it under Pages project → Settings → Bindings, or paste a video link instead. " +
   "Captured card thumbnails work without it.";
 
+/* Random, opaque IDs only: a thumbnail / video / share-image URL must never
+   reveal when the file was uploaded. Old Date.now()-prefixed keys still work —
+   they are simply looked up by key. */
 function randomKey() {
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -90,7 +93,7 @@ async function store(env, { body, info, size }) {
   if (size > max) return fail(info.kind === "video" ? TOO_BIG_VIDEO : TOO_BIG_IMAGE, 413);
   if (size === 0) return fail("The uploaded file is empty.", 422);
 
-  const key = `${folder}/${Date.now()}-${randomKey()}.${info.ext}`;
+  const key = `${folder}/${randomKey()}.${info.ext}`;
 
   /* R2 can take the stream directly; the D1 fallback needs the bytes. */
   if (env.MEDIA) {

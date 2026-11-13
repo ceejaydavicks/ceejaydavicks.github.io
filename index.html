@@ -375,28 +375,11 @@
         orientation: row.orientation,
         featured: row.featured === true || row.featured === 1,
         pinned: row.pinned === true || row.pinned === 1,
-        posted: postedLabel(row.created_at),
-        createdAt: clean(row.created_at),
+        /* No upload date is ever sent to the browser. The server sorts the
+           feed newest-first; the row's position in the list is the only
+           recency signal the client has (and it is not a date). */
         source: clean(row.source)
       };
-    }
-
-    function postedLabel(value) {
-      if (!value) return "";
-      const raw = String(value);
-      const date = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
-      if (Number.isNaN(date.getTime())) return "";
-
-      const days = Math.floor((Date.now() - date.getTime()) / 86400000);
-      if (days <= 0) return "Today";
-      if (days === 1) return "Yesterday";
-      if (days < 7) return `${days} days ago`;
-      if (days < 30) {
-        const weeks = Math.floor(days / 7);
-        return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
-      }
-      const months = Math.floor(days / 30);
-      return `${months} month${months === 1 ? "" : "s"} ago`;
     }
 
     function getVideoUrls(url) {
@@ -452,8 +435,6 @@
         views: clean(video.views),
         duration: clean(video.duration) || formatDuration(Number(video.durationSeconds)),
         durationSeconds: window.VideoRules.seconds(video.durationSeconds) || window.VideoRules.seconds(video.duration),
-        posted: clean(video.posted || video.ago),
-        createdAt: clean(video.createdAt || video.created_at),
         category: clean(video.category),
         tag: clean(video.tag),
         tags: Array.isArray(video.tags) ? video.tags.map((tag) => clean(tag)).filter(Boolean) : [],
@@ -486,38 +467,20 @@
     const isMovie = (video) => videoKind(video) === "movie";
 
     /* ================================================================
-       HOW RECENT IS A VIDEO
+       RECENCY IS A SERVER-SIDE SORT, NOT A DATE
        ----------------------------------------------------------------
-       The catalogue hands us a timestamp per row (created_at), and the
-       display text ("3 days ago") as a fallback for rows that only
-       carry a date. Both are turned into a number so the Up next rail
-       can sort by age without inventing anything.
+       /api/videos returns the public rows in strict newest-first order
+       (ORDER BY created_at DESC, id DESC). The date itself never leaves
+       the server, so the only recency signal the browser has is a row's
+       position in that list. `recencyScore()` is a rank, not a timestamp:
+       it is used for the Newest chip, the shuffle's "recent uploads" rule
+       and the search tie-break. Pinned-first is applied locally from the
+       pinned/featured flags, so no date is needed for that either.
        ================================================================ */
-    function videoPublishedAt(video) {
-      const raw = String(video.createdAt || "").trim();
-      if (raw) {
-        const stamp = Date.parse(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
-        if (!Number.isNaN(stamp)) return stamp;
-      }
-
-      const label = String(video.posted || "").trim().toLowerCase();
-      if (!label) return 0;
-
-      const now = Date.now();
-      if (label === "today") return now;
-      if (label === "yesterday") return now - 86400000;
-
-      const match = /^(\d+)\s*(d|day|days|w|week|weeks|m|mo|month|months)\s*ago$/.exec(label);
-      if (match) {
-        const amount = Number(match[1]);
-        const unit = match[2].charAt(0);
-        if (unit === "d") return now - amount * 86400000;
-        if (unit === "w") return now - amount * 604800000;
-        return now - amount * 2592000000;
-      }
-
-      const stamp = Date.parse(label);
-      return Number.isNaN(stamp) ? 0 : stamp;
+    const RECENCY_RANK = new Map(VIDEOS.map((video, index) => [video.id, index]));
+    function recencyScore(video) {
+      const rank = RECENCY_RANK.get(video && video.id);
+      return Number.isFinite(rank) ? VIDEOS.length - rank : 0;
     }
 
     function videoTags(video) {
@@ -525,10 +488,8 @@
     }
 
     const categories = [...new Set(VIDEOS.flatMap(videoTags).filter((tag) => !/^(all|shorts|movies)$/i.test(tag)))];
-    const BY_RECENCY = VIDEOS
-      .map((video, index) => ({ video, index, at: videoPublishedAt(video) }))
-      .sort((a, b) => (b.at - a.at) || (a.index - b.index))
-      .map((entry) => entry.video);
+    /* The API is already newest-first. Keep that exact order. */
+    const BY_RECENCY = VIDEOS.slice();
     const PINNED_FIRST = BY_RECENCY.slice().sort((a, b) => Number(Boolean(b.pinned || b.featured)) - Number(Boolean(a.pinned || a.featured)));
     const MOVIES = PINNED_FIRST.filter(isMovie);
     const SHORTS = PINNED_FIRST.filter(isShort);
@@ -688,8 +649,8 @@
       if (!saved || saved.seed !== seed || !pager) return;
       const target = Math.min(Number(saved.cursor) || 0, pager.items.length);
       let guard = 0;
-      while (pager && pager.cursor < target && guard < 100) {
-        loadNextPage();
+      while (pager && pager.cursor < target && !pager.done && guard < 100) {
+        loadNextPage({ auto: false });
         guard += 1;
       }
       const y = Math.max(0, Number(saved.scrollY) || 0);
@@ -832,7 +793,11 @@
       image.alt = "";
       image.decoding = "async";
       image.loading = eager ? "eager" : "lazy";
-      // Explicit intrinsic size stops layout shift while the image loads.
+      /* The poster box already reserves this exact space with aspect-ratio,
+         from the video's stored shape (orientation / duration). Set the same
+         intrinsic size on the image so nothing shifts while it decodes. The
+         natural width/height of the file is NEVER written back into --ar:
+         that used to resize placed cards and reflow the whole grid. */
       const ratio = Number(video.ratio) || (isShort(video) ? 9 / 16 : 16 / 9);
       image.width = 480;
       image.height = Math.max(1, Math.round(480 / ratio));
@@ -840,10 +805,9 @@
       if (eager) image.fetchPriority = "high";
       // A saved picture uses the lightweight 480px variant. Nothing else does.
       image.src = hasSaved ? cardThumb(video.thumb) : CARD_PLACEHOLDER;
-      image.addEventListener("load", () => {
-        applyNaturalRatio(posterNode, video, image.naturalWidth, image.naturalHeight);
-        markReady(posterNode);
-      }, { once: true });
+      /* Image arrival only fades the picture in. It never changes a size,
+         moves a card or reflows the grid. */
+      image.addEventListener("load", () => markReady(posterNode), { once: true });
       image.addEventListener("error", () => {
         if (image.src.endsWith(CARD_PLACEHOLDER)) { image.remove(); return; }
         image.src = CARD_PLACEHOLDER;
@@ -875,6 +839,8 @@
       const wrap = document.createElement("div");
       wrap.className = `poster poster--${variant}`;
       wrap.style.setProperty("--tone", tone(Number(String(video.id).replace(/\D/g, "")) || 0));
+      /* Stable shape from the stored orientation / duration. This is set
+         BEFORE the image starts loading and is never changed afterwards. */
       const defaultRatio = video.ratio || (video.format === "short" ? 9 / 16 : 16 / 9);
       wrap.style.setProperty("--ar", String(defaultRatio));
 
@@ -1027,7 +993,15 @@
     }
 
     /* ================================================================
-       MASONRY / NATURAL-RATIO GRIDS
+       STABLE MASONRY — APPEND ONLY
+       ----------------------------------------------------------------
+       The old code called grid.replaceChildren() and re-created every
+       column on each infinite-scroll batch and on every image load. For a
+       moment the page was only as tall as the header, so the browser
+       clamped window.scrollY to 0 and the visitor was thrown back to the
+       top. Columns are now created once; new cards are appended to the
+       shortest column and existing cards are never detached or moved
+       while the visitor scrolls.
        ================================================================ */
     const masonryMobile = window.matchMedia("(max-width: 767px)");
 
@@ -1048,59 +1022,82 @@
       return columnWidth / (Number.isFinite(ratio) && ratio > 0 ? ratio : 16 / 9) + (mobile ? 48 : 58);
     }
 
-    function distributeMasonry(grid) {
-      const cards = grid._masonryCards;
-      if (!grid.classList.contains("masonry-grid") || !cards || !cards.length) return;
+    /* Column wrappers live as long as the grid. A rebuild happens only on
+       the first batch or when the phone/desktop breakpoint changes; a
+       min-height floor holds the old grid height during that rebuild so
+       the document can never collapse and pull scrollY back to 0. */
+    function ensureMasonryColumns(grid) {
       const cols = masonryColumnCount(grid);
-      const gap = masonryGap(grid);
-      const mobile = masonryMobile.matches;
-      const width = grid.clientWidth;
-      const columnWidth = width ? Math.max(80, (width - gap * (cols - 1)) / cols) : (mobile ? 140 : 300);
+      if (grid._masonryColumns && grid._masonryColumns.length === cols) return grid._masonryColumns;
+
+      const height = grid.getBoundingClientRect().height;
+      if (height > 0) grid.style.minHeight = `${height}px`;
+      const existing = (grid._masonryCards || []).slice();
       grid.replaceChildren();
 
       const columns = [];
-      const estimated = [];
       for (let index = 0; index < cols; index += 1) {
         const column = document.createElement("div");
         column.className = "masonry__col";
         grid.append(column);
         columns.push(column);
-        estimated.push(0);
       }
-      const measurable = width > 0 && grid.offsetParent !== null;
-      cards.forEach((card) => {
-        let target = 0;
-        for (let index = 1; index < cols; index += 1) {
-          const current = measurable ? columns[target].offsetHeight : estimated[target];
-          const candidate = measurable ? columns[index].offsetHeight : estimated[index];
-          if (candidate < current) target = index;
-        }
-        columns[target].append(card);
-        estimated[target] += estimatedCardHeight(card, columnWidth, mobile) + gap;
-      });
+      grid._masonryColumns = columns;
+      grid._columnHeights = new Array(cols).fill(0);
       grid.dataset.masonryCols = String(cols);
+      if (existing.length) placeMasonryCards(grid, existing);
+      window.requestAnimationFrame(() => { grid.style.minHeight = ""; });
+      return columns;
     }
 
+    /* Estimated heights only: no per-card offsetHeight reads, so appending
+       a batch never forces a layout or moves a card that is already placed. */
+    function placeMasonryCards(grid, cards) {
+      const columns = ensureMasonryColumns(grid);
+      const heights = grid._columnHeights;
+      const gap = masonryGap(grid);
+      const mobile = masonryMobile.matches;
+      const width = grid.clientWidth;
+      const columnWidth = width
+        ? Math.max(80, (width - gap * (columns.length - 1)) / columns.length)
+        : (mobile ? 140 : 300);
+      cards.forEach((card) => {
+        let target = 0;
+        for (let index = 1; index < columns.length; index += 1) {
+          if (heights[index] < heights[target]) target = index;
+        }
+        columns[target].append(card);
+        heights[target] += estimatedCardHeight(card, columnWidth, mobile) + gap;
+      });
+    }
+
+    function resetGrid(grid) {
+      grid.replaceChildren();
+      grid.style.minHeight = "";
+      grid._masonryCards = [];
+      grid._masonryColumns = null;
+      grid._columnHeights = null;
+      grid._videoCount = 0;
+      grid._nativeInserted = false;
+      grid._smartlinkInserted = false;
+    }
+
+    /* Resize only matters when the column count actually changes. Nothing
+       here runs on scroll or when an image finishes loading. */
     let masonryTimer = 0;
     function scheduleMasonryReflow() {
       window.clearTimeout(masonryTimer);
       masonryTimer = window.setTimeout(() => {
-        document.querySelectorAll(".masonry-grid").forEach(distributeMasonry);
+        document.querySelectorAll(".masonry-grid").forEach((grid) => {
+          if (!grid._masonryCards || !grid._masonryCards.length) return;
+          const cols = masonryColumnCount(grid);
+          if (grid._masonryColumns && grid._masonryColumns.length === cols) return;
+          ensureMasonryColumns(grid);
+        });
       }, 100);
     }
 
-    function applyNaturalRatio(posterNode, video, width, height) {
-      if (!posterNode || !width || !height) return;
-      const ratio = width / height;
-      if (!Number.isFinite(ratio) || ratio <= 0) return;
-      if (video && video.format === "short" && width >= height) return;
-      const rounded = Number(ratio.toFixed(4));
-      if (video) video.ratio = rounded;
-      posterNode.style.setProperty("--ar", String(rounded));
-      if (posterNode.closest(".masonry-grid")) scheduleMasonryReflow();
-    }
-
-    window.addEventListener("resize", scheduleMasonryReflow);
+    window.addEventListener("resize", scheduleMasonryReflow, { passive: true });
 
     function appendVideoBatch(grid, items, { variant = "masonry", native = false, final = false } = {}) {
       if (!grid._masonryCards) grid._masonryCards = [];
@@ -1131,18 +1128,17 @@
 
       if (grid.classList.contains("masonry-grid")) {
         grid._masonryCards.push(...additions);
-        distributeMasonry(grid);
+        placeMasonryCards(grid, additions);
       } else {
+        /* Plain grids were always append-only — keep them that way. */
         grid.append(...additions);
       }
     }
 
     function fillGrid(grid, items, options = {}) {
-      grid.replaceChildren();
-      grid._masonryCards = [];
-      grid._videoCount = 0;
-      grid._nativeInserted = false;
-      grid._smartlinkInserted = false;
+      /* A full reset only happens when the visitor changes the view/filter,
+         never while they are scrolling. */
+      resetGrid(grid);
       appendVideoBatch(grid, items, { ...options, final: true });
     }
 
@@ -1157,15 +1153,18 @@
        CATALOGUE FILTERS, HOME SHELVES AND INFINITE SCROLL
        ================================================================ */
     const PAGE_SIZE = 12;
+    const LOAD_AHEAD_PX = 800;
     const chipsShell = $(".chips-shell");
     const loadSentinel = $("#load-sentinel");
     let pager = null;
     let loadObserver = null;
+    let loadScheduled = false;
+    let pagerToken = 0;
 
     if ("IntersectionObserver" in window) {
       loadObserver = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadNextPage();
-      }, { rootMargin: "500px 0px" });
+        if (entries.some((entry) => entry.isIntersecting)) scheduleNextPage();
+      }, { rootMargin: `${LOAD_AHEAD_PX}px 0px` });
     }
 
     function searchHaystack(video) {
@@ -1189,7 +1188,7 @@
         if ([video.creator, video.description, video.tag].filter(Boolean).join(" ").toLowerCase().includes(q)) score += 5;
         return score;
       };
-      const at = (video) => videoPublishedAt(video) || 0;
+      const at = (video) => recencyScore(video);
       return list.slice().sort((a, b) => (rank(b) - rank(a)) || (at(b) - at(a)));
     }
 
@@ -1243,39 +1242,62 @@
     }
 
     function showPaginatedGrid(grid, items, { variant = "masonry", native = false } = {}) {
+      pagerToken += 1;
+      loadScheduled = false;
       if (loadObserver && loadSentinel) loadObserver.unobserve(loadSentinel);
       setGridVariant(grid, variant);
-      grid.replaceChildren();
-      grid._masonryCards = [];
-      grid._videoCount = 0;
-      grid._nativeInserted = false;
-      grid._smartlinkInserted = false;
-      pager = { grid, items, variant, native, cursor: 0, loading: false };
+      resetGrid(grid);
+      pager = { grid, items, variant, native, cursor: 0, loading: false, done: false };
       loadSentinel.hidden = true;
       loadNextPage();
+      /* One observer for the whole pager. A hidden sentinel (no more items)
+         never intersects; revealing it re-arms the same observer. */
+      if (loadObserver) loadObserver.observe(loadSentinel);
     }
 
-    function loadNextPage() {
-      if (!pager || pager.loading) return;
+    function sentinelNear() {
+      if (!pager || pager.done || loadSentinel.hidden) return false;
+      return loadSentinel.getBoundingClientRect().top <= window.innerHeight + LOAD_AHEAD_PX;
+    }
+
+    /* Exactly one batch per animation frame. The token makes a pending frame
+       from a previous filter harmless, and pager.loading / pager.done stop
+       any duplicate or overlapping load. */
+    function scheduleNextPage() {
+      if (!pager || pager.loading || pager.done || loadScheduled) return;
+      loadScheduled = true;
+      const token = pagerToken;
+      window.requestAnimationFrame(() => {
+        loadScheduled = false;
+        if (token !== pagerToken || !pager) return;
+        loadNextPage();
+      });
+    }
+
+    function loadNextPage({ auto = true } = {}) {
+      if (!pager || pager.loading || pager.done) return;
       pager.loading = true;
       const next = pager.items.slice(pager.cursor, pager.cursor + PAGE_SIZE);
       pager.cursor += next.length;
       const final = pager.cursor >= pager.items.length;
       if (next.length) appendVideoBatch(pager.grid, next, { variant: pager.variant, native: pager.native, final });
-      const more = pager.cursor < pager.items.length;
-      loadSentinel.hidden = !more;
-      if (more && loadObserver) loadObserver.observe(loadSentinel);
+      loadSentinel.hidden = final;
+      if (final) pager.done = true;
       pager.loading = false;
-      scheduleMasonryReflow();
-      if (more && !loadObserver) window.requestAnimationFrame(checkSentinel);
+      /* A batch can be shorter than the 800px look-ahead (4 columns on a
+         wide screen, for example). Keep feeding one batch per frame until
+         the sentinel is safely below the fold, so the feed never stalls. */
+      if (auto && !final && sentinelNear()) scheduleNextPage();
     }
 
     function checkSentinel() {
-      if (!pager || loadSentinel.hidden || pager.loading) return;
-      if (loadSentinel.getBoundingClientRect().top <= window.innerHeight + 500) loadNextPage();
+      if (sentinelNear()) scheduleNextPage();
     }
 
-    if (!loadObserver) {
+    /* A passive, rAF-throttled scroll check runs alongside the observer. Some
+       mobile browsers throttle IntersectionObserver during a fast flick; this
+       guarantees the 800px preload and never blocks the scroll itself. */
+    {
       let checkFrame = 0;
       window.addEventListener("scroll", () => {
         if (checkFrame) return;
@@ -1296,6 +1318,8 @@
       const empty = $("#catalogue-empty");
       const banner = $("#ad-banner");
       const sortToggle = $("#sort-toggle");
+      pagerToken += 1;
+      loadScheduled = false;
       if (loadObserver && loadSentinel) loadObserver.unobserve(loadSentinel);
       pager = null;
       loadSentinel.hidden = true;
@@ -1433,21 +1457,13 @@
       });
     }
 
-    let searchTimer = 0;
-
+    /* No timed scrollTo here: a delayed smooth scroll used to fire while
+       the visitor was already scrolling through the new results and yank
+       them back up. Search only re-renders; scroll position is untouched. */
     function handleSearch(value) {
       state.query = value;
       syncSearchInputs(value);
       renderPage();
-      clearTimeout(searchTimer);
-      searchTimer = window.setTimeout(() => {
-        const section = state.view === "home" && state.chip === "All" && !state.query.trim()
-          ? $("#latest-section")
-          : state.view === "home" ? $("#filtered-section") : $("#catalogue-section");
-        if (!section || section.hidden) return;
-        const rect = section.getBoundingClientRect();
-        if (rect.top < 0) window.scrollTo({ top: rect.top + window.scrollY - 76, behavior: "smooth" });
-      }, 350);
     }
 
     function setupSearch() {
@@ -1485,11 +1501,10 @@
 
         const chip = target.closest("[data-chip]");
         if (chip) {
-          /* All brings back the shuffle, and a NEW one at that. */
-          if (chip.dataset.chip === "All" && state.view === "home") {
-            newShuffle();
-            window.scrollTo({ top: 0, behavior: "auto" });
-          }
+          /* All brings back the shuffle, and a NEW one at that. It does not
+             touch the scroll position: any programmatic jump while the
+             visitor is moving is exactly what we are removing. */
+          if (chip.dataset.chip === "All" && state.view === "home") newShuffle();
           state.chip = chip.dataset.chip;
           renderPage();
           return;

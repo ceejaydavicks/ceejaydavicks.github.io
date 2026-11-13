@@ -2,9 +2,12 @@
    GET  /api/videos?all=1             – admin list (all rows, includes drafts)
    POST /api/videos                   – admin create
 
-   The public list is edge-cached for 60s (+600s stale-while-revalidate) and
-   returns only the fields a card renders. The browser does the home/shorts
-   reshuffle locally, so a cached response can be shared by every visitor.
+   The public list is edge-cached for 30s (+300s stale-while-revalidate) and
+   returns only the fields a card renders — never an upload date. Rows are
+   sorted newest-first here in SQL; the browser does the home/shorts reshuffle
+   locally, so a cached response can be shared by every visitor. Clients add
+   `?shape=nodates2` purely as an edge-cache key so a response written by an
+   older deploy (which still contained created_at) can never be served again.
 
    Mirroring the bot catalogue used to run *inside* this request: an upstream
    fetch with a 6s timeout plus two D1 reads per row. A slow/unreachable bot
@@ -14,7 +17,9 @@
 
 import { isAdminRequest } from "../_lib/auth.js";
 import { embedThumbnail, syncBotCatalogue } from "../_lib/catalogue.js";
-import { ensureSchema, insertVideo, listPublishedCardVideos, listVideos } from "../_lib/db.js";
+import {
+  ensureSchema, insertVideo, listPublishedCardVideos, listVideos, publicVideo
+} from "../_lib/db.js";
 import { cachedResponse, FEED_CACHE } from "../_lib/edge-cache.js";
 import { fail, methodNotAllowed, toInt } from "../_lib/http.js";
 import { validateVideoInput } from "../_lib/validate.js";
@@ -68,9 +73,12 @@ export async function onRequestGet(context) {
   return cachedResponse(request, async () => {
     scheduleBotSync(context);
     const { videos, total } = await listPublishedCardVideos(env, { limit, offset });
+    /* Belt and braces: no upload date (created_at / date / updated_at) is
+       ever serialised into a public list response. */
+    const publicRows = videos.map(publicVideo);
     return new Response(
       JSON.stringify({
-        videos,
+        videos: publicRows,
         total,
         limit,
         offset,

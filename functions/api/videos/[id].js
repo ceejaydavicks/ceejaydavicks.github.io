@@ -14,6 +14,7 @@ import {
   getVideo,
   getVideoSourceRefs,
   markSourceDeleted,
+  publicVideo,
   updateVideo
 } from "../../_lib/db.js";
 import { deleteTelegramPost } from "../../_lib/telegram.js";
@@ -185,8 +186,10 @@ export async function onRequestGet({ request, env, params }) {
     const video = await getVideo(env, id);
     if (!video || (!video.video_url && !video.embed_url)) return fail("Video not found", 404);
 
+    /* Public detail: playable URL and description, but never an upload date.
+       The admin panel gets its dates from the authenticated ?all=1 list. */
     return Response.json(
-      { video },
+      { video: publicVideo(video) },
       {
         headers: {
           "cache-control": DETAIL_CACHE,

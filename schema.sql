@@ -37,12 +37,14 @@ CREATE TABLE IF NOT EXISTS videos (
 CREATE INDEX IF NOT EXISTS videos_order_idx
   ON videos (featured DESC, pinned DESC, created_at DESC);
 
--- Public feed queries (pinned first, newest first, 24 rows per page).
+-- Public feed queries (24 rows per page). The public list is sorted
+-- newest-first here on the server; the date is never returned to the browser.
 -- A plain created_at DESC sort uses this index; wrapping the column in
 -- datetime() would force a full scan + sort on every request.
 CREATE INDEX IF NOT EXISTS videos_feed_idx
   ON videos (featured DESC, pinned DESC, created_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC);
+CREATE INDEX IF NOT EXISTS videos_recency_idx ON videos (created_at DESC, id DESC);
 
 -- Shorts/Movies filtering, pinned lookups and category/tag filtering.
 CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds);

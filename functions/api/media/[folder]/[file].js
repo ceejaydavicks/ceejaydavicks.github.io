@@ -96,6 +96,10 @@ function publicHeaders(contentType, size, etag) {
   headers.set("cross-origin-resource-policy", "cross-origin");
   headers.set("timing-allow-origin", "*");
   headers.delete("content-disposition");
+  /* Never echo a build/upload timestamp. The only validators here are
+     content-derived: R2's httpEtag (a hash of the object's bytes) and the
+     content hash used as the D1-backed image id. */
+  headers.delete("last-modified");
   if (etag) headers.set("etag", etag);
   if (Number.isFinite(size)) headers.set("content-length", String(size));
   return headers;
