@@ -3,6 +3,7 @@
 // ----------------------------------------------------------------------------
 // Every card, row, chip and the featured player are built from this list, so a
 // new upload appears automatically the next time the page loads — no HTML edits.
+// The list is newest-first; it carries NO upload dates or relative-age labels.
 //
 // REQUIRED
 //   { title, url }
@@ -13,8 +14,7 @@
 //   views        display text, e.g. "12.4K" (this site has no analytics for it)
 //   duration     "12:48"; read from the video file when omitted
 //   category     adds a filter chip, e.g. "Cinematic"
-//   posted       display text, e.g. "2d ago"
-//   tag          corner badge, e.g. "4K" or "New"
+//   tag          corner badge, e.g. "4K" (never an upload-date label)
 //   description  one line shown beside the featured video
 //   format       "short" marks a vertical 9:16 clip for the Vertical Shorts row
 //
@@ -37,7 +37,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "1:00",
     views: "5.1K",
-    posted: "1d ago",
     category: "Cinematic",
     tag: "4K"
   },
@@ -48,7 +47,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "2:07",
     views: "6.8K",
-    posted: "2d ago",
     category: "Studio"
   },
   {
@@ -58,7 +56,6 @@ export const videos = [
     creator: "After Hours",
     duration: "3:14",
     views: "8.5K",
-    posted: "3d ago",
     category: "Archive"
   },
   {
@@ -68,7 +65,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "4:21",
     views: "10.2K",
-    posted: "4d ago",
     category: "Cinematic"
   },
   {
@@ -78,7 +74,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "5:28",
     views: "11.9K",
-    posted: "5d ago",
     category: "Studio",
     tag: "4K",
     format: "short"
@@ -90,7 +85,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "6:35",
     views: "13.6K",
-    posted: "6d ago",
     category: "Archive",
     format: "short"
   },
@@ -101,7 +95,6 @@ export const videos = [
     creator: "After Hours",
     duration: "7:42",
     views: "15.3K",
-    posted: "1d ago",
     category: "Cinematic",
     format: "short"
   },
@@ -112,7 +105,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "8:49",
     views: "17.0K",
-    posted: "2d ago",
     category: "Studio",
     format: "short"
   },
@@ -123,7 +115,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "9:56",
     views: "18.7K",
-    posted: "3d ago",
     category: "Archive",
     tag: "4K",
     format: "short"
@@ -135,7 +126,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "1:03",
     views: "20.4K",
-    posted: "4d ago",
     category: "Cinematic",
     format: "short"
   },
@@ -146,7 +136,6 @@ export const videos = [
     creator: "After Hours",
     duration: "2:10",
     views: "22.1K",
-    posted: "5d ago",
     category: "Studio"
   },
   {
@@ -156,7 +145,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "3:17",
     views: "23.8K",
-    posted: "6d ago",
     category: "Archive"
   },
   {
@@ -166,7 +154,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "4:24",
     views: "25.5K",
-    posted: "1d ago",
     category: "Cinematic",
     tag: "4K"
   },
@@ -177,7 +164,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "5:31",
     views: "27.2K",
-    posted: "2d ago",
     category: "Studio"
   },
   {
@@ -187,7 +173,6 @@ export const videos = [
     creator: "After Hours",
     duration: "6:38",
     views: "28.9K",
-    posted: "3d ago",
     category: "Archive"
   },
   {
@@ -197,7 +182,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "7:45",
     views: "30.6K",
-    posted: "4d ago",
     category: "Cinematic"
   },
   {
@@ -207,7 +191,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "8:52",
     views: "32.3K",
-    posted: "5d ago",
     category: "Studio",
     tag: "4K"
   },
@@ -218,7 +201,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "9:59",
     views: "34.0K",
-    posted: "6d ago",
     category: "Archive"
   },
   {
@@ -228,7 +210,6 @@ export const videos = [
     creator: "After Hours",
     duration: "1:06",
     views: "35.7K",
-    posted: "1d ago",
     category: "Cinematic"
   },
   {
@@ -238,7 +219,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "2:13",
     views: "37.4K",
-    posted: "2d ago",
     category: "Studio"
   },
   {
@@ -248,7 +228,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "3:20",
     views: "39.1K",
-    posted: "3d ago",
     category: "Archive",
     tag: "4K"
   },
@@ -259,7 +238,6 @@ export const videos = [
     creator: "Velour Films",
     duration: "4:27",
     views: "40.8K",
-    posted: "4d ago",
     category: "Cinematic"
   },
   {
@@ -269,7 +247,6 @@ export const videos = [
     creator: "After Hours",
     duration: "5:34",
     views: "42.5K",
-    posted: "5d ago",
     category: "Studio"
   },
   {
@@ -279,7 +256,6 @@ export const videos = [
     creator: "Maison Rose",
     duration: "6:41",
     views: "44.2K",
-    posted: "6d ago",
     category: "Archive"
   },
   {
@@ -289,7 +265,6 @@ export const videos = [
     creator: "Noir Studio",
     duration: "7:48",
     views: "45.9K",
-    posted: "1d ago",
     category: "Cinematic",
     tag: "4K"
   },

@@ -178,7 +178,18 @@ export function injectWatchMeta(html, meta) {
       /<meta\s+property="og:(?:title|description|image|image:width|image:height|image:type|url|video|video:secure_url|video:type|video:width|video:height)"[^>]*>\s*/gi,
       ""
     )
-    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, "");
+    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, "")
+    /* No upload date in hidden data either. Older builds / third-party
+       snippets can leave article:published_time or JSON-LD uploadDate; a
+       crawler must never be able to recover the timestamp from the page. */
+    .replace(
+      /<meta\s+(?:property|name)="(?:article:(?:published|modified)_time|og:updated_time|video:release_date|date|dc\.date|lastmod)"[^>]*>\s*/gi,
+      ""
+    )
+    .replace(
+      /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi,
+      (block) => (/uploadDate|datePublished|dateModified/i.test(block) ? "" : block)
+    );
 
   const tags = [
     `<title>${e(title)}</title>`,
@@ -220,9 +231,11 @@ export function injectWatchMeta(html, meta) {
 
 /* Builds the final response. Content-Length / ETag / Content-Encoding are
    dropped because the body changed; Content-Disposition is removed so the
-   watch URL can never be interpreted as a download. */
+   watch URL can never be interpreted as a download. Last-Modified would be a
+   build timestamp, so it is dropped too. */
 export function watchHtmlResponse(body, original) {
   const headers = new Headers(original ? original.headers : {});
+  headers.delete("last-modified");
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("cache-control", WATCH_CACHE);
   headers.delete("content-length");

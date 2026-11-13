@@ -70,6 +70,8 @@ const AD_CONFIG = {
 
 const API_TIMEOUT = 7000;
 const RELATED_PAGE = 12;
+/* Start the next batch this far before the visitor reaches the bottom. */
+const RELATED_LOAD_AHEAD_PX = 800;
 
 /* Cards are images only. Posters are generated when a video is saved, so a
    card never has to load the video file just to find a frame. */
@@ -108,24 +110,6 @@ async function fetchJson(url) {
 function splitTags(value) {
   const list = Array.isArray(value) ? value : String(value == null ? "" : value).split(",");
   return list.map((tag) => clean(tag)).filter(Boolean);
-}
-
-function postedLabel(value) {
-  if (!value) return "";
-  const raw = String(value);
-  const date = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const days = Math.floor((Date.now() - date.getTime()) / 86400000);
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${days} days ago`;
-  if (days < 30) {
-    const weeks = Math.floor(days / 7);
-    return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
-  }
-  const months = Math.floor(days / 30);
-  return `${months} month${months === 1 ? "" : "s"} ago`;
 }
 
 /* A row of /api/videos becomes a video of the site. */
@@ -169,24 +153,13 @@ function rowToVideo(row) {
     embed: /^https?:\/\//i.test(embedUrl) ? embedUrl : null,
     embedUrl,
     orientation: row.orientation === "vertical" ? "vertical" : "horizontal",
-    posted: postedLabel(row.created_at),
-    createdAt: clean(row.created_at),
+    /* No upload date is sent to the browser: the public API sorts the list
+       newest-first on the server and never returns created_at. */
     ratio: 0
   };
 }
 
 const isShort = (video) => window.VideoRules.isShort(video.durationSeconds);
-
-/* How old a video is, so the newest ones come first when nothing else tells
-   them apart. */
-function publishedAt(video) {
-  const raw = String(video.createdAt || "").trim();
-  if (raw) {
-    const stamp = Date.parse(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw.replace(" ", "T")}Z`);
-    if (!Number.isNaN(stamp)) return stamp;
-  }
-  return 0;
-}
 
 /* ---- data --------------------------------------------------------------- */
 
@@ -208,7 +181,7 @@ if (window.Catalogue) {
   }
 } else {
   const [videosResult, settingsResult] = await Promise.allSettled([
-    fetchJson("/api/videos"),
+    fetchJson("/api/videos?shape=nodates2"),
     fetchJson("/api/settings")
   ]);
   if (videosResult.status === "fulfilled") catalogueResult = videosResult.value || { videos: [] };
@@ -233,6 +206,15 @@ if (window.Catalogue) {
 
 const rows = Array.isArray(catalogueResult.videos) ? catalogueResult.videos : [];
 const VIDEOS = rows.map(rowToVideo).filter(Boolean);
+
+/* Recency is a server-side sort (ORDER BY created_at DESC). The browser only
+   receives the resulting order, never a date. A row's position becomes a
+   plain rank used as the final tie-break for "More like this". */
+const RECENCY_RANK = new Map(VIDEOS.map((video, index) => [video.id, index]));
+function recencyScore(video) {
+  const rank = RECENCY_RANK.get(video && video.id);
+  return Number.isFinite(rank) ? VIDEOS.length - rank : 0;
+}
 
 /* ---- the video that was asked for --------------------------------------- */
 
@@ -434,7 +416,7 @@ function renderInfo(video) {
   if (video.creator) bits.push(`<span>${esc(video.creator)}</span>`);
   if (video.views) bits.push(`<span>${esc(video.views)} views</span>`);
   if (video.duration) bits.push(`<span>${esc(video.duration)}</span>`);
-  if (video.posted) bits.push(`<span>${esc(video.posted)}</span>`);
+  /* Upload dates/times are deliberately never shown to visitors. */
   if (isShort(video)) bits.push(`<span class="watch__short">Short</span>`);
   meta.innerHTML = bits.join('<span class="watch__dot" aria-hidden="true">·</span>');
 
@@ -568,7 +550,7 @@ function rankRelated(video, current, currentTags, currentWords) {
     close = Math.max(0, 1 - Math.abs(here - there) / Math.max(here, there));
   }
 
-  return { video, shared, keywords, close, at: publishedAt(video) };
+  return { video, shared, keywords, close, at: recencyScore(video) };
 }
 
 function relatedVideos(video) {
@@ -600,6 +582,8 @@ function createCard(video, index) {
   const poster = document.createElement("div");
   poster.className = "poster poster--masonry";
   poster.style.setProperty("--tone", tone(index));
+  /* Stable shape from the video's stored orientation, reserved BEFORE the
+     image loads and never changed afterwards. */
   poster.style.setProperty("--ar", String(video.ratio || (video.orientation === "vertical" ? 9 / 16 : 16 / 9)));
 
   const button = document.createElement("a");
@@ -628,14 +612,9 @@ function createCard(video, index) {
     image.width = 480;
     image.height = Math.max(1, Math.round(480 / ratio));
     image.src = hasSaved ? cardThumb(video.thumb) : CARD_PLACEHOLDER;
-    image.addEventListener(
-      "load",
-      () => {
-        applyNaturalRatio(poster, video, image.naturalWidth, image.naturalHeight);
-        poster.classList.add("has-media");
-      },
-      { once: true }
-    );
+    /* Decoding a picture only fades it in. It must never resize the poster,
+       move an already-placed card or rebuild the masonry columns. */
+    image.addEventListener("load", () => poster.classList.add("has-media"), { once: true });
     image.addEventListener("error", () => {
       if (image.src.endsWith(CARD_PLACEHOLDER)) { image.remove(); return; }
       image.src = CARD_PLACEHOLDER;
@@ -691,42 +670,51 @@ function estimatedCardHeight(card, columnWidth) {
   return columnWidth / ratio + 66;
 }
 
-/* Items drop into whichever column is shortest, so the grid has no holes. */
-function distributeMasonry(grid) {
-  const cards = grid._masonryCards;
-  if (!cards || !cards.length) return;
-
+/* APPEND-ONLY masonry. The old version wiped the grid with
+   replaceChildren() on every batch and on every image load, which briefly
+   collapsed the document height and snapped scrollY back to the top. */
+function ensureMasonryColumns(grid) {
   const cols = masonryColumnCount();
-  const gap = masonryGap(grid);
-  const width = grid.clientWidth;
-  const columnWidth = width ? Math.max(80, (width - gap * (cols - 1)) / cols) : 460;
+  if (grid._masonryColumns && grid._masonryColumns.length === cols) return grid._masonryColumns;
 
+  /* Only on first paint or a phone/desktop breakpoint change. Hold the old
+     height while rebuilding so the page cannot shrink mid-scroll. */
+  const height = grid.getBoundingClientRect().height;
+  if (height > 0) grid.style.minHeight = `${height}px`;
+  const existing = (grid._masonryCards || []).slice();
   grid.replaceChildren();
 
   const columns = [];
-  const estimated = [];
   for (let i = 0; i < cols; i += 1) {
     const column = document.createElement("div");
     column.className = "masonry__col";
     grid.append(column);
     columns.push(column);
-    estimated.push(0);
   }
+  grid._masonryColumns = columns;
+  grid._columnHeights = new Array(cols).fill(0);
+  grid.dataset.masonryCols = String(cols);
+  if (existing.length) placeMasonryCards(grid, existing);
+  window.requestAnimationFrame(() => { grid.style.minHeight = ""; });
+  return columns;
+}
 
-  const measurable = width > 0 && grid.offsetParent !== null;
-
+/* Estimated heights: no offsetHeight reads per card, and existing cards are
+   never detached or moved while the visitor scrolls. */
+function placeMasonryCards(grid, cards) {
+  const columns = ensureMasonryColumns(grid);
+  const heights = grid._columnHeights;
+  const gap = masonryGap(grid);
+  const width = grid.clientWidth;
+  const columnWidth = width ? Math.max(80, (width - gap * (columns.length - 1)) / columns.length) : 460;
   cards.forEach((card) => {
     let target = 0;
-    for (let i = 1; i < cols; i += 1) {
-      const current = measurable ? columns[target].offsetHeight : estimated[target];
-      const candidate = measurable ? columns[i].offsetHeight : estimated[i];
-      if (candidate < current) target = i;
+    for (let i = 1; i < columns.length; i += 1) {
+      if (heights[i] < heights[target]) target = i;
     }
     columns[target].append(card);
-    estimated[target] += estimatedCardHeight(card, columnWidth) + gap;
+    heights[target] += estimatedCardHeight(card, columnWidth) + gap;
   });
-
-  grid.dataset.masonryCols = String(cols);
 }
 
 let masonryTimer = 0;
@@ -735,23 +723,14 @@ function scheduleMasonryReflow() {
   window.clearTimeout(masonryTimer);
   masonryTimer = window.setTimeout(() => {
     const grid = $("#related-grid");
-    if (grid) distributeMasonry(grid);
+    if (!grid || !grid._masonryCards || !grid._masonryCards.length) return;
+    const cols = masonryColumnCount();
+    if (grid._masonryColumns && grid._masonryColumns.length === cols) return;
+    ensureMasonryColumns(grid);
   }, 120);
 }
 
-window.addEventListener("resize", scheduleMasonryReflow);
-
-/* The video's own shape drives the card, so nothing is cropped. */
-function applyNaturalRatio(posterNode, video, width, height) {
-  if (!posterNode || !width || !height) return;
-  const ratio = width / height;
-  if (!Number.isFinite(ratio) || ratio <= 0) return;
-
-  const rounded = Number(ratio.toFixed(4));
-  if (video) video.ratio = rounded;
-  posterNode.style.setProperty("--ar", String(rounded));
-  scheduleMasonryReflow();
-}
+window.addEventListener("resize", scheduleMasonryReflow, { passive: true });
 
 /* ---- the list itself ---------------------------------------------------- */
 
@@ -774,9 +753,8 @@ let fallbackCursor = 0;
 const shownOnThisPage = new Set();
 
 function newestOtherVideos() {
-  return VIDEOS.filter((video) => video.id !== (current && current.id))
-    .slice()
-    .sort((a, b) => publishedAt(b) - publishedAt(a));
+  /* VIDEOS is already newest-first from the server. No date is needed. */
+  return VIDEOS.filter((video) => video.id !== (current && current.id));
 }
 
 function nextEndlessChunk() {
@@ -795,6 +773,24 @@ function nextEndlessChunk() {
   return chunk;
 }
 
+/* One batch per animation frame: no duplicate or overlapping loads. */
+let relatedScheduled = false;
+
+function relatedSentinelNear() {
+  const sentinel = $("#related-sentinel");
+  if (!sentinel) return false;
+  return sentinel.getBoundingClientRect().top <= window.innerHeight + RELATED_LOAD_AHEAD_PX;
+}
+
+function scheduleRelatedChunk() {
+  if (relatedScheduled) return;
+  relatedScheduled = true;
+  window.requestAnimationFrame(() => {
+    relatedScheduled = false;
+    renderRelatedChunk();
+  });
+}
+
 function renderRelatedChunk() {
   const grid = $("#related-grid");
   if (!grid) return;
@@ -803,40 +799,49 @@ function renderRelatedChunk() {
   if (!chunk.length) chunk = nextEndlessChunk();
   if (!chunk.length) return; // Only possible when the catalogue has no other video.
 
-  const cards = grid._masonryCards || [];
+  const cards = grid._masonryCards || (grid._masonryCards = []);
+  const additions = [];
   chunk.forEach((video, index) => {
-    cards.push(createCard(video, cards.length + index));
+    const card = createCard(video, cards.length + index);
+    cards.push(card);
+    additions.push(card);
     shownOnThisPage.add(video.id);
     rememberSeen(video.id);
   });
 
-  grid._masonryCards = cards;
   relatedShown += chunk.length;
-  distributeMasonry(grid);
+  /* Only the new cards are appended; no existing card is touched. */
+  placeMasonryCards(grid, additions);
 
+  /* Keep feeding until the sentinel is outside the 800px look-ahead, so a
+     short batch can never leave the list stalled with the sentinel on screen. */
+  if (relatedSentinelNear()) scheduleRelatedChunk();
 }
 
 function setupInfiniteScroll() {
   const sentinel = $("#related-sentinel");
   if (!sentinel) return;
-  if (!("IntersectionObserver" in window)) {
-    window.addEventListener("scroll", () => {
-      if (sentinel.getBoundingClientRect().top < window.innerHeight + 400) renderRelatedChunk();
-    }, { passive: true });
-    return;
+
+  /* Passive, rAF-throttled scroll check alongside the observer: a fast flick
+     can outrun IntersectionObserver on mobile, and the feed must never stop. */
+  let checkFrame = 0;
+  window.addEventListener("scroll", () => {
+    if (checkFrame) return;
+    checkFrame = window.requestAnimationFrame(() => {
+      checkFrame = 0;
+      if (relatedSentinelNear()) scheduleRelatedChunk();
+    });
+  }, { passive: true });
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) scheduleRelatedChunk();
+      },
+      { rootMargin: `${RELATED_LOAD_AHEAD_PX}px 0px` }
+    );
+    observer.observe(sentinel);
   }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        renderRelatedChunk();
-      });
-    },
-    { rootMargin: "400px 0px" }
-  );
-
-  observer.observe(sentinel);
 }
 
 /* ---- the one ad slot ---------------------------------------------------- */
@@ -924,4 +929,3 @@ if (!loadError && current) {
 }
 
 mountAd();
-scheduleMasonryReflow();

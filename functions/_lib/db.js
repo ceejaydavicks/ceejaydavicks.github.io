@@ -40,6 +40,9 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS videos_feed_idx
      ON videos (featured DESC, pinned DESC, created_at DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC)`,
+  /* Public feed order: strictly newest-first. The date stays on the server;
+     this index is what makes the sorted, paginated list cheap. */
+  `CREATE INDEX IF NOT EXISTS videos_recency_idx ON videos (created_at DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)`,
   `CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)`,
   `CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)`,
@@ -127,6 +130,7 @@ const LATE_INDEXES = [
   "CREATE UNIQUE INDEX IF NOT EXISTS videos_tg_idx ON videos (tg_chat, tg_message_id)",
   "CREATE INDEX IF NOT EXISTS videos_feed_idx ON videos (featured DESC, pinned DESC, created_at DESC, id DESC)",
   "CREATE INDEX IF NOT EXISTS videos_created_idx ON videos (created_at DESC)",
+  "CREATE INDEX IF NOT EXISTS videos_recency_idx ON videos (created_at DESC, id DESC)",
   "CREATE INDEX IF NOT EXISTS videos_duration_idx ON videos (duration_seconds)",
   "CREATE INDEX IF NOT EXISTS videos_pinned_idx ON videos (pinned, featured)",
   "CREATE INDEX IF NOT EXISTS videos_tag_idx ON videos (tag)",
@@ -241,16 +245,20 @@ export const CARD_COLUMNS = [
   '"views"',
   "tag",
   "tags",
-  "created_at",
+  /* Deliberately NO created_at / date / updated_at: the public list never
+     ships an upload date. Newest-first order is applied by the SQL below. */
   "orientation",
   "featured",
   "pinned"
 ].join(", ");
 
 const PUBLISHED = "WHERE video_url <> '' OR embed_url <> ''";
-/* created_at is stored as 'YYYY-MM-DD HH:MM:SS', so a plain DESC sort is
-   chronological AND can use videos_feed_idx. No datetime() wrapper. */
-const FEED_ORDER = "ORDER BY featured DESC, pinned DESC, created_at DESC, id DESC";
+/* Public rows are sorted here, on the server, strictly newest first. The
+   date is used only for the ORDER BY and is never selected for the browser.
+   created_at is stored as 'YYYY-MM-DD HH:MM:SS', so a plain DESC sort is
+   chronological and uses videos_recency_idx. No datetime() wrapper.
+   Pinned-first is applied in the browser from the pinned/featured flags. */
+const RECENCY_ORDER = "ORDER BY created_at DESC, id DESC";
 
 /* Count + page in one D1 batch (one round trip). `total` lets the client
    fetch the remaining 24-row pages in parallel and dedupe them safely. */
@@ -258,7 +266,7 @@ export async function listPublishedCardVideos(env, { limit = 24, offset = 0 } = 
   const statements = [
     env.DB.prepare(`SELECT COUNT(*) AS total FROM videos ${PUBLISHED}`),
     env.DB.prepare(
-      `SELECT ${CARD_COLUMNS} FROM videos ${PUBLISHED} ${FEED_ORDER} LIMIT ? OFFSET ?`
+      `SELECT ${CARD_COLUMNS} FROM videos ${PUBLISHED} ${RECENCY_ORDER} LIMIT ? OFFSET ?`
     ).bind(limit, offset)
   ];
   const [countResult, pageResult] = await env.DB.batch(statements);
@@ -268,6 +276,21 @@ export async function listPublishedCardVideos(env, { limit = 24, offset = 0 } = 
 
 export async function getVideo(env, id) {
   return env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE id = ?`).bind(id).first();
+}
+
+/* Fields that must never leave the server on a PUBLIC response. The admin
+   panel (which is authenticated) still reads the full row, dates included.
+   A copy is returned so the original row stays intact for internal callers. */
+const PUBLIC_DATE_FIELDS = [
+  "created_at", "updated_at", "createdAt", "updatedAt",
+  "date", "uploaded_at", "published_at", "posted", "timestamp"
+];
+
+export function publicVideo(row) {
+  if (!row || typeof row !== "object") return row;
+  const copy = { ...row };
+  for (const field of PUBLIC_DATE_FIELDS) delete copy[field];
+  return copy;
 }
 
 /* Only one video is featured at a time: setting the flag clears it everywhere

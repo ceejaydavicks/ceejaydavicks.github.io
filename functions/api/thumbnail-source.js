@@ -83,7 +83,9 @@ export async function onRequestGet({ request, env }) {
   headers.set("accept-ranges", "bytes");
   headers.set("cache-control", "no-store");
   headers.set("x-content-type-options", "nosniff");
-  for (const name of ["content-length", "content-range", "etag"]) {
+  /* Forward only byte-range bookkeeping. An upstream ETag / Last-Modified
+     can encode the file's timestamp, so neither is passed on. */
+  for (const name of ["content-length", "content-range"]) {
     const value = upstream.headers.get(name);
     if (value) headers.set(name, value);
   }

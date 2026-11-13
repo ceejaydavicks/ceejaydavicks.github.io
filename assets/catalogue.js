@@ -25,9 +25,16 @@
   var MAX_PAGES = 40;
   var TTL_MS = 60000;
 
-  var CACHE_KEY = "bootymansion.catalogue.v4";
+  /* v5: the public API no longer carries upload dates. Bumping these keys
+     stops a tab from reusing a sessionStorage row written by an older build,
+     which would otherwise put created_at back in the browser. */
+  var CACHE_KEY = "bootymansion.catalogue.v5";
   var SETTINGS_KEY = "bootymansion.settings.v4";
-  var DETAIL_PREFIX = "bootymansion.detail.";
+  var DETAIL_PREFIX = "bootymansion.detail.v2.";
+  /* Cache-buster for the edge cache: an entry written by the previous deploy
+     still contains created_at, so use a fresh URL for this response shape.
+     The server ignores the parameter; it only changes the cache key. */
+  var SHAPE = "shape=nodates2";
 
   var catalogueInflight = null;
   var settingsInflight = null;
@@ -104,7 +111,7 @@
   }
 
   function pageUrl(offset) {
-    return "/api/videos?limit=" + PAGE_SIZE + "&offset=" + offset;
+    return "/api/videos?limit=" + PAGE_SIZE + "&offset=" + offset + "&" + SHAPE;
   }
 
   async function loadCatalogue() {
@@ -188,7 +195,7 @@
     var key = normaliseId(id);
     if (!key) return Promise.resolve(null);
     if (details.has(key)) return details.get(key);
-    var promise = fetchJson("/api/videos/" + encodeURIComponent(key))
+    var promise = fetchJson("/api/videos/" + encodeURIComponent(key) + "?" + SHAPE)
       .then(function (payload) { return (payload && payload.video) || null; })
       .catch(function () { details.delete(key); return null; });
     details.set(key, promise);

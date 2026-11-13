@@ -164,7 +164,9 @@ function parseCaption(text) {
 
 function fileTitle(media) {
   const name = String((media && media.file_name) || "").replace(/\.[^.]+$/, "");
-  return cleanText(name, 200) || `Telegram upload ${new Date().toISOString().slice(0, 10)}`;
+  /* The fallback title used to contain the upload date. A random ID keeps
+     every public video title free of dates. */
+  return cleanText(name, 200) || `Telegram upload ${randomKey().slice(0, 8)}`;
 }
 
 /* ---- telegram api ------------------------------------------------------- */
@@ -273,7 +275,7 @@ async function saveThumbnail(env, media) {
   if (!fileId || !env.MEDIA) return "";
   try {
     const thumb = await downloadFile(env, fileId);
-    const key = `thumbs/tg-${Date.now()}-${randomKey()}.jpg`;
+    const key = `thumbs/tg-${randomKey()}-${randomKey()}.jpg`;
     return await storeInR2(env, key, thumb.bytes, "image/jpeg");
   } catch (error) {
     return "";
@@ -345,7 +347,7 @@ async function publishVideo(env, { chat, message, text, fromChannel = false }) {
       throw new Error("That file is larger than 20 MB. Send it through the channel instead.");
     }
     const contentType = media.mime_type || "video/mp4";
-    const key = `videos/tg-${Date.now()}-${randomKey()}.${extensionOf(file.path, "mp4")}`;
+    const key = `videos/tg-${randomKey()}-${randomKey()}.${extensionOf(file.path, "mp4")}`;
     videoUrl = await storeInR2(env, key, file.bytes, contentType);
   }
 
@@ -477,7 +479,7 @@ async function storeRemote(env, url, { referer, folder, maxBytes, kind }) {
   const fetched = await fetchRemoteFile(url, { referer, maxBytes });
   if (fetched.error) return fetched;
 
-  const key = `${folder}/${kind}-${Date.now()}-${randomKey()}.${extensionFor(url, fetched.contentType)}`;
+  const key = `${folder}/${kind}-${randomKey()}-${randomKey()}.${extensionFor(url, fetched.contentType)}`;
   await env.MEDIA.put(key, fetched.response.body, {
     httpMetadata: {
       contentType: fetched.contentType || (kind === "thumb" ? "image/jpeg" : "video/mp4"),
@@ -736,7 +738,7 @@ async function handlePhoto(env, message, chatId, text) {
   }
 
   const file = await downloadFile(env, largest.file_id);
-  const key = `thumbs/tg-${Date.now()}-${randomKey()}.${extensionOf(file.path, "jpg")}`;
+  const key = `thumbs/tg-${randomKey()}-${randomKey()}.${extensionOf(file.path, "jpg")}`;
   const url = await storeInR2(env, key, file.bytes, "image/jpeg");
 
   const video = await createEntry(env, {
